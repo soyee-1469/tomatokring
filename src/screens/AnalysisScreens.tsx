@@ -3,7 +3,7 @@ import {
   CheckCircle,
   Export,
 } from '@phosphor-icons/react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BottomNav, Header, Phone } from '../components/ui'
 import { isMeasureDone, markMeasureDone } from '../session'
@@ -189,6 +189,14 @@ export function SleepAnalysisScreen() {
   const [period, setPeriod] = useState<Period>('day')
   const session = useSession()
   const sleepDone = isMeasureDone(session, 'sleep')
+  const autoStart = params.get('run') === '1'
+  const started = useRef(false)
+  useEffect(() => {
+    // 홈의 "수면 확인하기"로 들어오면 지난밤 수면 확인을 바로 완료 처리
+    if (!autoStart || started.current || sleepDone) return
+    started.current = true
+    markMeasureDone('sleep')
+  }, [autoStart, sleepDone])
 
   return (
     <div className="stage">

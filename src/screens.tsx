@@ -901,7 +901,7 @@ function MiniBars({
         const x = i * (bw + gap)
         const y = h - bottom - bh
         const isLast = i === last
-        if (isLast && todayEmpty) {
+        if ((isLast && todayEmpty) || v <= 0) {
           const eh = h - top - bottom
           return (
             <g key={labels[i] ?? i}>
@@ -1177,11 +1177,13 @@ type HomeProfile = (typeof TEAM_HOME)[keyof typeof TEAM_HOME]
 /** 선택한 날짜 기준 홈 데이터. 오늘은 기본 샘플, 지난 날짜는 날짜 시드로 달라진 값 (7일 창은 선택 날짜로 끝남) */
 function homeDataFor(profile: HomeProfile, date: Date) {
   const labels = Array.from({ length: 7 }, (_, i) => WEEKDAYS_KO[addDays(date, i - 6).getDay()])
+  // 스트레스는 측정 기록이 생기기 전에는 오늘·이전 날 모두 비어 있다
+  const stress = Array.from({ length: 7 }, () => 0)
   if (sameDay(date, HOME_TODAY)) {
     return {
       labels,
       score: profile.todayScore,
-      stress: profile.stressWeek.scores as readonly number[],
+      stress,
       steps: profile.stepsWeek as readonly number[],
       sleepHours: profile.sleepWeek.hours as readonly number[],
       efficiency: profile.sleepWeek.efficiency,
@@ -1191,7 +1193,6 @@ function homeDataFor(profile: HomeProfile, date: Date) {
     }
   }
   const seed = date.getFullYear() * 400 + date.getMonth() * 31 + date.getDate()
-  const stress = profile.stressWeek.scores.map((v, i) => clampNum(v + seededShift(seed, i, 12), 5, 95))
   const steps = profile.stepsWeek.map((v, i) => clampNum(v + seededShift(seed, i + 10, 1800), 500, 15_000))
   const sleepHours = profile.sleepWeek.hours.map((v, i) => clampNum(Math.round((v + seededShift(seed, i + 20, 10) / 10) * 10) / 10, 3, 10))
   return {
@@ -1259,6 +1260,7 @@ function DietUploadCard({
   measured,
   claimed,
   isToday,
+  onOpen,
   onMeasure,
   onClaim,
 }: {
@@ -1269,13 +1271,16 @@ function DietUploadCard({
   measured: boolean
   claimed: boolean
   isToday: boolean
+  /** 카드 탭 → 식단 상세 보기 */
+  onOpen: () => void
+  /** 버튼 → 상세에서 바로 사진 올리기 */
   onMeasure: () => void
   onClaim: () => void
 }) {
   const shown = measured ? kcal : 0
   return (
     <div className="elder-fit-card diet">
-      <button type="button" className="elder-card-hit" onClick={onMeasure} aria-label="AI 식단">
+      <button type="button" className="elder-card-hit" onClick={onOpen} aria-label="AI 식단 상세">
         <div className="elder-fit-head">
           <i style={{ color: '#FF7A45' }}><ForkKnife size={22} weight="fill" /></i>
           <b>AI 식단</b>
@@ -1342,7 +1347,7 @@ const TEAM_HOME = {
     },
     stressWeek: {
       days: ['월', '화', '수', '목', '금', '토', '일'],
-      scores: [44, 38, 52, 41, 36, 33, 28],
+      scores: [0, 0, 0, 0, 0, 0, 0],
     },
     stepsWeek: [6_120, 7_340, 5_980, 8_010, 6_650, 9_120, 8_412],
     diet: { kcal: 1_120, goal: 2_300, count: 2 },
@@ -1427,7 +1432,10 @@ export function HomeScreen() {
   const isToday = sameDay(selectedDate, HOME_TODAY)
   const day = homeDataFor(profile, selectedDate)
   const dayWord = isToday ? '오늘' : `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`
-  const stressSel = day.stress[day.stress.length - 1]
+  const stressSeries = isToday && isMeasureDone(session, 'stress')
+    ? day.stress.map((v, i) => (i === day.stress.length - 1 ? 28 : v))
+    : day.stress
+  const stressSel = stressSeries[stressSeries.length - 1]
   const stressInfo = stressLevel(stressSel)
   const stressEligible = stressSel <= STRESS_REWARD_MAX
   const sleepInfo = sleepEfficiencyLevel(day.efficiency)
@@ -1450,25 +1458,27 @@ export function HomeScreen() {
   const walkClaimed = isClaimed(session, 'walk')
   const sleepClaimed = isClaimed(session, 'sleep')
   const surveyClaimed = isClaimed(session, 'survey')
-  const stressShow = !isToday || stressMeasured
-  // 오늘 측정 전이라도 이전 기록이 있으면 어제 값 + 오늘 빈 막대, 이전 기록도 없으면 안내 문장만
+  const stressShow = stressSel > 0
+  // 선택한 날 값이 없어도 그 이전 기록이 있으면 마지막 기록 + 빈 막대, 아예 없으면 안내만
   const hasPrev = (vals: readonly number[]) => vals.slice(0, -1).some((v) => v > 0)
-  const stressYday = day.stress[day.stress.length - 2]
+  const stressYday = stressSeries[stressSeries.length - 2]
   const stepsYday = day.steps[day.steps.length - 2]
   const sleepYday = day.sleepHours[day.sleepHours.length - 2]
   const walkShow = !isToday || walkMeasured
   const sleepShow = !isToday || sleepMeasured
   const dateQuery = `?d=${toDateKey(selectedDate)}`
-  const goMeasure = (kind: MeasureKind) => {
+  /** 카드 탭 → 상세 보기(start=false), 측정 버튼 → 상세에서 바로 측정 시작(start=true, run=1) */
+  const goMeasure = (kind: MeasureKind, start = false) => {
+    const run = start ? '&run=1' : ''
     if (kind === 'sleep') {
-      navigate(`/vitaling/sleep${dateQuery}`)
+      navigate(`/vitaling/sleep${dateQuery}${run}`)
       return
     }
     if (kind === 'survey') {
       navigate('/vitaling/survey')
       return
     }
-    navigate(`/vitaling/measure/${kind}${dateQuery}`)
+    navigate(`/vitaling/measure/${kind}${dateQuery}${run}`)
   }
 
 
@@ -1551,7 +1561,7 @@ export function HomeScreen() {
                 />
 
                 <div className="elder-fit-card stress">
-                  <button type="button" className="elder-card-hit" onClick={() => goMeasure('stress')} aria-label="스트레스 측정">
+                  <button type="button" className="elder-card-hit" onClick={() => goMeasure('stress')} aria-label="스트레스 상세">
                     <div className="elder-fit-head">
                       <i style={{ color: STRESS_COLORS.line }}><Brain size={22} weight="fill" /></i>
                       <b>스트레스</b>
@@ -1569,7 +1579,7 @@ export function HomeScreen() {
                             <em>{isToday ? `또래 평균 ${STRESS_AVG_REF}점` : `${dayWord} 기록`}</em>
                           </div>
                           <div className="elder-fit-chart-wrap">
-                            <MiniBars values={day.stress} labels={day.labels} color={STRESS_COLORS.line} bubble={`${stressSel}점`} />
+                            <MiniBars values={stressSeries} labels={day.labels} color={STRESS_COLORS.line} bubble={`${stressSel}점`} />
                             <span className="elder-fit-cap">최근 7일 스트레스</span>
                           </div>
                         </>
@@ -1580,13 +1590,13 @@ export function HomeScreen() {
                             <em>어제 기록</em>
                           </div>
                           <div className="elder-fit-chart-wrap">
-                            <MiniBars values={day.stress} labels={day.labels} color={STRESS_COLORS.line} bubble="" todayEmpty />
+                            <MiniBars values={stressSeries} labels={day.labels} color={STRESS_COLORS.line} bubble="" todayEmpty />
                             <span className="elder-fit-cap">최근 7일 스트레스</span>
                           </div>
                         </>
                       ) : (
                         <div className="elder-fit-blank">
-                          <span>편안히 앉아 오늘의 스트레스를 측정해 보세요.</span>
+                          <span>{isToday ? '편안히 앉아 오늘의 스트레스를 측정해 보세요.' : '이 날은 스트레스 측정 기록이 없어요.'}</span>
                         </div>
                       )}
                     </div>
@@ -1602,7 +1612,7 @@ export function HomeScreen() {
                     claimLabel={`${formatClaimP(STRESS_REWARD_P)} 지급 받기`}
                     doneLabel={`${formatClaimP(STRESS_REWARD_P)} 지급 완료`}
                     tip={`오늘 ${stressSel}점 (또래 평균 ${STRESS_AVG_REF}점) · ${STRESS_REWARD_MAX}점 이하일 때 지급`}
-                    onMeasure={() => goMeasure('stress')}
+                    onMeasure={() => goMeasure('stress', true)}
                     onClaim={() => markClaimed('stress')}
                   />
                 </div>
@@ -1615,7 +1625,8 @@ export function HomeScreen() {
                   measured={isToday ? dietMeasured : true}
                   claimed={dietClaimed}
                   isToday={isToday}
-                  onMeasure={() => goMeasure('diet')}
+                  onOpen={() => goMeasure('diet')}
+                  onMeasure={() => goMeasure('diet', true)}
                   onClaim={() => markClaimed('diet')}
                 />
 
@@ -1671,7 +1682,7 @@ export function HomeScreen() {
                     claimLabel={`${formatClaimP(WALK_REWARD_P)} 지급 받기`}
                     doneLabel={`${formatClaimP(WALK_REWARD_P)} 지급 완료`}
                     tip={`오늘 ${stepsLabel}걸음 · ${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상일 때 지급`}
-                    onMeasure={() => goMeasure('walk')}
+                    onMeasure={() => goMeasure('walk', true)}
                     onClaim={() => markClaimed('walk')}
                   />
                 </div>
@@ -1726,7 +1737,7 @@ export function HomeScreen() {
                     readyText="수면 확인 완료! 포인트를 받아 보세요"
                     claimLabel={`${formatClaimP(SLEEP_REWARD_P)} 지급 받기`}
                     doneLabel={`${formatClaimP(SLEEP_REWARD_P)} 지급 완료`}
-                    onMeasure={() => goMeasure('sleep')}
+                    onMeasure={() => goMeasure('sleep', true)}
                     onClaim={() => markClaimed('sleep')}
                   />
                 </div>

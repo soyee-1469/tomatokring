@@ -1,4 +1,4 @@
-import { getSession, type AutoMeasureMode, type AutoMeasureKind } from './session'
+import { getSession, isMeasureDone, type AutoMeasureMode, type AutoMeasureKind } from './session'
 
 export type LiveMetricId = 'hr' | 'hrv' | 'spo2' | 'temp' | 'stress'
 export type LogMode = 'auto' | 'manual'
@@ -30,6 +30,15 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
+/** 오늘 스트레스를 직접 측정한 뒤에만 채워지는 기록. 측정 전에는 비어 있다. */
+export const STRESS_DAY_POINTS = [
+  { h: 8.5, v: 44 },
+  { h: 11.2, v: 39 },
+  { h: 13.5, v: 35 },
+  { h: 15.5, v: 31 },
+  { h: 16.3, v: 28 },
+] as const
+
 /** 해당 지표의 자동 측정 주기(분). 스트레스는 자동 측정이 없어 1시간 간격 샘플 */
 export function autoIntervalFor(metric: LiveMetricId) {
   const auto = BASE[metric].auto
@@ -50,6 +59,15 @@ export function dayLog(metric: LiveMetricId, date: Date): LogRow[] {
   const b = BASE[metric]
   const now = new Date()
   const today = isSameDay(date, now)
+  if (metric === 'stress') {
+    if (!today || !isMeasureDone(getSession(), 'stress')) return []
+    return [...STRESS_DAY_POINTS].reverse().map((pt) => ({
+      id: `m-${pt.h}`,
+      time: hhmmss(Math.round(pt.h * 60)),
+      value: pt.v,
+      mode: 'manual' as const,
+    }))
+  }
   const endMin = today ? now.getHours() * 60 + now.getMinutes() : 22 * 60
   const seed = date.getFullYear() * 400 + date.getMonth() * 31 + date.getDate() + metric.length * 7
   const step = autoIntervalFor(metric)

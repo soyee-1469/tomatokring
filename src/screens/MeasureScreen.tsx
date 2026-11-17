@@ -14,12 +14,12 @@ import {
   Waveform,
   Wind,
 } from '@phosphor-icons/react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BottomNav, Header, Phone } from '../components/ui'
-import { isMeasureDone, markMeasureDone, saveDietPhoto, todayDietPhoto, type MeasureKind } from '../session'
+import { getSession, isMeasureDone, markMeasureDone, saveDietPhoto, todayDietPhoto, type MeasureKind } from '../session'
 import { useSession } from '../useSession'
-import { autoIntervalFor, dayLog, formatLogValue, type LiveMetricId } from '../measureLog'
+import { autoIntervalFor, dayLog, formatLogValue, STRESS_DAY_POINTS, type LiveMetricId } from '../measureLog'
 
 type Period = 'day' | 'week' | 'month'
 
@@ -95,15 +95,6 @@ export function recentDate(ago: number) {
   d.setDate(d.getDate() - ago)
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${WEEKDAY_KO[d.getDay()]}`
 }
-
-/** 오늘 스트레스 측정 기록 (시각, 점수) — 홈 카드의 28점과 같은 마지막 값 */
-const STRESS_DAY_POINTS = [
-  { h: 8.5, v: 44 },
-  { h: 11.2, v: 39 },
-  { h: 13.5, v: 35 },
-  { h: 15.5, v: 31 },
-  { h: 16.3, v: 28 },
-] as const
 
 /** 브링식 하루 측정 그래프: 0~24시 축, 측정 시각마다 점, 평균 점선 */
 function DayDotChart({
@@ -665,12 +656,35 @@ function StressMetricBody({
   date: Date
   dayLabel?: string
 }) {
+  const session = useSession()
+  const isToday = date.getFullYear() === todayStart().getFullYear()
+    && date.getMonth() === todayStart().getMonth()
+    && date.getDate() === todayStart().getDate()
+  const measured = isToday && isMeasureDone(session, 'stress')
+  const points = measured ? STRESS_DAY_POINTS : []
+  const last = points[points.length - 1]
+  if (!measured) {
+    return (
+      <>
+        <div className="elder-sleep-card ms-stress-hero">
+          <em>{dayLabel} 스트레스</em>
+          <p className="ms-empty">{isToday ? '아직 측정 기록이 없어요. 편안히 앉아 측정해 보세요.' : '이 날은 측정 기록이 없어요.'}</p>
+        </div>
+        {isToday ? (
+          <div className="elder-sleep-card">
+            <MeasureNow label="스트레스 측정하기" busy={busy} onClick={onMeasure} />
+          </div>
+        ) : null}
+        <MeasureLogCard metric="stress" date={date} onMore={onHistory} />
+      </>
+    )
+  }
   return (
     <>
       <div className="elder-sleep-card ms-stress-hero">
         <em>{dayLabel} 스트레스</em>
         <strong>
-          28<small>점</small>
+          {last.v}<small>점</small>
         </strong>
         <span className="elder-menu-tag ok">낮음</span>
       </div>
@@ -679,11 +693,11 @@ function StressMetricBody({
           <b>{dayLabel} 시간대별 측정</b>
           <em className="ms-head-sub">마지막 16:19</em>
         </div>
-        <DayDotChart points={STRESS_DAY_POINTS} color="#00A48A" yMin={0} yMax={100} unit="점" />
+        <DayDotChart points={points} color="#00A48A" yMin={0} yMax={100} unit="점" />
         <div className="ms-stat-row">
-          <div><em>최저</em><strong>{Math.min(...STRESS_DAY_POINTS.map((p) => p.v))}</strong></div>
-          <div><em>평균</em><strong>{Math.round(STRESS_DAY_POINTS.reduce((a, b) => a + b.v, 0) / STRESS_DAY_POINTS.length)}</strong></div>
-          <div><em>최고</em><strong>{Math.max(...STRESS_DAY_POINTS.map((p) => p.v))}</strong></div>
+          <div><em>최저</em><strong>{Math.min(...points.map((p) => p.v))}</strong></div>
+          <div><em>평균</em><strong>{Math.round(points.reduce((a, b) => a + b.v, 0) / points.length)}</strong></div>
+          <div><em>최고</em><strong>{Math.max(...points.map((p) => p.v))}</strong></div>
         </div>
       </div>
       <div className="elder-sleep-card">
@@ -712,13 +726,17 @@ function LiveBody({
   initialMetric,
   dayLabel,
   date,
+  autoStart = false,
 }: {
   onHistory: () => void
   initialMetric?: (typeof LIVE_METRICS)[number]['id']
   dayLabel?: string
   date: Date
+  /** 홈의 측정하기에서 들어오면 상세에서 바로 측정을 시작 */
+  autoStart?: boolean
 }) {
   const [busy, setBusy] = useState(false)
+  const started = useRef(false)
   const onMeasure = () => {
     setBusy(true)
     window.setTimeout(() => {
@@ -727,6 +745,13 @@ function LiveBody({
       if (!initialMetric || initialMetric === 'stress') markMeasureDone('stress')
     }, 900)
   }
+  useEffect(() => {
+    if (!autoStart || started.current) return
+    if (initialMetric && initialMetric !== 'stress') return
+    if (isMeasureDone(getSession(), 'stress')) return
+    started.current = true
+    onMeasure()
+  }, [autoStart, initialMetric])
   const props = { busy, onMeasure, onHistory, date }
 
   if (initialMetric === 'hr') return <HrBody {...props} />
@@ -764,10 +789,21 @@ function shrinkImage(file: File, maxSide = 640) {
   })
 }
 
-function DietBody({ period }: { period: Period }) {
+function DietBody({ period, autoStart = false }: { period: Period; autoStart?: boolean }) {
   const session = useSession()
   const photo = todayDietPhoto(session)
   const photoTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+  const fileRef = useRef<HTMLInputElement>(null)
+  const started = useRef(false)
+  useEffect(() => {
+    // 홈의 "식단 사진 올리기"로 들어오면 사진 선택창을 바로 연다
+    if (!autoStart || started.current) return
+    if (isMeasureDone(getSession(), 'diet')) return
+    started.current = true
+    const input = fileRef.current
+    input?.scrollIntoView({ block: 'center' })
+    input?.click()
+  }, [autoStart])
 
   return (
     <>
@@ -833,6 +869,7 @@ function DietBody({ period }: { period: Period }) {
         <label className="ms-plus">
           <Plus size={22} weight="bold" />
           <input
+            ref={fileRef}
             type="file"
             accept="image/*"
             hidden
@@ -865,9 +902,10 @@ function DietBody({ period }: { period: Period }) {
   )
 }
 
-function WalkBody({ period }: { period: Period }) {
+function WalkBody({ period, autoStart = false }: { period: Period; autoStart?: boolean }) {
   const [mode, setMode] = useState<'hour' | 'sum'>('hour')
   const [busy, setBusy] = useState(false)
+  const started = useRef(false)
   const onSync = () => {
     setBusy(true)
     window.setTimeout(() => {
@@ -876,6 +914,13 @@ function WalkBody({ period }: { period: Period }) {
       markMeasureDone('walk')
     }, 900)
   }
+  useEffect(() => {
+    // 홈의 측정 버튼으로 들어오면 걸음 불러오기를 바로 시작
+    if (!autoStart || started.current) return
+    if (isMeasureDone(getSession(), 'walk')) return
+    started.current = true
+    onSync()
+  }, [autoStart])
   const bars = [12, 8, 4, 0, 0, 0, 6, 18, 32, 28, 40, 55, 48, 36, 44, 52, 38, 30, 22, 16, 10, 8, 4, 2]
 
   return (
@@ -984,10 +1029,16 @@ export function MeasureScreen() {
           <div className="scroll elder-body">
             {kind === 'health' ? <HealthBody /> : null}
             {kind === 'stress' ? (
-              <LiveBody onHistory={() => navigate(historyTo)} initialMetric={liveMetric} dayLabel={dayLabelOf(date)} date={date} />
+              <LiveBody
+                onHistory={() => navigate(historyTo)}
+                initialMetric={liveMetric}
+                dayLabel={dayLabelOf(date)}
+                date={date}
+                autoStart={params.get('run') === '1' && liveMetric === 'stress'}
+              />
             ) : null}
-            {kind === 'diet' ? <DietBody period={period} /> : null}
-            {kind === 'walk' ? <WalkBody period={period} /> : null}
+            {kind === 'diet' ? <DietBody period={period} autoStart={params.get('run') === '1'} /> : null}
+            {kind === 'walk' ? <WalkBody period={period} autoStart={params.get('run') === '1'} /> : null}
             {kind === 'health' ? (
               <RecentCard title="최근 기록" rows={RECENT.health} onMore={() => navigate(historyTo)} />
             ) : null}
