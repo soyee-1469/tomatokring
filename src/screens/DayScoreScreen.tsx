@@ -7,7 +7,6 @@ import { ScoreArc as TodayScoreArc } from '../components/ScoreArc'
 import { useSession } from '../useSession'
 import { RHYTHM_MIN_DAYS, validDayCount } from '../session'
 import { addDays, dayBundle, daySeed, GRADE_COPY, gradeOf, sameDay, startOfDay, type DayMetric } from '../rhythm'
-import { WeekStrip } from '../components/WeekStrip'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -108,8 +107,7 @@ export function DayScoreScreen() {
   const validDays = validDayCount(session)
   const ready = validDays >= RHYTHM_MIN_DAYS
   const today = useMemo(() => startOfDay(new Date()), [])
-  const [selected, setSelected] = useState(today)
-  const [weekEnd, setWeekEnd] = useState(today)
+  const [selected] = useState(today)
   const bundle = useMemo(() => dayBundle(selected), [selected])
   const status = statusFromScore(bundle.score)
   const isToday = sameDay(selected, today)
@@ -124,11 +122,6 @@ export function DayScoreScreen() {
     return Math.sign(s3[0] - s3[2])
   }, [selected])
 
-  const shiftWeek = (dir: -1 | 1) => {
-    const next = addDays(weekEnd, dir * 7)
-    const clamped = next > today ? today : next
-    setWeekEnd(clamped)
-  }
 
   return (
     <div className="stage">
@@ -148,7 +141,7 @@ export function DayScoreScreen() {
           </header>
 
           <div className="scroll reward-page day-score-page">
-            <WeekStrip selected={selected} weekEnd={weekEnd} today={today} onSelect={setSelected} onShift={shiftWeek} scoreOf={(d) => dayBundle(d).score} />
+            <p className="rd-date">{isToday ? `오늘 · ${dateLabel} ${WEEKDAYS[selected.getDay()]}요일` : `${dateLabel} ${WEEKDAYS[selected.getDay()]}요일`}</p>
 
             {!ready && (
               <section className="rhythm-hero collecting">
@@ -166,7 +159,6 @@ export function DayScoreScreen() {
               <>
                 {/* 1) 반원 게이지가 주인공 — 홈과 같은 그림 */}
                 <section className="rd-gauge">
-                  <span className="v2-hero-date">{isToday ? `오늘 · ${dateLabel} ${WEEKDAYS[selected.getDay()]}요일` : `${dateLabel} ${WEEKDAYS[selected.getDay()]}요일`}</span>
                   <div className="rd-gauge-wrap">
                     <TodayScoreArc score={bundle.score} size="lg" />
                     <div className="rd-gauge-center">
