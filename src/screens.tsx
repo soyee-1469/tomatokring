@@ -37,6 +37,7 @@ import {
   SLEEP_COLORS,
   VITAL_COLORS,
   HOME_COLORS,
+  HOME_SOFT,
 } from './palette'
 import { TERMS_DOCS, TERMS_LIST, type TermsDocId } from './termsDocs'
 import { useSession } from './useSession'
@@ -1065,10 +1066,10 @@ function DietUploadCard({
 
 /** 홈 바이탈 4종 — 최신 자동 측정값과 상태 한 단어 */
 const HOME_VITALS = [
-  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', status: '일상생활', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: '#FFF0F1' },
-  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', status: '보통', icon: 'drop', color: HOME_COLORS.berry, soft: '#E8EFFF' },
-  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', status: '정상', icon: 'temp-hot', color: HOME_COLORS.orange, soft: '#FFF7D9' },
-  { id: 'hrv', label: 'HRV 회복력', value: 42, unit: 'ms', status: '평균', icon: 'pulse', color: HOME_COLORS.beet, soft: '#F6EEFF' },
+  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', status: '일상생활', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: HOME_SOFT.tomato },
+  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', status: '보통', icon: 'drop', color: HOME_COLORS.berry, soft: HOME_SOFT.berry },
+  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', status: '정상', icon: 'temp-hot', color: HOME_COLORS.orange, soft: HOME_SOFT.orange },
+  { id: 'hrv', label: 'HRV 회복력', value: 42, unit: 'ms', status: '평균', icon: 'pulse', color: HOME_COLORS.beet, soft: HOME_SOFT.beet },
 ] as const
 
 const TEAM_HOME = {

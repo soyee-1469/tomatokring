@@ -28,3 +28,17 @@ export function ScoreArc({ score, size = 'md' }: { score: number; size?: 'md' | 
     </svg>
   )
 }
+
+/** 게이지 그라데이션(빨강→주황→노랑→초록→파랑)에서 점수 위치의 색 */
+const STOPS: [number, string][] = [[0, '#E53935'], [28, '#FF9800'], [52, '#FFEB3B'], [78, '#66BB6A'], [100, '#42A5F5']]
+export function gaugeColor(score: number) {
+  const t = Math.min(100, Math.max(0, score))
+  let i = 0
+  while (i < STOPS.length - 2 && t > STOPS[i + 1][0]) i++
+  const [a, ca] = STOPS[i], [b, cb] = STOPS[i + 1]
+  const k = (t - a) / (b - a)
+  const hex = (c: string) => [1, 3, 5].map((j) => parseInt(c.slice(j, j + 2), 16))
+  const [r1, g1, b1] = hex(ca), [r2, g2, b2] = hex(cb)
+  const mix = (x: number, y: number) => Math.round(x + (y - x) * k).toString(16).padStart(2, '0')
+  return `#${mix(r1, r2)}${mix(g1, g2)}${mix(b1, b2)}`
+}

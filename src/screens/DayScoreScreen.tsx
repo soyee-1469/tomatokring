@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone } from '../components/ui'
 import { Ri } from '../components/Ri'
-import { ScoreArc as TodayScoreArc } from '../components/ScoreArc'
+import { ScoreArc as TodayScoreArc, gaugeColor } from '../components/ScoreArc'
 import { useSession } from '../useSession'
 import { RHYTHM_MIN_DAYS, validDayCount } from '../session'
 import { addDays, dayBundle, daySeed, GRADE_COPY, gradeOf, sameDay, startOfDay, type DayMetric } from '../rhythm'
@@ -17,7 +17,7 @@ function statusFromScore(score: number) {
   return { tone: g.tone, label: g.label, headline: c.headline, headlinePast: c.headlinePast, advice: c.advice }
 }
 
-/** 최근 7일 바디 리듬: 세로 막대 7개, 막대 색 = 그날 등급 색 (홈 게이지와 같은 색 기준) */
+/** 최근 7일 바디 리듬: 세로 막대 7개, 막대 색 = 게이지에서 그 점수 위치의 색 */
 function WeekLine({ endDate }: { endDate: Date }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(endDate, i - 6))
   const vals = days.map((d) => dayBundle(d).score)
@@ -38,11 +38,10 @@ function WeekLine({ endDate }: { endDate: Date }) {
       ))}
       <line x1={padL} x2={w - padR} y1={y(avg)} y2={y(avg)} stroke="#1a2332" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="4 4" />
       {vals.map((v, i) => {
-        const g = gradeOf(v)
         const last = i === 6
         return (
           <g key={i}>
-            <rect x={x(i)} y={y(v)} width={bw} height={Math.max(4, bottom - y(v))} rx={bw / 2} fill={g.color} opacity={last ? 1 : 0.55} />
+            <rect x={x(i)} y={y(v)} width={bw} height={Math.max(4, bottom - y(v))} rx={bw / 2} fill={gaugeColor(v)} opacity={last ? 1 : 0.5} />
             <text x={x(i) + bw / 2} y={y(v) - 8} textAnchor="middle" fontSize="12" fontWeight="700" fill={last ? '#1a2332' : '#6b7684'}>{v}</text>
             <text x={x(i) + bw / 2} y={h - 8} textAnchor="middle" fontSize="12" fontWeight={last ? '700' : '500'} fill={last ? '#1a2332' : '#9aa3ad'}>{last ? '오늘' : WEEKDAYS[days[i].getDay()]}</text>
           </g>
@@ -62,7 +61,7 @@ function MetricRow({
   return (
     <button type="button" className="day-metric-row" onClick={onOpen}>
       <span className="day-metric-ico" style={{ background: metric.soft, color: metric.color }}>
-        <Ri name={metric.icon} size={22} />
+        <Ri name={metric.icon} fill size={22} />
       </span>
       <span className="day-metric-copy">
         <b>{metric.label}</b>
