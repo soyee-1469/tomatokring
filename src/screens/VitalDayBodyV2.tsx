@@ -135,9 +135,9 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
         ? hourly.map((p, i) => (
             <rect key={p.h} x={x(p.h) + 1.5} y={y(p.mean)} width={bw} height={Math.max(3, y(s.yMin) - y(p.mean))} rx={bw / 2} className="bar" style={{ animationDelay: `${i * 28}ms` }} />
           ))
-        : metric === 'hr'
+        : metric === 'hr' || metric === 'hrv'
         ? hourly.map((p, i) => {
-            // 심박수: 시간대별 최소~최대 범위 막대 (한 시간 안에서도 크게 오르내리므로)
+            // 심박수·HRV: 시간대별 최소~최대 범위 막대 (한 시간 안에서도 오르내리므로)
             // 한 시간에 측정이 하나뿐이면 범위가 없으므로 막대 대신 점
             const top = y(p.max), bot = y(p.min)
             const single = bot - top < 2

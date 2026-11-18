@@ -13480,3 +13480,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .date-line b { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; min-width: 140px; text-align: center; }
 .date-line button { width: 36px; height: 36px; border: 0; background: transparent; color: var(--text); display: grid; place-items: center; cursor: pointer; border-radius: 50%; }
 .date-line button:disabled { color: #C9CED4; cursor: default; }
+
+/* HRV 회복력 하루 흐름: 심박수와 같은 범위 막대 */
+.v2-page .v2-chart.v2-m-hrv .range { fill: #8B5CF6; opacity: 0.45; }
+.v2-page .v2-chart.v2-m-hrv .range.last { opacity: 1; }
