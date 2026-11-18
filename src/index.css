@@ -13489,3 +13489,12 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .v2-page .v2-chart .rangeband { opacity: 0.22; }
 .v2-page .v2-chart.v2-m-spo2 .rangeband { fill: #2F80ED; }
 .v2-page .v2-chart.v2-m-temp .rangeband { fill: var(--c-orange); }
+
+/* 하루 흐름: 고정 눈금 + 가로 스크롤 그래프 (스크롤바 숨김) */
+.v2-chart-wrap { display: flex; align-items: flex-start; margin-top: 2px; }
+.v2-chart-axis { flex: 0 0 44px; display: block; }
+.v2-chart-scroll { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.v2-chart-scroll::-webkit-scrollbar { display: none; }
+.v2-chart-scroll .v2-chart { width: auto; height: 170px; display: block; }
+.v2-chart-axis .ylab { font-size: 11px; font-weight: 600; fill: #9aa3ad; }
+.v2-chart-axis .avglab { font-size: 11px; font-weight: 700; fill: #5a6570; }
