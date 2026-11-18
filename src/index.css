@@ -13571,3 +13571,8 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-chip-btn { flex-shrink: 0; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--chip-gray); font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; }
 /* 보조 동작은 버튼처럼 보이지 않게: 배경 없는 글자 링크 (카드 안 버튼 모양은 상태 태그 + 포인트 버튼 둘만) */
 .elder-chip-btn { height: auto; padding: 4px 0; border-radius: 0; background: transparent; font-size: 14px; font-weight: 600; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #C9CED4; }
+
+/* 버튼 아래 작은 링크 줄 (측정 전 설명글과 같은 자리·크기) */
+.elder-home .elder-claim-guide.under.links { justify-content: center; gap: 6px; }
+.elder-home .elder-claim-guide.under.links button { border: 0; background: transparent; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer; }
+.elder-home .elder-claim-guide.under.links i { font-style: normal; color: var(--text-3); }

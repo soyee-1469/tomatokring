@@ -521,6 +521,8 @@ function RewardBlock({
   guide,
   points,
   measureLabel,
+  /** 여러 번 할 수 있는 항목: 버튼 아래 작은 링크 문구 */
+  repeatLabel,
   readyText,
   doneLabel,
   tip,
@@ -534,6 +536,7 @@ function RewardBlock({
   /** 버튼에 함께 보여줄 지급 포인트 (예: '20만 P') */
   points: string
   measureLabel: string
+  repeatLabel?: string
   readyText: string
   doneLabel: string
   tip?: string
@@ -556,15 +559,21 @@ function RewardBlock({
             <Ri name="checkbox-circle" fill size={18} />
             {doneLabel}
           </button>
-          <button type="button" className="elder-claim-link" onClick={() => navigate('/reward/history')}>
-            적립 내역 보기 <Ri name="arrow-right-s" size={14} />
-          </button>
+          <p className="elder-claim-guide under links">
+            {repeatLabel && <><button type="button" onClick={onMeasure}>{repeatLabel}</button><i>·</i></>}
+            <button type="button" onClick={() => navigate('/reward/history')}>적립 내역 보기</button>
+          </p>
         </>
       ) : eligible ? (
-        <button type="button" className="elder-claim-btn with-points" onClick={onClaim}>
-          <Ri name="checkbox-circle" fill size={18} />
-          <span>{readyText} · {points} 받기</span>
-        </button>
+        <>
+          <button type="button" className="elder-claim-btn with-points" onClick={onClaim}>
+            <Ri name="checkbox-circle" fill size={18} />
+            <span>{readyText} · {points} 받기</span>
+          </button>
+          {repeatLabel && (
+            <p className="elder-claim-guide under links"><button type="button" onClick={onMeasure}>{repeatLabel}</button></p>
+          )}
+        </>
       ) : (
         <p className="elder-claim-tip">
           <Ri name="heart-3" fill size={12} />
@@ -673,12 +682,11 @@ function DietUploadCard({
         <div className="elder-fit-body">
           {measured ? (
             <>
-              <div className="elder-fit-num with-chip">
+              <div className="elder-fit-num">
                 <div>
                   <strong>{shown.toLocaleString('ko-KR')}<small>kcal</small></strong>
                   <em>목표 {goal.toLocaleString('ko-KR')}kcal</em>
                 </div>
-                <span role="button" tabIndex={0} className="elder-chip-btn" onClick={(e) => { e.stopPropagation(); onMeasure() }}>더 올리기</span>
               </div>
               <ul className="home-meals">
                 {photo && (
@@ -711,6 +719,7 @@ function DietUploadCard({
         guide="아침·점심·저녁 중 1회 올리면 지급 · 1일 1회"
         points={formatClaimP(DIET_REWARD_P)}
         measureLabel="사진 올리고"
+        repeatLabel="식단 더 올리기"
         readyText="등록 완료"
         doneLabel={`오늘 ${formatClaimP(DIET_REWARD_P)} 받았어요`}
         onMeasure={onMeasure}
@@ -864,12 +873,11 @@ export function HomeScreen() {
           </div>
           <div className="elder-fit-body">
             {stressShow ? (
-              <div className="elder-fit-num with-chip">
+              <div className="elder-fit-num">
                 <div>
                   <strong>{stressSel}<small>점</small></strong>
                   <em>{stressMyAvg !== null ? `내 평균 ${stressMyAvg}점` : '첫 측정'}</em>
                 </div>
-                <span role="button" tabIndex={0} className="elder-chip-btn" onClick={(e) => { e.stopPropagation(); goMeasure('stress', true) }}>다시 측정</span>
               </div>
             ) : (
               <p className="elder-fit-hint">편안히 앉아 오늘의 스트레스를 측정해 보세요.</p>
@@ -883,6 +891,7 @@ export function HomeScreen() {
           guide={`${STRESS_REWARD_MAX}점 이하면 지급 · 1일 1회`}
           points={formatClaimP(STRESS_REWARD_P)}
           measureLabel="측정하고"
+          repeatLabel="다시 측정하기"
           readyText="측정 완료"
           doneLabel={`오늘 ${formatClaimP(STRESS_REWARD_P)} 받았어요`}
           tip={`오늘 ${stressSel}점${stressMyAvg !== null ? ` (내 평균 ${stressMyAvg}점)` : ''} · ${STRESS_REWARD_MAX}점 이하일 때 지급`}
@@ -931,12 +940,11 @@ export function HomeScreen() {
           <div className="elder-fit-body">
             {walkShow ? (
               <>
-                <div className="elder-fit-num with-chip">
+                <div className="elder-fit-num">
                   <div>
                     <strong>{stepsLabel}<small>걸음</small></strong>
                     <em>{walkEligible ? `목표 ${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 · ${walkPct}%` : `목표까지 ${walkRemain.toLocaleString('ko-KR')}걸음`}</em>
                   </div>
-                  <span role="button" tabIndex={0} className="elder-chip-btn" onClick={(e) => { e.stopPropagation(); goMeasure('walk', true) }}>다시 불러오기</span>
                 </div>
                 <progress
                   className="elder-walk-progress"
@@ -957,6 +965,7 @@ export function HomeScreen() {
           guide={`${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상이면 지급 · 1일 1회`}
           points={formatClaimP(WALK_REWARD_P)}
           measureLabel="걸음 확인하고"
+          repeatLabel="걸음 다시 불러오기"
           readyText="걸음 확인 완료"
           doneLabel={`오늘 ${formatClaimP(WALK_REWARD_P)} 받았어요`}
           tip={`오늘 ${stepsLabel}걸음 · ${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상일 때 지급`}
