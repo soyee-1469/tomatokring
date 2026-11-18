@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Phone } from '../components/ui'
 import { Ri } from '../components/Ri'
 import { ScoreArc as TodayScoreArc } from '../components/ScoreArc'
+import { DateLine } from '../components/DateLine'
 import { useSession } from '../useSession'
 import { RHYTHM_MIN_DAYS, validDayCount } from '../session'
 import { addDays, dayBundle, daySeed, GRADE_COPY, gradeOf, sameDay, startOfDay, type DayMetric } from '../rhythm'
@@ -107,7 +108,7 @@ export function DayScoreScreen() {
   const validDays = validDayCount(session)
   const ready = validDays >= RHYTHM_MIN_DAYS
   const today = useMemo(() => startOfDay(new Date()), [])
-  const [selected] = useState(today)
+  const [selected, setSelected] = useState(today)
   const bundle = useMemo(() => dayBundle(selected), [selected])
   const status = statusFromScore(bundle.score)
   const isToday = sameDay(selected, today)
@@ -141,7 +142,7 @@ export function DayScoreScreen() {
           </header>
 
           <div className="scroll reward-page day-score-page">
-            <p className="rd-date">{isToday ? `오늘 · ${dateLabel} ${WEEKDAYS[selected.getDay()]}요일` : `${dateLabel} ${WEEKDAYS[selected.getDay()]}요일`}</p>
+            <DateLine date={selected} today={today} onDate={setSelected} />
 
             {!ready && (
               <section className="rhythm-hero collecting">

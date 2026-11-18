@@ -291,11 +291,15 @@ function MeasureNow({
 function LiveBody({
   onHistory,
   initialMetric,
+  date,
+  onDate,
   dayLabel,
   autoStart = false,
 }: {
   onHistory: () => void
   initialMetric?: (typeof LIVE_METRICS)[number]['id']
+  date: Date
+  onDate: (d: Date) => void
   dayLabel?: string
   /** 홈의 측정하기에서 들어오면 상세에서 바로 측정을 시작 */
   autoStart?: boolean
@@ -318,7 +322,7 @@ function LiveBody({
     onMeasure()
   }, [autoStart, initialMetric])
   void dayLabel
-  return <VitalDayBodyV2 metric={initialMetric ?? 'stress'} busy={busy} onMeasure={onMeasure} onHistory={onHistory} />
+  return <VitalDayBodyV2 metric={initialMetric ?? 'stress'} date={date} onDate={onDate} busy={busy} onMeasure={onMeasure} onHistory={onHistory} />
 }
 
 /** 선택한 사진을 긴 변 640px JPEG data URL로 축소 (localStorage 저장용) */
@@ -625,6 +629,8 @@ export function MeasureScreen() {
               <LiveBody
                 onHistory={() => navigate(historyTo)}
                 initialMetric={liveMetric}
+                date={date}
+                onDate={setDate}
                 dayLabel={dayLabelOf(date)}
                 autoStart={params.get('run') === '1' && liveMetric === 'stress'}
               />

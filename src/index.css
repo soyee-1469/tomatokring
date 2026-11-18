@@ -13474,3 +13474,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* 바디 리듬: 카드 밖 가운데 날짜 한 줄 */
 .rd-date { margin: 10px 0 12px; text-align: center; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+
+/* 카드 밖 날짜 줄: ‹ 11월 18일 수요일 › */
+.date-line { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 12px; }
+.date-line b { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; min-width: 140px; text-align: center; }
+.date-line button { width: 36px; height: 36px; border: 0; background: transparent; color: var(--text); display: grid; place-items: center; cursor: pointer; border-radius: 50%; }
+.date-line button:disabled { color: #C9CED4; cursor: default; }

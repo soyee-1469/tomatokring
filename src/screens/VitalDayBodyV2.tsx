@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Ri } from '../components/Ri'
-import { addDays, startOfDay } from '../components/WeekStrip'
+import { addDays, sameDay, startOfDay } from '../components/WeekStrip'
+import { DateLine } from '../components/DateLine'
 import { TrendBars } from '../components/TrendBars'
 import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measureLog'
 import { useSession } from '../useSession'
@@ -137,9 +138,13 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
         : metric === 'hr'
         ? hourly.map((p, i) => {
             // 심박수: 시간대별 최소~최대 범위 막대 (한 시간 안에서도 크게 오르내리므로)
+            // 한 시간에 측정이 하나뿐이면 범위가 없으므로 막대 대신 점
             const top = y(p.max), bot = y(p.min)
+            const single = bot - top < 2
+            const cls = i === hourly.length - 1 ? 'range last' : 'range'
+            if (single) return <circle key={p.h} cx={x(p.h) + 1.5 + bw / 2} cy={top} r={bw / 2} className={cls} />
             const hgt = Math.max(bw, bot - top)
-            return <rect key={p.h} x={x(p.h) + 1.5} y={top - (hgt - (bot - top)) / 2} width={bw} height={hgt} rx={bw / 2} className={i === hourly.length - 1 ? 'range last' : 'range'} />
+            return <rect key={p.h} x={x(p.h) + 1.5} y={top - (hgt - (bot - top)) / 2} width={bw} height={hgt} rx={bw / 2} className={cls} />
           })
         : (
           <>
@@ -161,14 +166,13 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
 }
 
 export function VitalDayBodyV2({
-  metric, busy, onMeasure, onHistory,
-}: { metric: LiveMetricId; busy: boolean; onMeasure: () => void; onHistory: () => void }) {
+  metric, date, onDate, busy, onMeasure, onHistory,
+}: { metric: LiveMetricId; date: Date; onDate: (d: Date) => void; busy: boolean; onMeasure: () => void; onHistory: () => void }) {
   const navigate = useNavigate()
   const session = useSession()
   const s = SPEC[metric]
   const today = useMemo(() => startOfDay(new Date()), [])
-  const date = today
-  const isToday = true
+  const isToday = sameDay(date, today)
   const rows = useMemo(() => dayLog(metric, date), [metric, date, session.autoMeasure, session.doneDates])
   const vals = rows.map((r) => r.value)
   const has = vals.length > 0
@@ -181,12 +185,12 @@ export function VitalDayBodyV2({
   const say = has ? interpret(metric, isToday ? latest : mean, usual, isToday) : null
   const week = useMemo(() => {
     const WD = ['일', '월', '화', '수', '목', '금', '토']
-    const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
+    const days = Array.from({ length: 7 }, (_, i) => addDays(date, i - 6))
     return {
       values: days.map((d) => { const rs = dayLog(metric, d); return rs.length ? rs.reduce((a, r) => a + r.value, 0) / rs.length : 0 }),
-      labels: days.map((d, i) => (i === 6 ? '오늘' : WD[d.getDay()])),
+      labels: days.map((d, i) => (i === 6 && isToday ? '오늘' : WD[d.getDay()])),
     }
-  }, [metric, today, session.autoMeasure, session.doneDates])
+  }, [metric, date, isToday, session.autoMeasure, session.doneDates])
   const zoneCounts = s.zones.map((z) => vals.filter(z.test).length)
   const zoneTotal = zoneCounts.reduce((a, b) => a + b, 0)
   const manual = rows.find((r) => r.mode === 'manual')
@@ -195,8 +199,9 @@ export function VitalDayBodyV2({
     <>
 
       {/* 2) 한 줄 해석 + 오늘 값 */}
+      <DateLine date={date} today={today} onDate={onDate} />
+
       <section className={`v2-hero v2-m-${metric}`}>
-        <span className="v2-hero-date">{`오늘 · ${date.getMonth() + 1}월 ${date.getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}요일`}</span>
         <div className="v2-say">
           <span className="v2-say-ico"><Ri name="chat-smile-3" fill size={20} /></span>
           <div>
