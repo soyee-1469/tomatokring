@@ -13537,3 +13537,6 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 상세 히어로 1행: 값은 왼쪽, 아이콘은 오른쪽 끝 */
 .v2-page .v2-top { flex-direction: row-reverse; justify-content: space-between; }
 .v2-page .v2-top .v2-val { margin-right: auto; }
+/* 아이콘은 오른쪽 위, 큰 숫자와 같은 높이 */
+.v2-page .v2-top { align-items: flex-start; }
+.v2-page .v2-top .v2-say-ico { margin-top: 2px; }
