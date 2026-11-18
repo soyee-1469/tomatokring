@@ -13378,3 +13378,6 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
   .screen { height: 100%; padding-top: env(safe-area-inset-top); }
   .scroll { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
 }
+
+.v2-page .v2-chart .normal { display: none; }
+.v2-page .v2-key i { display: none; }

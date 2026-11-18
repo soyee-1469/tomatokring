@@ -113,7 +113,6 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
   const bw = (W - padL - padR) / 24 - 3
   return (
     <svg className={`v2-chart v2-m-${metric}`} viewBox={`0 0 ${W} ${H}`} aria-hidden>
-      {y(s.normal[0]) - y(s.normal[1]) > 2 && <rect x={padL} y={y(s.normal[1])} width={W - padL - padR} height={y(s.normal[0]) - y(s.normal[1])} className="normal" />}
       <line x1={padL} x2={W - padR} y1={y(hi)} y2={y(hi)} className="grid" />
       <line x1={padL} x2={W - padR} y1={y(lo)} y2={y(lo)} className="grid" />
       <text x={padL - 8} y={y(hi) + 4} className="ylab" textAnchor="end">{fmtY(hi)}</text>
@@ -131,11 +130,13 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
         : (
           <>
             {path && <path d={path} className="line" />}
-            {/* 점: 직접 잰 값만 빈 점, 마지막 값은 채운 점 */}
-            {rows.filter((r) => r.mode === 'manual').map((r) => (
-              <circle key={r.time} cx={x(minutesOf(r.time) / 60)} cy={y(r.value)} r={4.5} className="dot" />
-            ))}
-            {pts.length > 0 && <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r={6.5} className="dot last" />}
+            {/* 점은 선 위에만: 직접 잰 시간대는 빈 점, 마지막 시간대는 채운 점 */}
+            {hourly.map((p, i) => {
+              const last = i === hourly.length - 1
+              const manualHere = rows.some((r) => r.mode === 'manual' && Math.floor(minutesOf(r.time) / 60) === p.h)
+              if (!last && !manualHere) return null
+              return <circle key={p.h} cx={pts[i].x} cy={pts[i].y} r={last ? 6.5 : 4.5} className={last ? 'dot last' : 'dot'} />
+            })}
           </>
         )}
       {['0', '6', '12', '18', '24'].map((h) => (
@@ -205,7 +206,7 @@ export function VitalDayBodyV2({
 
       {/* 3) 하루 그래프 */}
       <section className="v2-card">
-        <div className="v2-head"><b className="v2-label">하루 흐름</b><span className="v2-key"><i />{metric === 'stress' ? '편안한 구간 0–40' : `정상 ${s.normal[0]}–${s.normal[1]}${s.unit}`}</span></div>
+        <div className="v2-head"><b className="v2-label">하루 흐름</b><span className="v2-key">{metric === 'stress' ? '편안한 구간 0–40' : `정상 ${s.normal[0]}–${s.normal[1]}${s.unit}`}</span></div>
         <DayBars metric={metric} rows={rows} />
       </section>
 

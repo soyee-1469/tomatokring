@@ -68,14 +68,15 @@ export function dayLog(metric: LiveMetricId, date: Date): LogRow[] {
       mode: 'manual' as const,
     }))
   }
-  const endMin = today ? now.getHours() * 60 + now.getMinutes() : 22 * 60
+  const endMin = today ? now.getHours() * 60 + now.getMinutes() : 23 * 60 + 50
   const seed = date.getFullYear() * 400 + date.getMonth() * 31 + date.getDate() + metric.length * 7
   const step = autoIntervalFor(metric)
   const rows: LogRow[] = []
   let i = 0
-  for (let m = 6 * 60; m <= endMin; m += step) {
+  for (let m = 0; m <= endMin; m += step) {
     // 점심 전후로 살짝 높고 저녁엔 낮아지는 하루 곡선
-    const curve = Math.sin(((m - 6 * 60) / (16 * 60)) * Math.PI) * b.spread * 0.6
+    // 새벽엔 낮고 점심 전후로 살짝 높았다가 저녁에 내려오는 하루 곡선
+    const curve = Math.sin((Math.max(0, m - 5 * 60) / (17 * 60)) * Math.PI) * b.spread * 0.6 - (m < 5 * 60 ? b.spread * 0.25 : 0)
     const v = b.base + curve + noise(seed, i) * b.spread
     rows.push({ id: `a-${m}`, time: hhmmss(m), value: Number(v.toFixed(b.digits)), mode: 'auto' })
     i += 1
