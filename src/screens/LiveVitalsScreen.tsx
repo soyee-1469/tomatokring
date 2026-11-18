@@ -1,7 +1,7 @@
 import { AccuracyInfoButton } from '../components/AccuracyInfo'
 import { useNavigate } from 'react-router-dom'
-import { BottomNav, Header, Phone } from '../components/ui'
-import type { VitalId } from './VitalDetailScreen'
+import { Header, Phone } from '../components/ui'
+type VitalId = 'hr' | 'spo2' | 'temp' | 'hrv'
 
 type Series = {
   id: VitalId
@@ -142,7 +142,7 @@ export function LiveVitalsScreen() {
       min: 62,
       max: 108,
       value: '72',
-      label: '심박',
+      label: '심박수',
       unit: 'bpm',
       status: '정상 범위',
       guide: 75,
@@ -155,7 +155,7 @@ export function LiveVitalsScreen() {
       min: 92,
       max: 99,
       value: '95',
-      label: 'SpO₂',
+      label: '혈중 산소',
       unit: '%',
       status: '양호',
       guide: 95,
@@ -168,24 +168,11 @@ export function LiveVitalsScreen() {
       min: 35.9,
       max: 36.8,
       value: '36.4',
-      label: '피부온도',
+      label: '피부 온도',
       unit: '°C',
       status: '안정',
       guide: 36.4,
       points: [36.28, 36.31, 36.35, 36.42, 36.48, 36.44, 36.39, 36.36, 36.41, 36.45, 36.43, 36.38, 36.4, 36.42, 36.39, 36.41],
-    },
-    {
-      id: 'resp',
-      color: '#43A047',
-      soft: '#fafbfc',
-      min: 12,
-      max: 22,
-      value: '18',
-      label: '호흡',
-      unit: '/분',
-      status: '정상 12–20',
-      guide: 16,
-      points: [16, 17, 17, 18, 18, 17, 19, 18, 17, 16, 18, 19, 18, 17, 18, 18, 17, 18, 17, 18],
     },
     {
       id: 'hrv',
@@ -194,7 +181,7 @@ export function LiveVitalsScreen() {
       min: 10,
       max: 75,
       value: '37',
-      label: '심박변이도',
+      label: 'HRV 회복력',
       unit: 'RMSSD',
       status: '회복 중',
       guide: 40,
@@ -205,7 +192,7 @@ export function LiveVitalsScreen() {
   return (
     <div className="stage">
       <Phone>
-        <div className="screen with-nav ring-live">
+        <div className="screen ring-live">
           <Header title="바이탈" backTo="/vitaling/home" right={<AccuracyInfoButton />} />
           <div className="scroll live-page ring">
             <p className="ring-live-lead">지표를 선택하면 날짜·시간별 추이를 볼 수 있어요</p>
@@ -213,11 +200,10 @@ export function LiveVitalsScreen() {
               <LiveCard
                 key={item.id}
                 item={item}
-                onOpen={() => navigate(`/vitaling/vital/${item.id}`)}
+                onOpen={() => navigate(`/vitaling/measure/stress?m=${item.id}`)}
               />
             ))}
           </div>
-          <BottomNav active="service" />
         </div>
       </Phone>
     </div>

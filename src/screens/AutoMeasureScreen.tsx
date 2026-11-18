@@ -1,7 +1,7 @@
 import { CaretRight } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { BottomNav, Header, Phone } from '../components/ui'
+import { Header, Phone } from '../components/ui'
 import { AUTO_INTERVAL_MIN, AUTO_MODE_LABEL } from '../measureLog'
 import { setAutoMeasure, type AutoMeasureKind, type AutoMeasureMode } from '../session'
 import { useSession } from '../useSession'
@@ -86,14 +86,21 @@ function ModeSheet({
   )
 }
 
+const TOGGLES: { id: 'hrv' | 'stress' | 'temp'; title: string; desc: string }[] = [
+  { id: 'hrv', title: 'HRV 회복력', desc: '1시간마다 자동으로 측정해요.' },
+  { id: 'stress', title: '스트레스', desc: '1시간마다 자동으로 계산해요. 직접 측정은 스트레스 화면에서 할 수 있어요.' },
+  { id: 'temp', title: '피부 온도', desc: '30분마다 자동으로 측정해요.' },
+]
+
 export function AutoMeasureScreen() {
+  const [toggles, setToggles] = useState<Record<'hrv' | 'stress' | 'temp', boolean>>({ hrv: true, stress: true, temp: true })
   const session = useSession()
   const [editing, setEditing] = useState<AutoMeasureKind | null>(null)
 
   return (
     <div className="stage">
       <Phone>
-        <div className="screen with-nav elder-home">
+        <div className="screen elder-home">
           <Header title="자동 측정 모드" backTo="/vitaling/settings" />
           <div className="scroll elder-body">
             <div className="elder-sleep-card auto-measure-card">
@@ -113,6 +120,23 @@ export function AutoMeasureScreen() {
               ))}
             </div>
 
+            <div className="auto-toggles">
+              {TOGGLES.map((t) => (
+                <div key={t.id} className="auto-toggle-row">
+                  <div>
+                    <b>{t.title}</b>
+                    <em>{t.desc}</em>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={toggles[t.id]}
+                    className={`toggle ${toggles[t.id] ? 'on' : ''}`}
+                    onClick={() => setToggles((v) => ({ ...v, [t.id]: !v[t.id] }))}
+                  />
+                </div>
+              ))}
+            </div>
             <div className="elder-sleep-card auto-measure-manual">
               <b>직접 재기 (실시간 측정)</b>
               <em>자동 측정과 별도로 심박수·혈중 산소·피부 온도·스트레스는 각 화면의 "측정하기" 버튼으로 지금 바로 잴 수 있어요. 직접 잰 값은 기록에 "실시간 측정"으로 표시돼요.</em>
@@ -126,7 +150,6 @@ export function AutoMeasureScreen() {
               </ul>
             </div>
           </div>
-          <BottomNav active="service" />
           {editing ? <ModeSheet kind={editing} current={session.autoMeasure[editing]} onClose={() => setEditing(null)} /> : null}
         </div>
       </Phone>

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { dayLog, formatLogValue, type LiveMetricId } from '../measureLog'
 import { DateBar, parseDateKey, todayStart } from './MeasureScreen'
-import { BottomNav, Header, Phone } from '../components/ui'
+import { Header, Phone } from '../components/ui'
 import { type MeasureKind } from '../session'
 
 type HistoryRow = {
@@ -126,14 +126,14 @@ function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initial
   return (
     <div className="stage">
       <Phone>
-        <div className="screen with-nav elder-home">
+        <div className="screen elder-home">
           <Header title={`${LIVE_TITLES[metric]} 전체 기록`} backTo={`/vitaling/measure/stress?m=${metric}&d=${dateKey}`} />
           <DateBar period="day" date={date} onDate={setDate} />
           <div className="scroll elder-body">
             <div className="elder-sleep-card ms-hist-card">
               <div className="ms-hist-head">
                 <b>{dateHeading(date)}</b>
-                <em>{rows.length}건 · 자동 {autoCount} · 실시간 {manualCount}</em>
+                <em>{rows.length}건 · 자동 {autoCount} · 직접 {manualCount}</em>
               </div>
               {rows.length === 0 ? (
                 <div className="ms-hist-empty">
@@ -146,7 +146,7 @@ function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initial
                       <div className="ms-log-row">
                         <span className="ms-log-ico"><Icon size={18} weight="fill" /></span>
                         <strong>{formatLogValue(metric, row.value)}</strong>
-                        <i className={row.mode}>{row.mode === 'auto' ? '자동 측정' : '실시간 측정'}</i>
+                        <i className={row.mode}>{row.mode === 'auto' ? '자동 측정' : '직접 측정'}</i>
                         <em>{row.time}</em>
                       </div>
                     </li>
@@ -155,7 +155,6 @@ function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initial
               )}
             </div>
           </div>
-          <BottomNav active="service" />
         </div>
       </Phone>
     </div>
@@ -179,7 +178,7 @@ export function MeasureHistoryScreen() {
   return (
     <div className="stage">
       <Phone>
-        <div className="screen with-nav elder-home">
+        <div className="screen elder-home">
           <Header title={def.listTitle} backTo={detailTo} />
 
           <div className="scroll elder-body">
@@ -218,7 +217,6 @@ export function MeasureHistoryScreen() {
             </div>
           </div>
 
-          <BottomNav active="service" />
         </div>
       </Phone>
     </div>

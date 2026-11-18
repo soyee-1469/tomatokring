@@ -1,34 +1,29 @@
 import {
   CaretLeft,
-  ChatCircle,
   CheckCircle,
-  DotsThree,
-  SquaresFour,
-  User,
-  Wallet,
   WarningCircle,
   X,
   type Icon,
 } from '@phosphor-icons/react'
 import { useId, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Ri } from './Ri'
 
 export type NavTab = 'friends' | 'chat' | 'wallet' | 'service' | 'more'
 
 export function BottomNav({ active = 'service' }: { active?: NavTab }) {
   const navigate = useNavigate()
-  const tabs: { id: NavTab; label: string; icon: Icon; badge?: string; to?: string; fab?: boolean }[] = [
-    { id: 'friends', label: '친구', icon: User },
-    { id: 'chat', label: '대화', icon: ChatCircle, badge: '88' },
-    { id: 'wallet', label: '지갑', icon: Wallet, fab: true, to: '/wallet' },
-    { id: 'service', label: '서비스', icon: SquaresFour, to: '/service' },
-    { id: 'more', label: '더보기', icon: DotsThree },
+  const tabs: { id: NavTab; label: string; icon: string; badge?: string; to?: string; fab?: boolean }[] = [
+    { id: 'friends', label: '친구', icon: 'user-3' },
+    { id: 'chat', label: '대화', icon: 'chat-3', badge: '88' },
+    { id: 'wallet', label: '지갑', icon: 'wallet-3', fab: true, to: '/wallet' },
+    { id: 'service', label: '서비스', icon: 'grid', to: '/service' },
+    { id: 'more', label: '더보기', icon: 'more' },
   ]
 
   return (
     <nav className="bottom-nav" aria-label="메인 메뉴">
       {tabs.map((tab) => {
-        const IconComp = tab.icon
         const isOn = active === tab.id
         return (
           <button
@@ -38,7 +33,7 @@ export function BottomNav({ active = 'service' }: { active?: NavTab }) {
             onClick={() => tab.to && navigate(tab.to)}
           >
             <span className={`nav-icon-wrap ${tab.fab ? 'fab-wrap' : ''}`}>
-              <IconComp size={tab.fab ? 26 : 24} weight={tab.fab || isOn ? 'fill' : 'light'} />
+              <Ri name={tab.icon} fill={tab.fab || isOn} size={tab.fab ? 26 : 24} />
               {tab.badge && <span className="nav-badge">{tab.badge}</span>}
             </span>
             <span className="nav-label">{tab.label}</span>

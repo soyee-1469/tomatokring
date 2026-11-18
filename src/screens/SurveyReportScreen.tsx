@@ -2,15 +2,15 @@ import { MetricInfoButton } from '../components/AccuracyInfo'
 import {
   CaretLeft,
   CaretRight,
-  CheckCircle,
   Export,
   Robot,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BottomNav, Header, Phone } from '../components/ui'
+import { Header, Phone } from '../components/ui'
 import { isMeasureDone, markMeasureDone } from '../session'
 import { useSession } from '../useSession'
+import { ClaimBanner } from '../components/ClaimBanner'
 
 const MONTHS = [
   { label: '2026년 7월', sleep: '6시간 50분', stress: '42점', walk: '5,110보' },
@@ -42,7 +42,7 @@ export function SurveyReportScreen() {
   return (
     <div className="stage">
       <Phone>
-        <div className="screen with-nav elder-home">
+        <div className="screen elder-home">
           <Header
             title="설문조사 (월)"
             backTo="/vitaling/home"
@@ -116,13 +116,7 @@ export function SurveyReportScreen() {
             <div className="elder-sleep-card">
               <b className="ms-block-title">이번 달 설문 (3문항)</b>
               {surveyDone ? (
-                <div className="ms-done-banner">
-                  <CheckCircle size={20} weight="fill" />
-                  <span>이번 달 설문을 제출했어요</span>
-                  <button type="button" onClick={() => navigate('/vitaling/home')}>
-                    지급 받기
-                  </button>
-                </div>
+                <ClaimBanner kind="survey" doneText="설문 완료" />
               ) : (
                 <>
                   <ol className="ms-survey-q">
@@ -206,7 +200,6 @@ export function SurveyReportScreen() {
             </div>
           </div>
 
-          <BottomNav active="service" />
         </div>
       </Phone>
     </div>

@@ -10,7 +10,7 @@ import {
 } from '@phosphor-icons/react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { BottomNav, Phone } from '../components/ui'
+import { Phone } from '../components/ui'
 import adBg from '../assets/reward/ad-bg.svg'
 import adFg from '../assets/reward/ad-fg.svg'
 import attendBg from '../assets/reward/attend-bg.svg'
@@ -440,9 +440,9 @@ export function RewardHistoryScreen() {
   return (
     <div className="stage">
       <Phone>
-        <div className="screen with-nav rh-screen">
+        <div className="screen rh-screen">
           <header className="rh-header">
-            <button type="button" className="rh-back" aria-label="뒤로" onClick={() => navigate('/wallet')}>
+            <button type="button" className="rh-back" aria-label="뒤로" onClick={() => navigate('/vitaling/home')}>
               <CaretLeft size={22} weight="bold" />
             </button>
             <h1>보상 관리</h1>
@@ -458,6 +458,30 @@ export function RewardHistoryScreen() {
                   <small>P</small>
                 </strong>
               </div>
+              {maxTott > 0 ? (
+                <div className="rh-exchange-ready">
+                  <div className="rh-exchange-qty">
+                    <em>지금 교환 가능</em>
+                    <strong>{maxTott}</strong>
+                    <span>TOTT</span>
+                  </div>
+                  <button type="button" className="rh-exchange-btn compact">
+                    {maxTott} TOTT 교환하기
+                  </button>
+                </div>
+              ) : (
+                <div className="rh-exchange-progress">
+                  <p className="rh-exchange-progress-title">
+                    교환까지 <b>{formatP(MIN_P_TO_EXCHANGE - BALANCES.pointAvailable)}P</b> 남았어요
+                  </p>
+                  <progress
+                    className="rh-point-progress"
+                    value={BALANCES.pointAvailable}
+                    max={MIN_P_TO_EXCHANGE}
+                    aria-label="포인트 교환 진행률"
+                  />
+                </div>
+              )}
               <div className="rh-life-row">
                 <div className="rh-life-item">
                   <em>누적 포인트</em>
@@ -474,45 +498,6 @@ export function RewardHistoryScreen() {
                   </b>
                 </div>
               </div>
-
-              {maxTott > 0 ? (
-                <div className="rh-exchange-ready">
-                  <div className="rh-exchange-qty">
-                    <em>지금 교환 가능</em>
-                    <strong>{maxTott}</strong>
-                    <span>TOTT</span>
-                  </div>
-                  <button type="button" className="rh-exchange-btn compact">
-                    {maxTott} TOTT 교환하기
-                  </button>
-                </div>
-              ) : (
-                <div className="rh-exchange-progress">
-                  <p className="rh-exchange-progress-title">
-                    {formatP(MIN_P_TO_EXCHANGE)}P까지
-                    <br />
-                    <b>{formatP(Math.max(0, MIN_P_TO_EXCHANGE - BALANCES.pointAvailable))}P</b> 남았어요
-                  </p>
-                  <div className="ex-bar" aria-hidden>
-                    <i
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          Math.round((BALANCES.pointAvailable / MIN_P_TO_EXCHANGE) * 100),
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                  <em className="ex-bar-label">
-                    {Math.min(100, Math.round((BALANCES.pointAvailable / MIN_P_TO_EXCHANGE) * 100))}%
-                  </em>
-                  <p className="rh-exchange-hint-soft">
-                    출석체크와 게임으로
-                    <br />
-                    포인트를 더 모아보세요.
-                  </p>
-                </div>
-              )}
             </div>
 
             <div className="rh-section-head">
@@ -545,7 +530,6 @@ export function RewardHistoryScreen() {
             )}
           </div>
 
-          <BottomNav active="wallet" />
         </div>
       </Phone>
     </div>

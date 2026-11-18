@@ -82,11 +82,7 @@ export function AccuracySheet({
             <X size={20} weight="light" />
           </button>
         </div>
-        <p className="accuracy-lead">
-          신체 활동 데이터를 분석함에 있어
-          <br />
-          가장 중요한 건 <em>정확도</em>이기에
-        </p>
+        <p className="accuracy-lead">센서별로 측정 범위와 오차 범위예요.</p>
         <div className="accuracy-table">
           <div className="accuracy-head">
             <span>센서 항목</span>
@@ -122,7 +118,7 @@ export function WithInfoTitle({ children, title }: { children?: ReactNode; title
 /* ===== 지표별 정보(i) 안내 — 브링 앱의 정보 팝업 구성(지표 설명 → 기록이 없을 때 확인 → 면책)을 우리 스타일로 ===== */
 export type MetricInfoKey = 'stress' | 'hr' | 'hrv' | 'spo2' | 'temp' | 'sleep' | 'diet' | 'walk' | 'health' | 'survey'
 
-const METRIC_INFO: Record<MetricInfoKey, { title: string; what: string[]; tips?: string[] }> = {
+const METRIC_INFO: Record<MetricInfoKey, { title: string; what: string[]; tips?: string[]; rules?: string[] }> = {
   stress: {
     title: '스트레스 지수',
     what: [
@@ -174,9 +170,11 @@ const METRIC_INFO: Record<MetricInfoKey, { title: string; what: string[]; tips?:
   diet: {
     title: 'AI 식단',
     what: [
-      '음식 사진을 AI가 분석해 칼로리와 단백질·지방·탄수화물을 추정해요.',
-      '일반적인 기준으로 계산한 참고 정보라 실제 양이나 재료에 따라 차이가 있을 수 있어요.',
-      '지병이나 음식 알레르기가 있는 분은 전문가와 상담 후 활용해 주세요. 하루 최대 20회까지 분석할 수 있어요.',
+      'AI가 음식 사진을 분석해 칼로리와 영양 정보를 알려주는 기능이에요.',
+      '제공되는 분석 결과는 AI가 일반적인 기준을 바탕으로 산출한 참고용 건강 정보이며, 실제 섭취량이나 재료에 따라 차이가 있을 수 있어요.',
+      '특정 질병이나 알레르기가 있는 경우, 사용 전 반드시 전문가와 상담해 주세요.',
+      '현재 이 기능은 Beta(시범 운영) 단계로, 하루 최대 20회까지 분석할 수 있어요.',
+      'Beta 단계가 끝나면 분석 횟수나 제공 항목이 바뀔 수 있어요.',
     ],
   },
   walk: {
@@ -187,10 +185,18 @@ const METRIC_INFO: Record<MetricInfoKey, { title: string; what: string[]; tips?:
     ],
   },
   health: {
-    title: '종합 점수',
+    title: '바디 리듬',
+    // 브링 앱 '바디 리듬' 안내 모달 문구
     what: [
-      '심장, 산소, 체온, 호흡, 수면 수치를 함께 보고 오늘 몸 상태를 0~100으로 나타낸 값이에요.',
-      '나쁨, 주의, 보통, 좋음, 최상 5단계로 나눠 보여 줘요.',
+      '이 서비스는 의료 진단이나 치료 목적이 아닌, 일상적인 컨디션 관리를 돕는 참고 지표예요.',
+      '바디 리듬 점수는 절대적인 수치가 아니라, 내 최근 평균 상태(기준선)와 비교한 상대적인 변화를 보여줘요.',
+      '수면, 휴식, 수분 섭취 등 규칙적인 생활 습관을 함께 관리하면 더 정확한 리듬 분석이 가능해요.',
+    ],
+    // 브링 앱 '아직 데이터가 충분하지 않아요' 안내 기준
+    rules: [
+      '유효한 기록이 7회 쌓여야 바디 리듬 점수가 계산돼요. 그 전에는 "데이터가 충분하지 않아요"로 표시돼요.',
+      '하루에 2개 이상의 유효 데이터가 기록되어야 1회로 인정돼요. 이때 수면 기록이 반드시 포함돼야 해요.',
+      '링을 오래 착용했더라도 데이터가 부족한 날은 분석 횟수에서 제외될 수 있어요. 잠잘 때 링을 끼고 주무세요.',
     ],
   },
   survey: {
@@ -253,6 +259,8 @@ export function MetricInfoSheet({
 }) {
   const [host, setHost] = useState<Element | null>(null)
   const [showAccuracy, setShowAccuracy] = useState(false)
+  /** 팝업 안 스크롤을 피하려고 긴 내용은 두 번째 페이지로 */
+  const [page, setPage] = useState<'main' | 'trouble'>('main')
   const info = METRIC_INFO[metric]
   const isDevice = metric !== 'diet' && metric !== 'survey'
 
@@ -277,30 +285,56 @@ export function MetricInfoSheet({
       <div className="sheet-panel metric-info">
         <div className="sheet-handle" />
         <div className="sheet-top">
-          <h2 id="metric-info-title">{info.title}란?</h2>
+          {page === 'trouble' ? (
+            <button type="button" className="icon-btn" aria-label="이전" onClick={() => setPage('main')}>
+              <CaretRight size={20} weight="bold" style={{ transform: 'rotate(180deg)' }} />
+            </button>
+          ) : null}
+          <h2 id="metric-info-title">{page === 'trouble' ? '기록이 없거나 이상할 때' : `${info.title}란?`}</h2>
           <button type="button" className="icon-btn" aria-label="닫기" onClick={onClose}>
             <X size={20} weight="light" />
           </button>
         </div>
         <div className="metric-info-scroll">
-          <ul className="metric-info-list">
-            {info.what.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-          {info.tips?.length ? (
+          {page === 'main' ? (
             <>
-              <h3 className="metric-info-sub">이렇게 재면 더 정확해요</h3>
               <ul className="metric-info-list">
-                {info.tips.map((line) => (
+                {info.what.map((line) => (
                   <li key={line}>{line}</li>
                 ))}
               </ul>
+              {info.rules?.length ? (
+                <>
+                  <h3 className="metric-info-sub">점수가 계산되려면</h3>
+                  <ul className="metric-info-list">
+                    {info.rules.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+              {info.tips?.length ? (
+                <>
+                  <h3 className="metric-info-sub">이렇게 재면 더 정확해요</h3>
+                  <ul className="metric-info-list">
+                    {info.tips.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+              {isDevice ? (
+                <button type="button" className="metric-info-link" onClick={() => setPage('trouble')}>
+                  기록이 없거나 이상할 때 확인할 점
+                  <CaretRight size={16} weight="bold" />
+                </button>
+              ) : null}
+              {metric !== 'health' && (
+                <p className="accuracy-note">웰니스 기기라 수치는 참고용이에요. 진단·치료 근거로는 쓸 수 없어요.</p>
+              )}
             </>
-          ) : null}
-          {isDevice ? (
+          ) : (
             <>
-              <h3 className="metric-info-sub">기록이 없거나 이상할 때 확인해 주세요</h3>
               <ol className="metric-info-steps">
                 {NO_RECORD_STEPS.map((line) => (
                   <li key={line}>{line}</li>
@@ -317,12 +351,11 @@ export function MetricInfoSheet({
                 <CaretRight size={16} weight="bold" />
               </button>
             </>
-          ) : null}
-          <p className="accuracy-note">
-            토마톡 링은 의료기기가 아닌 웰니스 기기예요. 수치는 참고용이며 진단이나 치료 판단의 근거로 사용할 수 없어요. 수치가
-            계속 낮거나 불편한 증상이 있으면 의료 전문가와 상담해 주세요.
-          </p>
+          )}
         </div>
+        <button type="button" className="sheet-close-btn" onClick={page === 'trouble' ? () => setPage('main') : onClose}>
+          {page === 'trouble' ? '이전' : '닫기'}
+        </button>
       </div>
     </div>,
     host,

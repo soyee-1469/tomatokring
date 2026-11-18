@@ -59,3 +59,25 @@ export const VITAL_NORMAL: Record<'hr' | 'spo2' | 'temp' | 'resp', string> = {
   temp: '정상 36.0–36.8',
   resp: '정상 12–20',
 }
+
+/** 홈 카드 색 — 기존 메신저 보상 내역 칩 색 기준, CSS :root 토큰과 동일 값 */
+export const HOME_COLORS = {
+  tomato: '#CD313E',
+  orange: '#FF6B4A',
+  lemon: '#E0A800',
+  leaf: '#50B83D',
+  berry: '#2F80ED',
+  beet: '#8B5CF6',
+  pink: '#E85BB0',
+} as const
+
+/** 홈 카드 색의 연한 배경 (아이콘 칩용) — CSS --c-*-soft 와 동일 값 */
+export const HOME_SOFT = {
+  tomato: '#FFF0F1',
+  orange: '#FFEFEA',
+  lemon: '#FFF7D9',
+  leaf: '#F8FFE7',
+  berry: '#E8EFFF',
+  beet: '#F6EEFF',
+  pink: '#FFF2FC',
+} as const

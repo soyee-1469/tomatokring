@@ -8,13 +8,21 @@ export type AutoMeasureMode = 'standard' | 'saver' | 'deep'
 export type AutoMeasureKind = 'hr' | 'spo2'
 /** 항목별 완료/수령 날짜 키 (일 단위 항목은 YYYY-MM-DD, 설문은 YYYY-MM) */
 export type DateKeys = Partial<Record<MeasureKind, string>>
+/** 내 정보 (브링 프로필 중 계산에 쓰는 값만) */
+export type HealthProfile = { sex: 'female' | 'male' | null; birth: string; height: number | null; weight: number | null }
+/** 목표 (브링 목표 설정 구조) — 시간 값은 분 단위 */
+export type HealthGoals = { steps: number; kcalBurn: number; distance: number; sleepMinutes: number; bedtime: number; kcalIntake: number }
+export const DEFAULT_GOALS: HealthGoals = { steps: 6000, kcalBurn: 300, distance: 3, sleepMinutes: 480, bedtime: 22 * 60, kcalIntake: 2300 }
+/** 홈에서 순서를 바꿀 수 있는 카드 */
+export type HomeCardKind = Exclude<MeasureKind, 'health'>
+export const DEFAULT_CARD_ORDER: readonly HomeCardKind[] = ['stress', 'diet', 'walk', 'sleep', 'survey']
 
 export type VitalingSession = {
   onboarded: boolean
   phone: string
   paired: boolean
   serial: string | null
-  /** 바이탈링 앱 연동 고유번호 (예: ABC-012345) */
+  /** 브링 앱 고유번호 — 토마톡 링 데이터 연동 키 (예: ABC-012345) */
   vitalId: string | null
   /** 오늘 측정 완료 여부 — 처음 진입 시에는 보상 대신 측정하기 */
   measuredToday: boolean
@@ -28,6 +36,12 @@ export type VitalingSession = {
   dietPhotoDate: string | null
   /** 지표별 자동 측정 모드 */
   autoMeasure: Record<AutoMeasureKind, AutoMeasureMode>
+  /** 홈 카드 순서 (사용자가 편집) */
+  cardOrder: HomeCardKind[]
+  healthProfile: HealthProfile
+  healthGoals: HealthGoals
+  /** 바디 리듬 계산에 인정된 날 (YYYY-MM-DD). 하루 2개 이상 유효 데이터 + 수면 기록이 있는 날. 7일 쌓여야 점수 표시 */
+  validDays: string[]
 }
 
 const defaultSession: VitalingSession = {
@@ -43,6 +57,10 @@ const defaultSession: VitalingSession = {
   dietPhoto: null,
   dietPhotoDate: null,
   autoMeasure: { hr: 'standard', spo2: 'standard' },
+  cardOrder: [...DEFAULT_CARD_ORDER],
+  healthProfile: { sex: null, birth: '', height: null, weight: null },
+  healthGoals: { ...DEFAULT_GOALS },
+  validDays: [],
 }
 
 function pad2(n: number) {
@@ -53,6 +71,17 @@ function pad2(n: number) {
 export function periodKey(kind: MeasureKind, now = new Date()) {
   const ym = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`
   return kind === 'survey' ? ym : `${ym}-${pad2(now.getDate())}`
+}
+
+/** 저장된 순서에 빠진 카드는 뒤에, 모르는 값은 버림 */
+export function normalizeCardOrder(order: unknown): HomeCardKind[] {
+  const saved = Array.isArray(order) ? (order.filter((k): k is HomeCardKind => (DEFAULT_CARD_ORDER as readonly string[]).includes(k as string)) as HomeCardKind[]) : []
+  const seen = new Set<HomeCardKind>()
+  const out: HomeCardKind[] = []
+  for (const k of [...saved, ...DEFAULT_CARD_ORDER]) {
+    if (!seen.has(k)) { seen.add(k); out.push(k) }
+  }
+  return out
 }
 
 let cache: VitalingSession | null = null
@@ -71,6 +100,10 @@ function read(): VitalingSession {
         doneDates: { ...defaultSession.doneDates, ...parsed.doneDates },
         claimedDates: { ...defaultSession.claimedDates, ...parsed.claimedDates },
         autoMeasure: { ...defaultSession.autoMeasure, ...parsed.autoMeasure },
+        cardOrder: normalizeCardOrder(parsed.cardOrder),
+        healthProfile: { ...defaultSession.healthProfile, ...parsed.healthProfile },
+        healthGoals: { ...defaultSession.healthGoals, ...parsed.healthGoals },
+        validDays: Array.isArray(parsed.validDays) ? parsed.validDays.filter((v): v is string => typeof v === 'string') : [],
       }
       return cache!
     }
@@ -118,12 +151,50 @@ export function markMeasuredToday() {
 
 export function markMeasureDone(kind: MeasureKind) {
   const cur = read()
+  // 수면 기록이 들어온 날은 (반지를 끼고 있어 자동 바이탈이 있으므로) 유효한 하루로 인정
+  const today = periodKey('sleep')
+  const validDays = kind === 'sleep' && !cur.validDays.includes(today) ? [...cur.validDays, today] : cur.validDays
   write({
     ...cur,
     measuredToday: kind === 'health' ? true : cur.measuredToday,
     doneMeasures: { ...cur.doneMeasures, [kind]: true },
     doneDates: { ...cur.doneDates, [kind]: periodKey(kind) },
+    validDays,
   })
+}
+
+export const RHYTHM_MIN_DAYS = 7
+/** 바디 리듬 계산에 쓸 수 있는 유효한 날 수 (복원 가능 범위 73일 안) */
+export function validDayCount(session: VitalingSession) {
+  const now = new Date()
+  const from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 72)
+  const fromKey = periodKey('sleep', from)
+  return session.validDays.filter((d) => d >= fromKey).length
+}
+/** 시연용: 유효한 날을 n일로 맞춤 (어제부터 거꾸로). 목업 전용 */
+export function setDemoValidDays(n: number) {
+  const cur = read()
+  const days: string[] = []
+  for (let i = 1; i <= n; i++) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    days.push(periodKey('sleep', d))
+  }
+  write({ ...cur, validDays: days })
+}
+
+/** 데이터 복원: 서버 기록이 들어온 기간을 유효한 날로 채움 */
+export function restoreValidDays(fromKey: string, toKey: string) {
+  const cur = read()
+  const days: string[] = []
+  const d = new Date(Number(fromKey.slice(0, 4)), Number(fromKey.slice(5, 7)) - 1, Number(fromKey.slice(8, 10)))
+  for (let i = 0; i < 120; i++) {
+    const k = periodKey('sleep', d)
+    if (k > toKey) break
+    days.push(k)
+    d.setDate(d.getDate() + 1)
+  }
+  write({ ...cur, validDays: Array.from(new Set([...cur.validDays, ...days])).sort() })
 }
 
 /** 이번 주기(오늘/이번 달)에 실제로 측정·확인을 마쳤는지 */
@@ -134,6 +205,17 @@ export function isMeasureDone(session: VitalingSession, kind: MeasureKind) {
 export function markClaimed(kind: MeasureKind) {
   const cur = read()
   write({ ...cur, claimedDates: { ...cur.claimedDates, [kind]: periodKey(kind) } })
+}
+
+export function setHealthProfile(profile: HealthProfile) {
+  write({ ...read(), healthProfile: profile })
+}
+export function setHealthGoals(goals: HealthGoals) {
+  write({ ...read(), healthGoals: goals })
+}
+
+export function setCardOrder(order: readonly HomeCardKind[]) {
+  write({ ...read(), cardOrder: normalizeCardOrder(order) })
 }
 
 export function setAutoMeasure(kind: AutoMeasureKind, mode: AutoMeasureMode) {
