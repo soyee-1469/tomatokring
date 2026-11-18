@@ -13445,3 +13445,5 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 날짜 칸: 월 표시 줄 제거(헤더에 있음), 위아래 여백 동일 */
 .week-strip.scrollable .week-day { padding: 10px 0; gap: 4px; }
 .week-strip.scrollable .week-day-wd, .week-strip.scrollable .week-day-n { line-height: 1; }
+
+.week-strip.scrollable .week-day.future { opacity: 0.3; cursor: default; }

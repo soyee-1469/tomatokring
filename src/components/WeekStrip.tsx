@@ -15,6 +15,8 @@ export function sameDay(a: Date, b: Date) {
 
 /** 보여줄 과거 일수 (오늘 포함) */
 const DAYS_BACK = 60
+/** 오늘 뒤에 비활성으로 보여줄 미래 일수 — 오늘이 가운데 올 때 오른쪽이 비지 않게 */
+const DAYS_AHEAD = 7
 
 /**
  * 날짜 스트립 — 가로로 밀어서 지난 날로 이동 (스크롤바 숨김), 선택한 날이 가운데 오도록 자동 스크롤.
@@ -30,7 +32,7 @@ export function WeekStrip(props: {
   scoreOf?: (d: Date) => number
 }) {
   const { selected, today, onSelect } = props
-  const days = Array.from({ length: DAYS_BACK }, (_, i) => addDays(today, i - (DAYS_BACK - 1)))
+  const days = Array.from({ length: DAYS_BACK + DAYS_AHEAD }, (_, i) => addDays(today, i - (DAYS_BACK - 1)))
   const listRef = useRef<HTMLDivElement>(null)
   const firstRun = useRef(true)
 
@@ -53,13 +55,15 @@ export function WeekStrip(props: {
         {days.map((d) => {
           const on = sameDay(d, selected)
           const isToday = sameDay(d, today)
+          const future = d > today
           return (
             <button
               key={d.toISOString()}
               type="button"
               role="tab"
               aria-selected={on}
-              className={`week-day ${on ? 'on' : ''} ${isToday ? 'today' : ''}`}
+              disabled={future}
+              className={`week-day ${on ? 'on' : ''} ${isToday ? 'today' : ''} ${future ? 'future' : ''}`}
               onClick={() => onSelect(d)}
             >
               <span className="week-day-wd">{isToday ? '오늘' : WEEKDAYS[d.getDay()]}</span>
