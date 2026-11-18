@@ -17,55 +17,37 @@ function statusFromScore(score: number) {
   return { tone: g.tone, label: g.label, headline: c.headline, headlinePast: c.headlinePast, advice: c.advice }
 }
 
-/** 최근 7일 바디 리듬 선 그래프 (홈 카드와 같은 모양) */
+/** 최근 7일 바디 리듬: 세로 막대 7개, 막대 색 = 그날 등급 색 (홈 게이지와 같은 색 기준) */
 function WeekLine({ endDate }: { endDate: Date }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(endDate, i - 6))
   const vals = days.map((d) => dayBundle(d).score)
-  const w = 320, h = 150, padL = 50, padR = 14, top = 14, bottom = 122
-  // 축은 데이터 범위에 맞추되 위아래 여유를 두어 선이 가운데 오게 (무지개 띠는 축 범위에 따라 잘림)
-  const lo = Math.max(0, Math.min(...vals) - 15)
-  const hi = Math.min(100, Math.max(...vals) + 15)
-  const x = (i: number) => padL + 10 + ((w - padL - padR - 20) * i) / 6
-  const y = (v: number) => bottom - ((v - lo) / Math.max(1, hi - lo)) * (bottom - top)
+  const w = 320, h = 170, padL = 36, padR = 8, top = 24, bottom = 136
+  const n = 7
+  const slot = (w - padL - padR) / n
+  const bw = 26
+  const x = (i: number) => padL + slot * i + (slot - bw) / 2
+  const y = (v: number) => bottom - (v / 100) * (bottom - top)
   const avg = vals.reduce((a, b) => a + b, 0) / 7
-  const pts = vals.map((v, i) => ({ x: x(i), y: y(v) }))
-  let path = ''
-  pts.forEach((p, i) => {
-    if (i === 0) { path += `M ${p.x} ${p.y}`; return }
-    const p0 = pts[i - 2] ?? pts[i - 1], p1 = pts[i - 1], p2 = p, p3 = pts[i + 1] ?? p
-    path += ` C ${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6}, ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6}, ${p2.x} ${p2.y}`
-  })
   return (
-    <svg className="elder-fit-chart line rd-rainbow" viewBox={`0 0 ${w} ${h}`} aria-hidden>
-      <defs>
-        <linearGradient id="rdRainbowV" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#42A5F5" />
-          <stop offset="22%" stopColor="#66BB6A" />
-          <stop offset="48%" stopColor="#FFEB3B" />
-          <stop offset="72%" stopColor="#FF9800" />
-          <stop offset="100%" stopColor="#E53935" />
-        </linearGradient>
-        <linearGradient id="rdRainbowBand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#42A5F5" stopOpacity="0.14" />
-          <stop offset="22%" stopColor="#66BB6A" stopOpacity="0.14" />
-          <stop offset="48%" stopColor="#FFEB3B" stopOpacity="0.14" />
-          <stop offset="72%" stopColor="#FF9800" stopOpacity="0.14" />
-          <stop offset="100%" stopColor="#E53935" stopOpacity="0.14" />
-        </linearGradient>
-      </defs>
-      <clipPath id="rdBandClip"><rect x={padL} y={top} width={w - padL - padR} height={bottom - top} rx={8} /></clipPath>
-      <rect x={padL} y={y(100)} width={w - padL - padR} height={y(0) - y(100)} fill="url(#rdRainbowBand)" clipPath="url(#rdBandClip)" />
-      <line x1={padL} x2={w - padR} y1={top} y2={top} stroke="#E8EBEE" strokeWidth="1.5" />
-      <line x1={padL} x2={w - padR} y1={bottom} y2={bottom} stroke="#E8EBEE" strokeWidth="1.5" />
-      <text x={padL - 8} y={top + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{hi}점</text>
-      <text x={padL - 8} y={bottom + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{lo}점</text>
-      <line x1={padL} x2={w - padR} y1={y(avg)} y2={y(avg)} stroke="#1a2332" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="4 4" />
-      <text x={padL - 8} y={y(avg) + 4} textAnchor="end" fontSize="11" fontWeight="700" fill="#5a6570">평균</text>
-      <path d={path} fill="none" stroke="url(#rdRainbowV)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      {pts.map((p, i) => (i === 6 ? <circle key={i} cx={p.x} cy={p.y} r={7} fill="#1a2332" stroke="#fff" strokeWidth="2.5" /> : <circle key={i} cx={p.x} cy={p.y} r={5} fill="#fff" stroke="#1a2332" strokeWidth="2.5" />))}
-      {days.map((d, i) => (
-        <text key={i} x={x(i)} y={h - 6} textAnchor="middle" fontSize="12" fontWeight={i === 6 ? '700' : '500'} fill={i === 6 ? '#1a2332' : '#9aa3ad'}>{WEEKDAYS[d.getDay()]}</text>
+    <svg className="rd-bars" viewBox={`0 0 ${w} ${h}`} aria-hidden>
+      {[0, 50, 100].map((t) => (
+        <g key={t}>
+          <line x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} stroke="#EEF0F2" strokeWidth="1.5" />
+          <text x={padL - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{t}</text>
+        </g>
       ))}
+      <line x1={padL} x2={w - padR} y1={y(avg)} y2={y(avg)} stroke="#1a2332" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="4 4" />
+      {vals.map((v, i) => {
+        const g = gradeOf(v)
+        const last = i === 6
+        return (
+          <g key={i}>
+            <rect x={x(i)} y={y(v)} width={bw} height={Math.max(4, bottom - y(v))} rx={bw / 2} fill={g.color} opacity={last ? 1 : 0.55} />
+            <text x={x(i) + bw / 2} y={y(v) - 8} textAnchor="middle" fontSize="12" fontWeight="700" fill={last ? '#1a2332' : '#6b7684'}>{v}</text>
+            <text x={x(i) + bw / 2} y={h - 8} textAnchor="middle" fontSize="12" fontWeight={last ? '700' : '500'} fill={last ? '#1a2332' : '#9aa3ad'}>{last ? '오늘' : WEEKDAYS[days[i].getDay()]}</text>
+          </g>
+        )
+      })}
     </svg>
   )
 }

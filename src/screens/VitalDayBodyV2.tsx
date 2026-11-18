@@ -86,35 +86,60 @@ function interpret(metric: LiveMetricId, today: number, usual: number | null, is
 /** 하루 그래프: 시간대별 평균을 막대로, 정상 범위는 연한 띠 */
 function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
   const s = SPEC[metric]
-  const W = 320, H = 150, padL = 8, padR = 34, padT = 8, padB = 22
+  // 홈 카드 7일 그래프와 같은 틀: 왼쪽 눈금, 위아래 선, 평균 점선, 매끄러운 선, 빈 점 + 마지막 점만 채움
+  const W = 320, H = 150, padL = 46, padR = 14, padT = 14, padB = 26
   const x = (h: number) => padL + ((W - padL - padR) * h) / 24
-  const y = (v: number) => padT + (H - padT - padB) * (1 - (Math.min(s.yMax, Math.max(s.yMin, v)) - s.yMin) / (s.yMax - s.yMin))
+  // 축: 값 범위에 여유를 두되 규격 범위 안에서
+  const vs = rows.map((r) => r.value)
+  const span = vs.length ? Math.max(...vs) - Math.min(...vs) : 0
+  const pad = Math.max(span * 0.6, (s.yMax - s.yMin) * 0.12)
+  const lo = vs.length ? Math.max(s.yMin, Math.floor(Math.min(...vs) - pad)) : s.yMin
+  const hi = vs.length ? Math.min(s.yMax, Math.ceil(Math.max(...vs) + pad)) : s.yMax
+  const y = (v: number) => padT + (H - padT - padB) * (1 - (Math.min(hi, Math.max(lo, v)) - lo) / Math.max(1, hi - lo))
   const hourly = useMemo(() => {
     const m = new Map<number, number[]>()
     rows.forEach((r) => { const h = Math.floor(minutesOf(r.time) / 60); m.set(h, [...(m.get(h) ?? []), r.value]) })
     return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([h, vs]) => ({ h, mean: vs.reduce((a, b) => a + b, 0) / vs.length }))
   }, [rows])
+  const mean = rows.length ? rows.reduce((a, r) => a + r.value, 0) / rows.length : null
+  const fmtY = (t: number) => (s.digits ? t.toFixed(1) : String(t))
+  const pts = hourly.map((p) => ({ x: x(p.h + 0.5), y: y(p.mean) }))
+  let path = ''
+  pts.forEach((p, i) => {
+    if (i === 0) { path += `M ${p.x} ${p.y}`; return }
+    const p0 = pts[i - 2] ?? pts[i - 1], p1 = pts[i - 1], p2 = p, p3 = pts[i + 1] ?? p
+    path += ` C ${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6}, ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6}, ${p2.x} ${p2.y}`
+  })
   const bw = (W - padL - padR) / 24 - 3
   return (
     <svg className={`v2-chart v2-m-${metric}`} viewBox={`0 0 ${W} ${H}`} aria-hidden>
-      <rect x={padL} y={y(s.normal[1])} width={W - padL - padR} height={Math.max(2, y(s.normal[0]) - y(s.normal[1]))} className="normal" />
-      {[s.yMin, (s.yMin + s.yMax) / 2, s.yMax].map((t) => (
-        <text key={t} x={W - padR + 6} y={y(t) + 4} className="ylab">{s.digits ? t.toFixed(1) : t}</text>
-      ))}
+      {y(s.normal[0]) - y(s.normal[1]) > 2 && <rect x={padL} y={y(s.normal[1])} width={W - padL - padR} height={y(s.normal[0]) - y(s.normal[1])} className="normal" />}
+      <line x1={padL} x2={W - padR} y1={y(hi)} y2={y(hi)} className="grid" />
+      <line x1={padL} x2={W - padR} y1={y(lo)} y2={y(lo)} className="grid" />
+      <text x={padL - 8} y={y(hi) + 4} className="ylab" textAnchor="end">{fmtY(hi)}</text>
+      <text x={padL - 8} y={y(lo) + 4} className="ylab" textAnchor="end">{fmtY(lo)}</text>
+      {mean !== null && (
+        <>
+          <line x1={padL} x2={W - padR} y1={y(mean)} y2={y(mean)} className="avg" />
+          <text x={padL - 8} y={y(mean) + 4} className="avglab" textAnchor="end">평균</text>
+        </>
+      )}
       {metric === 'stress'
         ? hourly.map((p, i) => (
             <rect key={p.h} x={x(p.h) + 1.5} y={y(p.mean)} width={bw} height={Math.max(3, y(s.yMin) - y(p.mean))} rx={bw / 2} className="bar" style={{ animationDelay: `${i * 28}ms` }} />
           ))
         : (
           <>
-            <path d={hourly.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(p.h + 0.5)} ${y(p.mean)}`).join(' ')} className="line" />
-            {hourly.map((p, i) => (
-              <circle key={p.h} cx={x(p.h + 0.5)} cy={y(p.mean)} r={i === hourly.length - 1 ? 5 : 3} className={i === hourly.length - 1 ? 'dot last' : 'dot'} />
+            {path && <path d={path} className="line" />}
+            {/* 점: 직접 잰 값만 빈 점, 마지막 값은 채운 점 */}
+            {rows.filter((r) => r.mode === 'manual').map((r) => (
+              <circle key={r.time} cx={x(minutesOf(r.time) / 60)} cy={y(r.value)} r={4.5} className="dot" />
             ))}
+            {pts.length > 0 && <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r={6.5} className="dot last" />}
           </>
         )}
       {['0', '6', '12', '18', '24'].map((h) => (
-        <text key={h} x={x(Number(h))} y={H - 6} className="xlab" textAnchor={h === '0' ? 'start' : h === '24' ? 'end' : 'middle'}>{h}시</text>
+        <text key={h} x={x(Number(h))} y={H - 7} className="xlab" textAnchor={h === '0' ? 'start' : h === '24' ? 'end' : 'middle'}>{h}시</text>
       ))}
     </svg>
   )
@@ -200,10 +225,9 @@ export function VitalDayBodyV2({
         )}
       </section>
 
-      {/* 5) 자세히 (접기) */}
+      {/* 5) 최저·평균·최고 + 구간 — 항상 표시 */}
       {has && (
-        <details className="v2-details">
-          <summary>자세히 보기 <Ri name="arrow-down-s" size={20} /></summary>
+        <section className="v2-details open-always">
           <div className="v2-stat3">
             <div><em>최저</em><strong>{fmt(Math.min(...vals), s.digits)}</strong></div>
             <div><em>평균</em><strong>{fmt(mean, s.digits)}</strong></div>
@@ -221,7 +245,7 @@ export function VitalDayBodyV2({
             </ul>
           </div>
           <button type="button" className="v2-link" onClick={() => navigate('/vitaling/day')}>바디 리듬에서 종합 보기 <Ri name="arrow-right-s" size={16} /></button>
-        </details>
+        </section>
       )}
     </>
   )

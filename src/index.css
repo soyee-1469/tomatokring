@@ -13343,3 +13343,38 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .claim-banner .claim-done-btn { width: 100%; height: var(--btn-h); margin: 0; padding: 0 18px; border: 0; border-radius: 14px; background: var(--chip-gray); color: var(--text-2); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .claim-banner .claim-done-btn i { color: var(--brand-green); }
 .claim-banner .claim-link { align-self: center; width: auto; height: auto; margin: 0; padding: 4px 0; background: transparent; color: var(--text-2); font-size: 14px; font-weight: 600; }
+
+.rd-bars { width: 100%; height: auto; display: block; margin-top: 4px; }
+
+/* 상세: 최저·평균·최고 항상 표시, 가운데 정렬 */
+.v2-page .v2-details.open-always { margin-top: 4px; }
+.v2-page .v2-stat3 { text-align: center; padding: 0 0 24px; }
+.v2-page .v2-stat3 > div { display: grid; justify-items: center; gap: 4px; }
+
+/* 바이탈 상세 하루 흐름: 홈 7일 선 그래프와 같은 틀 */
+.v2-page .v2-chart .grid { stroke: #E8EBEE; stroke-width: 1.5; }
+.v2-page .v2-chart .avg { stroke: #1a2332; stroke-opacity: 0.35; stroke-width: 1.5; stroke-dasharray: 4 4; }
+.v2-page .v2-chart .ylab, .v2-page .v2-chart .xlab { font-size: 11px; font-weight: 600; fill: #9aa3ad; }
+.v2-page .v2-chart .avglab { font-size: 11px; font-weight: 700; fill: #5a6570; }
+.v2-page .v2-chart .line { stroke-width: 3; }
+.v2-page .v2-chart .dot { fill: #fff; stroke-width: 2.5; }
+.v2-page .v2-chart .dot.last { stroke: #fff; stroke-width: 2.5; }
+.v2-page .v2-chart.v2-m-hr .line { stroke: var(--tomato); } .v2-page .v2-chart.v2-m-hr .dot { stroke: var(--tomato); } .v2-page .v2-chart.v2-m-hr .dot.last { fill: var(--tomato); }
+.v2-page .v2-chart.v2-m-spo2 .line { stroke: #2F80ED; } .v2-page .v2-chart.v2-m-spo2 .dot { stroke: #2F80ED; } .v2-page .v2-chart.v2-m-spo2 .dot.last { fill: #2F80ED; }
+.v2-page .v2-chart.v2-m-temp .line { stroke: var(--c-orange); } .v2-page .v2-chart.v2-m-temp .dot { stroke: var(--c-orange); } .v2-page .v2-chart.v2-m-temp .dot.last { fill: var(--c-orange); }
+.v2-page .v2-chart.v2-m-hrv .line { stroke: #8B5CF6; } .v2-page .v2-chart.v2-m-hrv .dot { stroke: #8B5CF6; } .v2-page .v2-chart.v2-m-hrv .dot.last { fill: #8B5CF6; }
+.v2-page .v2-chart .normal { fill: #EDF7E8; }
+
+.v2-page .v2-chart.v2-m-hr .dot, .v2-page .v2-chart.v2-m-spo2 .dot, .v2-page .v2-chart.v2-m-temp .dot, .v2-page .v2-chart.v2-m-hrv .dot { fill: #fff; }
+.v2-page .v2-chart.v2-m-hr .dot.last { fill: var(--tomato); } .v2-page .v2-chart.v2-m-spo2 .dot.last { fill: #2F80ED; } .v2-page .v2-chart.v2-m-temp .dot.last { fill: var(--c-orange); } .v2-page .v2-chart.v2-m-hrv .dot.last { fill: #8B5CF6; }
+/* 실제 폰(좁은 화면): 목업 테두리·가짜 상태바 없이 화면을 꽉 채움 */
+@media (max-width: 520px) {
+  html, body, #root { height: 100%; }
+  body { padding: 0; background: var(--white); }
+  #root, .stage, .app-shell, .app-main { display: block; height: 100%; min-height: 100dvh; padding: 0; }
+  .stage { place-items: stretch; }
+  .phone { width: 100%; height: 100dvh; border-radius: 0; box-shadow: none; }
+  .status-bar { display: none; }
+  .screen { height: 100%; padding-top: env(safe-area-inset-top); }
+  .scroll { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+}
