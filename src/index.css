@@ -13543,3 +13543,17 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* 상세 맨 아래 바디 리듬 링크: 가운데 */
 .v2-page .v2-link { width: 100%; justify-content: center; text-align: center; }
+/* 게이지 눈금 글자: 반원 양끝(10%·90%)과 가운데에 정확히 맞춤 */
+.elder-home .elder-score-scale { position: relative; display: block; height: 18px; margin-top: 2px; padding: 0; }
+.elder-home .elder-score-scale span { position: absolute; top: 0; transform: translateX(-50%); text-align: center; width: auto; }
+.elder-home .elder-score-scale span:nth-child(1) { left: 10%; }
+.elder-home .elder-score-scale span:nth-child(2) { left: 50%; }
+.elder-home .elder-score-scale span:nth-child(3) { left: 90%; }
+/* 바디 리듬 상세 게이지도 동일 */
+.rd-gauge-scale { position: relative; display: block; height: 18px; max-width: 300px; margin: 2px auto 0; padding: 0; }
+.rd-gauge-scale span { position: absolute; top: 0; transform: translateX(-50%); }
+.rd-gauge-scale span:nth-child(1) { left: 10%; }
+.rd-gauge-scale span:nth-child(2) { left: 50%; }
+.rd-gauge-scale span:nth-child(3) { left: 90%; }
+/* 눈금 줄을 반원 그림과 같은 폭으로 (게이지 안쪽 여백만큼 들여쓰기) */
+.elder-home .elder-score-scale { margin-left: 12px; margin-right: 12px; }
