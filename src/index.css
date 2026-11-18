@@ -13463,3 +13463,11 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 전체 기록 날짜 바: 날짜·화살표 박스 없이 글자만 */
 .ms-date-center, .ms-date-center.static { background: transparent; box-shadow: none; padding: 8px 4px; }
 .ms-date-arrow { background: transparent; box-shadow: none; border: 0; }
+
+/* 심박수 하루 흐름: 시간대별 범위 막대 */
+.v2-page .v2-chart.v2-m-hr .range { fill: var(--tomato); opacity: 0.45; }
+.v2-page .v2-chart.v2-m-hr .range.last { opacity: 1; }
+
+/* 히어로 상단 날짜: 크고 분명하게 */
+.v2-hero-date { display: block; margin: 0 0 14px; font-size: 15px; font-weight: 700; color: var(--text); text-align: left; }
+.day-score-page .rd-gauge { padding-top: 18px; }

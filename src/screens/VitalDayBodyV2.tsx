@@ -106,7 +106,7 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
   const hourly = useMemo(() => {
     const m = new Map<number, number[]>()
     rows.forEach((r) => { const h = Math.floor(minutesOf(r.time) / 60); m.set(h, [...(m.get(h) ?? []), r.value]) })
-    return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([h, vs]) => ({ h, mean: vs.reduce((a, b) => a + b, 0) / vs.length }))
+    return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([h, vs]) => ({ h, mean: vs.reduce((a, b) => a + b, 0) / vs.length, min: Math.min(...vs), max: Math.max(...vs) }))
   }, [rows])
   const mean = rows.length ? rows.reduce((a, r) => a + r.value, 0) / rows.length : null
   const fmtY = (t: number) => (s.digits ? t.toFixed(1) : String(t))
@@ -134,6 +134,13 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
         ? hourly.map((p, i) => (
             <rect key={p.h} x={x(p.h) + 1.5} y={y(p.mean)} width={bw} height={Math.max(3, y(s.yMin) - y(p.mean))} rx={bw / 2} className="bar" style={{ animationDelay: `${i * 28}ms` }} />
           ))
+        : metric === 'hr'
+        ? hourly.map((p, i) => {
+            // 심박수: 시간대별 최소~최대 범위 막대 (한 시간 안에서도 크게 오르내리므로)
+            const top = y(p.max), bot = y(p.min)
+            const hgt = Math.max(bw, bot - top)
+            return <rect key={p.h} x={x(p.h) + 1.5} y={top - (hgt - (bot - top)) / 2} width={bw} height={hgt} rx={bw / 2} className={i === hourly.length - 1 ? 'range last' : 'range'} />
+          })
         : (
           <>
             {path && <path d={path} className="line" />}
@@ -189,12 +196,12 @@ export function VitalDayBodyV2({
 
       {/* 2) 한 줄 해석 + 오늘 값 */}
       <section className={`v2-hero v2-m-${metric}`}>
+        <span className="v2-hero-date">{`오늘 · ${date.getMonth() + 1}월 ${date.getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}요일`}</span>
         <div className="v2-say">
           <span className="v2-say-ico"><Ri name="chat-smile-3" fill size={20} /></span>
           <div>
             <b>{say ? say.head : isToday ? '아직 오늘 기록이 없어요.' : '이 날은 기록이 없어요.'}</b>
             <p>{say ? say.tip : metric === 'stress' ? '편안히 앉아 1분이면 돼요. 아래에서 바로 측정해 보세요.' : '반지를 끼고 있으면 자동으로 재요. 지금 바로 잴 수도 있어요.'}</p>
-            <span className="v2-say-date">{`오늘 · ${date.getMonth() + 1}월 ${date.getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}요일`}</span>
           </div>
         </div>
         {has && (

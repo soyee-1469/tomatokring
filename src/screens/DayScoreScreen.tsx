@@ -166,6 +166,7 @@ export function DayScoreScreen() {
               <>
                 {/* 1) 반원 게이지가 주인공 — 홈과 같은 그림 */}
                 <section className="rd-gauge">
+                  <span className="v2-hero-date">{isToday ? `오늘 · ${dateLabel} ${WEEKDAYS[selected.getDay()]}요일` : `${dateLabel} ${WEEKDAYS[selected.getDay()]}요일`}</span>
                   <div className="rd-gauge-wrap">
                     <TodayScoreArc score={bundle.score} size="lg" />
                     <div className="rd-gauge-center">
@@ -186,7 +187,6 @@ export function DayScoreScreen() {
                   <div>
                     <b>{isToday ? status.headline : status.headlinePast}</b>
                     <p>{status.advice}</p>
-                    <span className="v2-say-date">{isToday ? `오늘 · ${dateLabel} ${WEEKDAYS[selected.getDay()]}요일` : `${dateLabel} ${WEEKDAYS[selected.getDay()]}요일`}</span>
                   </div>
                 </section>
 
