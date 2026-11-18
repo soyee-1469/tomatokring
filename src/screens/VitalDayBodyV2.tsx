@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Ri } from '../components/Ri'
 import { addDays, sameDay, startOfDay } from '../components/WeekStrip'
@@ -94,10 +94,9 @@ function interpret(metric: LiveMetricId, today: number, usual: number | null, is
 /** 하루 그래프: 시간대별 평균을 막대로, 정상 범위는 연한 띠 */
 function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
   const s = SPEC[metric]
-  // 왼쪽 눈금은 고정, 그래프는 가로로 밀어서 봄 (한 시간 = 36px, 스크롤바 숨김, 처음엔 최근 시각이 보이게)
-  const HOUR = 36, AXIS = 44, H = 170, padR = 16, padT = 16, padB = 28
-  const W = HOUR * 24 + padR
-  const x = (h: number) => HOUR * h
+  // 모든 항목 공통: 시간대별 최저~최고를 연한 띠로, 평균은 작은 점으로 (가로 스크롤 없이 하루 전체)
+  const W = 320, H = 150, padL = 46, padR = 14, padT = 14, padB = 26
+  const x = (h: number) => padL + ((W - padL - padR) * h) / 24
   const vs = rows.map((r) => r.value)
   const span = vs.length ? Math.max(...vs) - Math.min(...vs) : 0
   const pad = Math.max(span * 0.6, (s.yMax - s.yMin) * 0.12)
@@ -111,73 +110,35 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
   }, [rows])
   const mean = rows.length ? rows.reduce((a, r) => a + r.value, 0) / rows.length : null
   const fmtY = (t: number) => (s.digits ? t.toFixed(1) : String(t))
-  const pts = hourly.map((p) => ({ x: x(p.h + 0.5), y: y(p.mean) }))
-  let path = ''
-  pts.forEach((p, i) => {
-    if (i === 0) { path += `M ${p.x} ${p.y}`; return }
-    const p0 = pts[i - 2] ?? pts[i - 1], p1 = pts[i - 1], p2 = p, p3 = pts[i + 1] ?? p
-    path += ` C ${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6}, ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6}, ${p2.x} ${p2.y}`
-  })
-  const bw = 16
-  const bx = (h: number) => x(h) + (HOUR - bw) / 2
-  const scrollRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    // 최근 시각이 오른쪽에 오되, 왼쪽 끝이 짝수 시(라벨 위치)에 맞게 정렬
-    const lastH = hourly.length ? hourly[hourly.length - 1].h : 24
-    const endH = Math.min(24, Math.ceil((lastH + 1) / 2) * 2)
-    el.scrollLeft = Math.max(0, x(endH) + padR - el.clientWidth)
-  }, [metric, hourly.length])
+  const bandW = 6
+  const cx = (h: number) => x(h + 0.5)
   return (
-    <div className={`v2-chart-wrap v2-m-${metric}`}>
-      <svg className="v2-chart-axis" width={AXIS} height={H} viewBox={`0 0 ${AXIS} ${H}`} aria-hidden>
-        <text x={AXIS - 8} y={y(hi) + 4} className="ylab" textAnchor="end">{fmtY(hi)}</text>
-        <text x={AXIS - 8} y={y(lo) + 4} className="ylab" textAnchor="end">{fmtY(lo)}</text>
-        {mean !== null && <text x={AXIS - 8} y={y(mean) + 4} className="avglab" textAnchor="end">평균</text>}
-      </svg>
-      <div className="v2-chart-scroll" ref={scrollRef}>
-        <svg className={`v2-chart v2-m-${metric}`} width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden>
-          <line x1={0} x2={W - padR} y1={y(hi)} y2={y(hi)} className="grid" />
-          <line x1={0} x2={W - padR} y1={y(lo)} y2={y(lo)} className="grid" />
-          {mean !== null && <line x1={0} x2={W - padR} y1={y(mean)} y2={y(mean)} className="avg" />}
-          {metric === 'stress'
-            ? hourly.map((p, i) => (
-                <rect key={p.h} x={bx(p.h)} y={y(p.mean)} width={bw} height={Math.max(3, y(s.yMin) - y(p.mean))} rx={bw / 2} className="bar" style={{ animationDelay: `${i * 28}ms` }} />
-              ))
-            : metric === 'hr' || metric === 'hrv'
-            ? hourly.map((p, i) => {
-                // 심박수·HRV: 시간대별 최소~최대 범위 막대. 측정이 하나뿐이면 점
-                const top = y(p.max), bot = y(p.min)
-                const single = bot - top < 2
-                const cls = i === hourly.length - 1 ? 'range last' : 'range'
-                if (single) return <circle key={p.h} cx={bx(p.h) + bw / 2} cy={top} r={bw / 2} className={cls} />
-                const hgt = Math.max(bw, bot - top)
-                return <rect key={p.h} x={bx(p.h)} y={top - (hgt - (bot - top)) / 2} width={bw} height={hgt} rx={bw / 2} className={cls} />
-              })
-            : (
-              <>
-                {/* 혈중 산소·피부 온도: 시간대별 범위 띠 + 평균 선 */}
-                {hourly.map((p) => {
-                  const top = y(p.max), bot = y(p.min)
-                  if (bot - top < 2) return null
-                  return <rect key={`r${p.h}`} x={x(p.h + 0.5) - 4} y={top} width={8} height={bot - top} rx={4} className="rangeband" />
-                })}
-                {path && <path d={path} className="line" />}
-                {hourly.map((p, i) => {
-                  const last = i === hourly.length - 1
-                  const manualHere = rows.some((r) => r.mode === 'manual' && Math.floor(minutesOf(r.time) / 60) === p.h)
-                  if (!last && !manualHere) return null
-                  return <circle key={p.h} cx={pts[i].x} cy={pts[i].y} r={last ? 6.5 : 4.5} className={last ? 'dot last' : 'dot'} />
-                })}
-              </>
-            )}
-          {Array.from({ length: 13 }, (_, i) => i * 2).map((h) => (
-            <text key={h} x={h === 0 ? 2 : h === 24 ? x(24) - 2 : x(h)} y={H - 8} className="xlab" textAnchor={h === 0 ? 'start' : h === 24 ? 'end' : 'middle'}>{h}시</text>
-          ))}
-        </svg>
-      </div>
-    </div>
+    <svg className={`v2-chart v2-m-${metric}`} viewBox={`0 0 ${W} ${H}`} aria-hidden>
+      <line x1={padL} x2={W - padR} y1={y(hi)} y2={y(hi)} className="grid" />
+      <line x1={padL} x2={W - padR} y1={y(lo)} y2={y(lo)} className="grid" />
+      <text x={padL - 8} y={y(hi) + 4} className="ylab" textAnchor="end">{fmtY(hi)}</text>
+      <text x={padL - 8} y={y(lo) + 4} className="ylab" textAnchor="end">{fmtY(lo)}</text>
+      {mean !== null && (
+        <>
+          <line x1={padL} x2={W - padR} y1={y(mean)} y2={y(mean)} className="avg" />
+          <text x={padL - 8} y={y(mean) + 4} className="avglab" textAnchor="end">평균</text>
+        </>
+      )}
+      {/* 시간대별 최저~최고 띠 */}
+      {hourly.map((p) => {
+        const top = y(p.max), bot = y(p.min)
+        if (bot - top < 2) return null
+        return <rect key={`r${p.h}`} x={cx(p.h) - bandW / 2} y={top} width={bandW} height={bot - top} rx={bandW / 2} className="rangeband" />
+      })}
+      {/* 시간대별 평균 점 (마지막만 조금 크게) */}
+      {hourly.map((p, i) => {
+        const last = i === hourly.length - 1
+        return <circle key={p.h} cx={cx(p.h)} cy={y(p.mean)} r={last ? 4 : 2.8} className={last ? 'mdot last' : 'mdot'} />
+      })}
+      {['0', '6', '12', '18', '24'].map((h) => (
+        <text key={h} x={x(Number(h))} y={H - 7} className="xlab" textAnchor={h === '0' ? 'start' : h === '24' ? 'end' : 'middle'}>{h}시</text>
+      ))}
+    </svg>
   )
 }
 

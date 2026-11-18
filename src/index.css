@@ -13498,3 +13498,13 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .v2-chart-scroll .v2-chart { width: auto; height: 170px; display: block; }
 .v2-chart-axis .ylab { font-size: 11px; font-weight: 600; fill: #9aa3ad; }
 .v2-chart-axis .avglab { font-size: 11px; font-weight: 700; fill: #5a6570; }
+
+/* 하루 흐름 공통: 범위 띠 + 평균 점 (항목 색), 가로 스크롤 없음 */
+.v2-page .v2-chart { width: 100%; height: auto; display: block; }
+.v2-page .v2-chart .rangeband { opacity: 0.22; }
+.v2-page .v2-chart .mdot { opacity: 0.85; }
+.v2-page .v2-chart .mdot.last { opacity: 1; stroke: #fff; stroke-width: 1.5; }
+.v2-page .v2-chart.v2-m-hr .rangeband, .v2-page .v2-chart.v2-m-hr .mdot { fill: var(--tomato); }
+.v2-page .v2-chart.v2-m-spo2 .rangeband, .v2-page .v2-chart.v2-m-spo2 .mdot { fill: #2F80ED; }
+.v2-page .v2-chart.v2-m-temp .rangeband, .v2-page .v2-chart.v2-m-temp .mdot { fill: var(--c-orange); }
+.v2-page .v2-chart.v2-m-hrv .rangeband, .v2-page .v2-chart.v2-m-hrv .mdot, .v2-page .v2-chart.v2-m-stress .rangeband, .v2-page .v2-chart.v2-m-stress .mdot { fill: #8B5CF6; }
