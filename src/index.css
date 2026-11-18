@@ -13563,3 +13563,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 7일 그래프를 포인트 버튼 아래로 */
 .elder-home .elder-fit-card .elder-fit-chart-wrap.tail { margin-top: 18px; padding-top: 0; width: 100%; }
 .elder-home .elder-fit-card .elder-fit-body { display: block; }
+
+/* 값 줄 오른쪽 작은 동작 칩 (다시 측정 · 다시 불러오기 · 더 올리기) */
+.elder-home .elder-fit-num.with-chip { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: transparent; padding: 0; border: 0; box-shadow: none; }
+.elder-home .elder-fit-num.with-chip > div { display: grid; gap: 2px; }
+.elder-home .elder-walk-progress { width: 100%; }
+.elder-chip-btn { flex-shrink: 0; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--chip-gray); font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; }
