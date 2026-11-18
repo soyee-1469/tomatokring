@@ -191,7 +191,7 @@ export function VitalDayBodyV2({
           <div className="v2-val">
             <strong>{fmt(isToday ? latest : mean, s.digits)}<small>{s.unit}</small></strong>
             <span className="v2-val-sub">
-              {isToday ? `지금 기준 · ${rows[0].time.slice(0, 5)}` : '하루 평균'}
+              {isToday ? `${rows[0].time.slice(0, 5)} 측정` : `${date.getMonth() + 1}월 ${date.getDate()}일 하루 평균`}
               {usual !== null && ` · 평소 ${fmt(usual, s.digits)}${s.unit}`}
             </span>
           </div>
