@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone } from '../components/ui'
 import { Ri } from '../components/Ri'
-import { ScoreArc as TodayScoreArc, gaugeColor } from '../components/ScoreArc'
+import { ScoreArc as TodayScoreArc } from '../components/ScoreArc'
 import { useSession } from '../useSession'
 import { RHYTHM_MIN_DAYS, validDayCount } from '../session'
 import { addDays, dayBundle, daySeed, GRADE_COPY, gradeOf, sameDay, startOfDay, type DayMetric } from '../rhythm'
@@ -17,7 +17,7 @@ function statusFromScore(score: number) {
   return { tone: g.tone, label: g.label, headline: c.headline, headlinePast: c.headlinePast, advice: c.advice }
 }
 
-/** 최근 7일 바디 리듬: 세로 막대 7개, 막대 색 = 게이지에서 그 점수 위치의 색 */
+/** 최근 7일 바디 리듬: 세로 막대 7개, 아래 빨강→위 파랑 무지개(축 고정)가 점수 높이만큼 드러남 */
 function WeekLine({ endDate }: { endDate: Date }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(endDate, i - 6))
   const vals = days.map((d) => dayBundle(d).score)
@@ -30,6 +30,16 @@ function WeekLine({ endDate }: { endDate: Date }) {
   const avg = vals.reduce((a, b) => a + b, 0) / 7
   return (
     <svg className="rd-bars" viewBox={`0 0 ${w} ${h}`} aria-hidden>
+      <defs>
+        {/* 축 전체(0~100)에 고정된 무지개: 막대 높이만큼 아래 빨강부터 드러남 → 게이지와 같은 색 언어 */}
+        <linearGradient id="rdBarRainbow" gradientUnits="userSpaceOnUse" x1="0" y1={y(0)} x2="0" y2={y(100)}>
+          <stop offset="0%" stopColor="#E53935" />
+          <stop offset="28%" stopColor="#FF9800" />
+          <stop offset="52%" stopColor="#FFEB3B" />
+          <stop offset="78%" stopColor="#66BB6A" />
+          <stop offset="100%" stopColor="#42A5F5" />
+        </linearGradient>
+      </defs>
       {[0, 50, 100].map((t) => (
         <g key={t}>
           <line x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} stroke="#EEF0F2" strokeWidth="1.5" />
@@ -41,7 +51,7 @@ function WeekLine({ endDate }: { endDate: Date }) {
         const last = i === 6
         return (
           <g key={i}>
-            <rect x={x(i)} y={y(v)} width={bw} height={Math.max(4, bottom - y(v))} rx={bw / 2} fill={gaugeColor(v)} opacity={last ? 1 : 0.5} />
+            <rect x={x(i)} y={y(v)} width={bw} height={Math.max(4, bottom - y(v))} rx={bw / 2} fill="url(#rdBarRainbow)" opacity={last ? 1 : 0.45} />
             <text x={x(i) + bw / 2} y={y(v) - 8} textAnchor="middle" fontSize="12" fontWeight="700" fill={last ? '#1a2332' : '#6b7684'}>{v}</text>
             <text x={x(i) + bw / 2} y={h - 8} textAnchor="middle" fontSize="12" fontWeight={last ? '700' : '500'} fill={last ? '#1a2332' : '#9aa3ad'}>{last ? '오늘' : WEEKDAYS[days[i].getDay()]}</text>
           </g>

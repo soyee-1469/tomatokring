@@ -13414,3 +13414,26 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
   .stage { display: block !important; width: 100% !important; max-width: none !important; margin: 0 !important; }
   .phone { width: 100% !important; max-width: none !important; margin: 0 !important; }
 }
+/* ——— 상세 날짜 스트립: 박스 없이 가로 스크롤, 스크롤바 숨김 ——— */
+.v2-page .week-strip.scrollable, .day-score-screen .week-strip.scrollable {
+  background: transparent; box-shadow: none; border-radius: 0; padding: 6px 0 2px; margin: 0 -16px 8px;
+}
+.week-strip.scrollable .week-days {
+  display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; padding: 0 16px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.week-strip.scrollable .week-days::-webkit-scrollbar { display: none; }
+.week-strip.scrollable .week-day {
+  flex: 0 0 46px; scroll-snap-align: center; display: grid; justify-items: center; gap: 4px;
+  padding: 6px 0 8px; border: 0; background: transparent; border-radius: 14px; cursor: pointer; color: var(--text);
+}
+.week-strip.scrollable .week-day-m { height: 12px; font-size: 10px; font-weight: 600; color: var(--text-3); line-height: 1; }
+.week-strip.scrollable .week-day-wd { font-size: 12px; color: var(--text-2); }
+.week-strip.scrollable .week-day-n { font-size: 17px; font-weight: 700; }
+.week-strip.scrollable .week-day.on { background: var(--text); }
+.week-strip.scrollable .week-day.on .week-day-m, .week-strip.scrollable .week-day.on .week-day-wd, .week-strip.scrollable .week-day.on .week-day-n { color: #fff; }
+.week-strip.scrollable .week-day.today:not(.on) .week-day-wd { color: var(--text); font-weight: 700; }
+
+.week-strip.scrollable .week-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 8px; }
+.week-strip.scrollable .week-head b { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+.week-strip.scrollable .week-head button { height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--chip-gray); font-size: 12px; font-weight: 600; color: var(--text); cursor: pointer; }

@@ -1,4 +1,4 @@
-import { Ri } from './Ri'
+import { useEffect, useRef } from 'react'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 export function startOfDay(d: Date) {
@@ -13,58 +13,57 @@ export function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
-/** 선택한 날로 끝나는 7일 스트립 — 가로 스크롤 없이 화면 폭에 7칸 고정, 지난주는 화살표로 */
-export function WeekStrip({
-  selected,
-  weekEnd,
-  today,
-  onSelect,
-  onShift,
-  scoreOf,
-}: {
+/** 보여줄 과거 일수 (오늘 포함) */
+const DAYS_BACK = 60
+
+/**
+ * 날짜 스트립 — 가로로 밀어서 지난 날로 이동 (스크롤바 숨김), 선택한 날이 가운데 오도록 자동 스크롤.
+ * weekEnd/onShift 는 이전 주 단위 이동용이라 더는 쓰지 않지만 호출부 호환을 위해 받기만 한다.
+ */
+export function WeekStrip(props: {
   selected: Date
-  weekEnd: Date
+  weekEnd?: Date
   today: Date
   onSelect: (d: Date) => void
-  onShift: (dir: -1 | 1) => void
-  /** 각 날짜의 0~100 값 (막대 높이) */
-  scoreOf: (d: Date) => number
+  onShift?: (dir: -1 | 1) => void
+  /** 각 날짜의 0~100 값 — 현재 UI에서는 표시하지 않음 */
+  scoreOf?: (d: Date) => number
 }) {
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekEnd, i - 6))
-  const scores = days.map((d) => scoreOf(d))
-  const first = days[0]
-  const last = days[6]
-  const range = `${first.getMonth() + 1}월 ${first.getDate()}일 ~ ${last.getMonth() + 1}월 ${last.getDate()}일`
-  const atLatest = sameDay(weekEnd, today)
+  const { selected, today, onSelect } = props
+  const days = Array.from({ length: DAYS_BACK }, (_, i) => addDays(today, i - (DAYS_BACK - 1)))
+  const listRef = useRef<HTMLDivElement>(null)
+  const firstRun = useRef(true)
+
+  useEffect(() => {
+    const el = listRef.current?.querySelector<HTMLElement>('.week-day.on')
+    if (!el || !listRef.current) return
+    const list = listRef.current
+    const target = el.offsetLeft - (list.clientWidth - el.offsetWidth) / 2
+    list.scrollTo({ left: target, behavior: firstRun.current ? 'auto' : 'smooth' })
+    firstRun.current = false
+  }, [selected])
+
   return (
-    <div className="week-strip">
-      <div className="week-nav">
-        <button type="button" aria-label="지난주" onClick={() => onShift(-1)}>
-          <Ri name="arrow-left-s" size={22} />
-        </button>
-        <b>{range}</b>
-        <button type="button" aria-label="다음주" disabled={atLatest} onClick={() => onShift(1)}>
-          <Ri name="arrow-right-s" size={22} />
-        </button>
+    <div className="week-strip scrollable">
+      <div className="week-head">
+        <b>{selected.getFullYear()}년 {selected.getMonth() + 1}월 {selected.getDate()}일 {WEEKDAYS[selected.getDay()]}요일</b>
+        {!sameDay(selected, today) && <button type="button" onClick={() => onSelect(today)}>오늘로</button>}
       </div>
-      <div className="week-days" role="tablist" aria-label="날짜 선택">
+      <div className="week-days" role="tablist" aria-label="날짜 선택" ref={listRef}>
         {days.map((d, i) => {
           const on = sameDay(d, selected)
           const isToday = sameDay(d, today)
-          const future = d > today
+          const showMonth = i === 0 || d.getDate() === 1
           return (
             <button
               key={d.toISOString()}
               type="button"
               role="tab"
               aria-selected={on}
-              disabled={future}
               className={`week-day ${on ? 'on' : ''} ${isToday ? 'today' : ''}`}
               onClick={() => onSelect(d)}
             >
-              <span className="week-day-bar" aria-hidden>
-                <i style={{ height: `${future ? 0 : Math.max(18, scores[i])}%` }} />
-              </span>
+              <span className="week-day-m" aria-hidden>{showMonth ? `${d.getMonth() + 1}월` : ''}</span>
               <span className="week-day-wd">{isToday ? '오늘' : WEEKDAYS[d.getDay()]}</span>
               <b className="week-day-n">{d.getDate()}</b>
             </button>
