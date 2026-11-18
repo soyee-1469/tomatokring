@@ -13540,3 +13540,6 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 아이콘은 오른쪽 위, 큰 숫자와 같은 높이 */
 .v2-page .v2-top { align-items: flex-start; }
 .v2-page .v2-top .v2-say-ico { margin-top: 2px; }
+
+/* 상세 맨 아래 바디 리듬 링크: 가운데 */
+.v2-page .v2-link { width: 100%; justify-content: center; text-align: center; }

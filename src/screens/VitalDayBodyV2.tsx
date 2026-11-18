@@ -276,7 +276,7 @@ export function VitalDayBodyV2({
               ))}
             </ul>
           </div>
-          <button type="button" className="v2-link" onClick={() => navigate('/vitaling/day')}>바디 리듬에서 종합 보기 <Ri name="arrow-right-s" size={16} /></button>
+          <button type="button" className="v2-link" onClick={() => navigate('/vitaling/day')}>바디 리듬에서 종합 점수 보기 <Ri name="arrow-right-s" size={16} /></button>
         </section>
       )}
     </>
