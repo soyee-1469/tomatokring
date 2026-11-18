@@ -50,10 +50,9 @@ export function WeekStrip(props: {
         {!sameDay(selected, today) && <button type="button" onClick={() => onSelect(today)}>오늘로</button>}
       </div>
       <div className="week-days" role="tablist" aria-label="날짜 선택" ref={listRef}>
-        {days.map((d, i) => {
+        {days.map((d) => {
           const on = sameDay(d, selected)
           const isToday = sameDay(d, today)
-          const showMonth = i === 0 || d.getDate() === 1
           return (
             <button
               key={d.toISOString()}
@@ -63,7 +62,6 @@ export function WeekStrip(props: {
               className={`week-day ${on ? 'on' : ''} ${isToday ? 'today' : ''}`}
               onClick={() => onSelect(d)}
             >
-              <span className="week-day-m" aria-hidden>{showMonth ? `${d.getMonth() + 1}월` : ''}</span>
               <span className="week-day-wd">{isToday ? '오늘' : WEEKDAYS[d.getDay()]}</span>
               <b className="week-day-n">{d.getDate()}</b>
             </button>
