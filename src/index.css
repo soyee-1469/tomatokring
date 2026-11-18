@@ -13569,3 +13569,5 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-fit-num.with-chip > div { display: grid; gap: 2px; }
 .elder-home .elder-walk-progress { width: 100%; }
 .elder-chip-btn { flex-shrink: 0; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--chip-gray); font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; }
+/* 보조 동작은 버튼처럼 보이지 않게: 배경 없는 글자 링크 (카드 안 버튼 모양은 상태 태그 + 포인트 버튼 둘만) */
+.elder-chip-btn { height: auto; padding: 4px 0; border-radius: 0; background: transparent; font-size: 14px; font-weight: 600; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #C9CED4; }
