@@ -13557,3 +13557,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rd-gauge-scale span:nth-child(3) { left: 90%; }
 /* 눈금 줄을 반원 그림과 같은 폭으로 (게이지 안쪽 여백만큼 들여쓰기) */
 .elder-home .elder-score-scale { margin-left: 12px; margin-right: 12px; }
+
+.elder-home .elder-fit-hint { margin: 2px 0 6px; font-size: 15px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
+
+/* 7일 그래프를 포인트 버튼 아래로 */
+.elder-home .elder-fit-card .elder-fit-chart-wrap.tail { margin-top: 18px; padding-top: 0; width: 100%; }
+.elder-home .elder-fit-card .elder-fit-body { display: block; }

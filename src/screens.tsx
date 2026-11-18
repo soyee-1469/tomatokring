@@ -822,6 +822,7 @@ export function HomeScreen() {
   // 내 평균: 오늘을 뺀 최근 6일 중 기록 있는 날의 평균
   const stressPast = stressSeries.slice(0, 6).filter((v) => v > 0)
   const stressMyAvg = stressPast.length ? Math.round(stressPast.reduce((a, b) => a + b, 0) / stressPast.length) : null
+  const stressHasPrev = stressPast.length > 0
   const stressInfo = stressLevel(stressSel)
   const stressEligible = stressSel <= STRESS_REWARD_MAX
   const sleepInfo = sleepEfficiencyLevel(day.efficiency)
@@ -846,8 +847,6 @@ export function HomeScreen() {
   const stressShow = stressSel > 0
   // 선택한 날 값이 없어도 그 이전 기록이 있으면 마지막 기록 + 빈 막대, 아예 없으면 안내만
   const hasPrev = (vals: readonly number[]) => vals.slice(0, -1).some((v) => v > 0)
-  const stressYday = stressSeries[stressSeries.length - 2]
-  const stepsYday = day.steps[day.steps.length - 2]
   const sleepYday = day.sleepHours[day.sleepHours.length - 2]
   const walkShow = walkMeasured
   const sleepShow = sleepMeasured
@@ -884,31 +883,12 @@ export function HomeScreen() {
           </div>
           <div className="elder-fit-body">
             {stressShow ? (
-              <>
-                <div className="elder-fit-num">
-                  <strong>{stressSel}<small>점</small></strong>
-                  <em>{stressMyAvg !== null ? `내 평균 ${stressMyAvg}점` : '첫 측정'}</em>
-                </div>
-                <div className="elder-fit-chart-wrap">
-                  <MiniBars values={stressSeries} labels={day.labels} color={HOME_COLORS.beet} yMax={100} unit="점" />
-                  <span className="elder-fit-cap">최근 7일 스트레스</span>
-                </div>
-              </>
-            ) : hasPrev(day.stress) ? (
-              <>
-                <div className="elder-fit-num">
-                  <strong>{stressYday}<small>점</small></strong>
-                  <em>어제 기록</em>
-                </div>
-                <div className="elder-fit-chart-wrap">
-                  <MiniBars values={stressSeries} labels={day.labels} color={HOME_COLORS.beet} yMax={100} unit="점" todayEmpty />
-                  <span className="elder-fit-cap">최근 7일 스트레스</span>
-                </div>
-              </>
-            ) : (
-              <div className="elder-fit-blank">
-                <span>편안히 앉아 오늘의 스트레스를 측정해 보세요.</span>
+              <div className="elder-fit-num">
+                <strong>{stressSel}<small>점</small></strong>
+                <em>{stressMyAvg !== null ? `내 평균 ${stressMyAvg}점` : '첫 측정'}</em>
               </div>
+            ) : (
+              <p className="elder-fit-hint">편안히 앉아 오늘의 스트레스를 측정해 보세요.</p>
             )}
           </div>
         </button>
@@ -926,6 +906,13 @@ export function HomeScreen() {
           onMeasure={() => goMeasure('stress', true)}
           onClaim={() => markClaimed('stress')}
         />
+        {/* 7일 그래프는 포인트 버튼 아래 (받는 게 먼저) */}
+        {(stressShow || stressHasPrev) && (
+          <div className="elder-fit-chart-wrap tail">
+            <MiniBars values={stressSeries} labels={day.labels} color={HOME_COLORS.beet} yMax={100} unit="점" todayEmpty={!stressShow} />
+            <span className="elder-fit-cap">최근 7일 스트레스</span>
+          </div>
+        )}
       </div>
           </Fragment>
         )
@@ -972,21 +959,8 @@ export function HomeScreen() {
                   aria-label="오늘 걸음 목표 진행률"
                 />
               </>
-            ) : hasPrev(day.steps) ? (
-              <>
-                <div className="elder-fit-num">
-                  <strong>{stepsYday.toLocaleString('ko-KR')}<small>걸음</small></strong>
-                  <em>어제 기록</em>
-                </div>
-                <div className="elder-fit-chart-wrap">
-                  <MiniBars values={day.steps} labels={day.labels} color={HOME_COLORS.leaf} unit="걸음" todayEmpty />
-                  <span className="elder-fit-cap">최근 7일 걸음</span>
-                </div>
-              </>
             ) : (
-              <div className="elder-fit-blank">
-                <span>반지에 기록된 오늘의 걸음 수를 불러와요.</span>
-              </div>
+              <p className="elder-fit-hint">반지에 기록된 오늘 걸음을 아직 불러오지 않았어요.</p>
             )}
           </div>
         </button>
@@ -1004,6 +978,12 @@ export function HomeScreen() {
           onMeasure={() => goMeasure('walk', true)}
           onClaim={() => markClaimed('walk')}
         />
+        {hasPrev(day.steps) && (
+          <div className="elder-fit-chart-wrap tail">
+            <MiniBars values={day.steps} labels={day.labels} color={HOME_COLORS.leaf} unit="걸음" todayEmpty={!walkShow} />
+            <span className="elder-fit-cap">최근 7일 걸음</span>
+          </div>
+        )}
       </div>
           </Fragment>
         )
@@ -1023,31 +1003,17 @@ export function HomeScreen() {
           </div>
           <div className="elder-fit-body">
             {sleepShow ? (
-              <>
-                <div className="elder-fit-num">
-                  <strong className="text">{day.latestLabel}</strong>
-                  <em>수면 효율 {day.efficiency}%</em>
-                </div>
-                <div className="elder-fit-chart-wrap">
-                  <MiniBars values={day.sleepHours} labels={day.labels} color={HOME_COLORS.berry} yMax={10} unit="시간" />
-                  <span className="elder-fit-cap">최근 7일 수면 시간</span>
-                </div>
-              </>
-            ) : hasPrev(day.sleepHours) ? (
-              <>
-                <div className="elder-fit-num">
-                  <strong className="text">{hoursLabel(sleepYday)}</strong>
-                  <em>어제 기록</em>
-                </div>
-                <div className="elder-fit-chart-wrap">
-                  <MiniBars values={day.sleepHours} labels={day.labels} color={HOME_COLORS.berry} yMax={10} unit="시간" todayEmpty />
-                  <span className="elder-fit-cap">최근 7일 수면 시간</span>
-                </div>
-              </>
-            ) : (
-              <div className="elder-fit-blank">
-                <span>지난밤 수면 시간과 수면 효율을 확인해 보세요.</span>
+              <div className="elder-fit-num">
+                <strong className="text">{day.latestLabel}</strong>
+                <em>수면 효율 {day.efficiency}%</em>
               </div>
+            ) : hasPrev(day.sleepHours) ? (
+              <div className="elder-fit-num">
+                <strong className="text">{hoursLabel(sleepYday)}</strong>
+                <em>지난밤 수면</em>
+              </div>
+            ) : (
+              <p className="elder-fit-hint">지난밤 수면 시간과 수면 효율을 확인해 보세요.</p>
             )}
           </div>
         </button>
@@ -1062,6 +1028,12 @@ export function HomeScreen() {
           onMeasure={() => goMeasure('sleep', true)}
           onClaim={() => markClaimed('sleep')}
         />
+        {hasPrev(day.sleepHours) && (
+          <div className="elder-fit-chart-wrap tail">
+            <MiniBars values={day.sleepHours} labels={day.labels} color={HOME_COLORS.berry} yMax={10} unit="시간" todayEmpty={!sleepShow} />
+            <span className="elder-fit-cap">최근 7일 수면 시간</span>
+          </div>
+        )}
       </div>
           </Fragment>
         )
