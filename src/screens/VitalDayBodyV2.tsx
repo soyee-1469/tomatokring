@@ -148,6 +148,12 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
           })
         : (
           <>
+            {/* 혈중 산소·피부 온도: 시간대별 최소~최대 범위를 연한 막대로 깔고 그 위에 평균 선 (브링과 같은 읽기 방식) */}
+            {hourly.map((p) => {
+              const top = y(p.max), bot = y(p.min)
+              if (bot - top < 2) return null
+              return <rect key={`r${p.h}`} x={x(p.h + 0.5) - 3} y={top} width={6} height={bot - top} rx={3} className="rangeband" />
+            })}
             {path && <path d={path} className="line" />}
             {/* 점은 선 위에만: 직접 잰 시간대는 빈 점, 마지막 시간대는 채운 점 */}
             {hourly.map((p, i) => {

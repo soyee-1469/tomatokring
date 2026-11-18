@@ -13484,3 +13484,8 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* HRV 회복력 하루 흐름: 심박수와 같은 범위 막대 */
 .v2-page .v2-chart.v2-m-hrv .range { fill: #8B5CF6; opacity: 0.45; }
 .v2-page .v2-chart.v2-m-hrv .range.last { opacity: 1; }
+
+/* 선 그래프 뒤 시간대별 범위 띠 */
+.v2-page .v2-chart .rangeband { opacity: 0.22; }
+.v2-page .v2-chart.v2-m-spo2 .rangeband { fill: #2F80ED; }
+.v2-page .v2-chart.v2-m-temp .rangeband { fill: var(--c-orange); }
