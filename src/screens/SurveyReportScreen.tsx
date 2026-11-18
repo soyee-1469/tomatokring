@@ -2,7 +2,6 @@ import { MetricInfoButton } from '../components/AccuracyInfo'
 import {
   CaretLeft,
   CaretRight,
-  Export,
   Robot,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
@@ -48,9 +47,6 @@ export function SurveyReportScreen() {
             backTo="/vitaling/home"
             right={
               <>
-                <button type="button" className="icon-btn" aria-label="내보내기">
-                  <Export size={22} weight="regular" />
-                </button>
                 <MetricInfoButton metric="survey" tone="plain" />
               </>
             }

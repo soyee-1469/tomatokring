@@ -60,13 +60,25 @@ export function dayLog(metric: LiveMetricId, date: Date): LogRow[] {
   const now = new Date()
   const today = isSameDay(date, now)
   if (metric === 'stress') {
-    if (!today || !isMeasureDone(getSession(), 'stress')) return []
-    return [...STRESS_DAY_POINTS].reverse().map((pt) => ({
-      id: `m-${pt.h}`,
-      time: hhmmss(Math.round(pt.h * 60)),
-      value: pt.v,
-      mode: 'manual' as const,
-    }))
+    if (today) {
+      if (!isMeasureDone(getSession(), 'stress')) return []
+      return [...STRESS_DAY_POINTS].reverse().map((pt) => ({
+        id: `m-${pt.h}`,
+        time: hhmmss(Math.round(pt.h * 60)),
+        value: pt.v,
+        mode: 'manual' as const,
+      }))
+    }
+    // 지난 날: 날짜 시드로 1~3회 직접 측정 (며칠에 한 번은 건너뜀) — 7일·한 달 추세용 샘플
+    const ds = date.getFullYear() * 400 + date.getMonth() * 31 + date.getDate()
+    if (ds % 5 === 0) return []
+    const count = 1 + (ds % 3)
+    const base = 30 + ((ds * 7) % 23)
+    return Array.from({ length: count }, (_, k) => {
+      const h = [9, 13, 16, 19][(ds + k) % 4]
+      const v = Math.max(10, Math.min(90, base + ((ds * (k + 3)) % 11) - 5))
+      return { id: `m-${h}`, time: hhmmss(h * 60 + ((ds * 13) % 50)), value: v, mode: 'manual' as const }
+    }).sort((x, y) => (x.time < y.time ? 1 : -1))
   }
   const endMin = today ? now.getHours() * 60 + now.getMinutes() : 23 * 60 + 50
   const seed = date.getFullYear() * 400 + date.getMonth() * 31 + date.getDate() + metric.length * 7

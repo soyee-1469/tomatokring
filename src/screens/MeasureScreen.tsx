@@ -4,7 +4,6 @@ import {
   CaretDown,
   CaretLeft,
   CaretRight,
-  Export,
   Fire,
   Sneaker,
 } from '@phosphor-icons/react'
@@ -604,9 +603,6 @@ export function MeasureScreen() {
             backTo="/vitaling/home"
             right={
               <>
-                <button type="button" className="icon-btn" aria-label="내보내기">
-                  <Export size={22} weight="regular" />
-                </button>
                 <MetricInfoButton metric={kind === 'stress' ? liveMetric : (kind as MeasureKind)} tone="plain" />
               </>
             }

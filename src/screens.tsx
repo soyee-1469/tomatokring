@@ -20,7 +20,7 @@ import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
 import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { TrendLine as MiniBars } from './components/TrendLine'
-import { AUTO_MODE_LABEL } from './measureLog'
+import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { completeOnboarding, DEFAULT_CARD_ORDER, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, RHYTHM_MIN_DAYS, saveVitalId, setCardOrder, todayDietPhoto, unpairRing, validDayCount, type HomeCardKind, type MeasureKind } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
@@ -810,9 +810,14 @@ export function HomeScreen() {
   const tiles = profile.tiles
   // 홈은 항상 오늘 기준. 지난 날짜는 상세 화면에서 본다
   const day = homeDataFor(profile)
-  const stressSeries = isMeasureDone(session, 'stress')
-    ? day.stress.map((v, i) => (i === day.stress.length - 1 ? 28 : v))
-    : day.stress
+  // 스트레스 7일: 상세 화면과 같은 기록(dayLog)에서 하루 평균 (오늘은 측정 전이면 0)
+  // 지난 날은 하루 평균, 오늘은 마지막 측정값 (상세 히어로와 같은 기준)
+  const stressSeries = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i))
+    const rs = dayLog('stress', d)
+    if (!rs.length) return 0
+    return i === 6 ? rs[0].value : Math.round(rs.reduce((acc, r) => acc + r.value, 0) / rs.length)
+  })
   const stressSel = stressSeries[stressSeries.length - 1]
   const stressInfo = stressLevel(stressSel)
   const stressEligible = stressSel <= STRESS_REWARD_MAX

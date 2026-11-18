@@ -172,6 +172,15 @@ export function VitalDayBodyV2({
       labels: days.map((d, i) => (i === 6 && isToday ? '오늘' : WD[d.getDay()])),
     }
   }, [metric, date, isToday, session.autoMeasure, session.doneDates])
+  const month = useMemo(() => {
+    // 선택한 날로 끝나는 4주: 주별 하루 평균의 평균 (기록 없는 날 제외)
+    const weeks = [3, 2, 1, 0].map((w) => {
+      const days = Array.from({ length: 7 }, (_, i) => addDays(date, -(w * 7) - (6 - i)))
+      const means = days.map((d) => { const rs = dayLog(metric, d); return rs.length ? rs.reduce((a, r) => a + r.value, 0) / rs.length : null }).filter((m): m is number => m !== null)
+      return means.length ? means.reduce((a, b) => a + b, 0) / means.length : 0
+    })
+    return { values: weeks, labels: ['3주 전', '2주 전', '지난주', isToday ? '이번 주' : '해당 주'] }
+  }, [metric, date, isToday, session.autoMeasure, session.doneDates])
   const zoneCounts = s.zones.map((z) => vals.filter(z.test).length)
   const zoneTotal = zoneCounts.reduce((a, b) => a + b, 0)
   const manual = rows.find((r) => r.mode === 'manual')
@@ -214,11 +223,19 @@ export function VitalDayBodyV2({
       </section>
 
       {/* 4) 오늘 기록 + 지금 측정하기 */}
-      {/* 최근 7일 — 홈 카드와 같은 선 그래프 (오늘은 지금까지 평균) */}
-      <section className="v2-card">
-        <div className="v2-head"><b className="v2-label">최근 7일</b><span className="v2-key">하루 평균{s.unit ? ` · ${s.unit}` : ''}</span></div>
-        <TrendBars values={week.values} labels={week.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
-      </section>
+      {/* 스트레스만 기간 비교: 최근 7일(하루 평균) + 최근 한 달(주 평균). 순간값 항목(심박수 등)은 하루 흐름까지만 */}
+      {metric === 'stress' && (
+        <>
+          <section className="v2-card">
+            <div className="v2-head"><b className="v2-label">최근 7일</b><span className="v2-key">하루 평균</span></div>
+            <TrendBars values={week.values} labels={week.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
+          </section>
+          <section className="v2-card">
+            <div className="v2-head"><b className="v2-label">최근 한 달</b><span className="v2-key">주 평균</span></div>
+            <TrendBars values={month.values} labels={month.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
+          </section>
+        </>
+      )}
 
       <section className="v2-card">
         <div className="v2-head"><b className="v2-label">{isToday ? '오늘 기록' : '이 날 기록'}</b><button type="button" className="v2-more" onClick={onHistory}>전체 보기 <Ri name="arrow-right-s" size={16} /></button></div>

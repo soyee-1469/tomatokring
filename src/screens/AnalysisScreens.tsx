@@ -1,6 +1,5 @@
 import { MetricInfoButton } from '../components/AccuracyInfo'
 import {
-  Export,
 } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -124,9 +123,6 @@ export function SleepAnalysisScreen() {
             backTo="/vitaling/home"
             right={
               <>
-                <button type="button" className="icon-btn" aria-label="내보내기">
-                  <Export size={22} weight="regular" />
-                </button>
                 <MetricInfoButton metric="sleep" tone="plain" />
               </>
             }
