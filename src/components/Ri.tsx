@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import {
   BookOpen, Brain, ChatCircleDots, ClipboardText, Drop, Flag, ForkKnife, Gear, Heartbeat,
-  Moon, PersonSimpleWalk, Pulse, Question, ArrowsClockwise, Thermometer, UserGear,
+  Moon, PersonSimpleWalk, Question, ArrowsClockwise, Thermometer, UserGear,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 
@@ -20,7 +20,7 @@ const DUOTONE: Record<string, Icon> = {
   'heart-pulse': Heartbeat,
   drop: Drop,
   'temp-hot': Thermometer,
-  pulse: Pulse,
+  // pulse(HRV 회복력)는 Phosphor 채움이 사각 박스 모양이라 Remix 파형 그대로 둔다
   'chat-smile-3': ChatCircleDots,
   flag: Flag,
   'book-open': BookOpen,
