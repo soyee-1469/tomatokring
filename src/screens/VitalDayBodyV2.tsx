@@ -47,7 +47,7 @@ const SPEC: Record<LiveMetricId, Spec> = {
     { label: '정상', color: '#50B83D', test: (v) => v >= 36.0 && v < 37.0 }, { label: '약간 높음', color: '#F2994A', test: (v) => v >= 37.0 && v < 37.5 }, { label: '고온', color: '#E4605A', test: (v) => v >= 37.5 }, { label: '약간 낮음', color: '#9DBBE8', test: (v) => v >= 35.5 && v < 36.0 }, { label: '저온', color: '#2F80ED', test: (v) => v < 35.5 } ] },
   hrv: { color: '#8B5CF6', trendMin: 0, trendMax: 80, label: 'HRV 회복력', unit: 'ms', digits: 0, normal: [40, 60], yMin: 30, yMax: 50, zoneUnit: '%', zones: [
     { label: '평균', color: '#50B83D', test: (v) => v >= 40 && v < 50 }, { label: '평균 이상', color: '#9DBBE8', test: (v) => v >= 50 && v < 60 }, { label: '높음', color: '#2F80ED', test: (v) => v >= 60 }, { label: '평균 이하', color: '#F2994A', test: (v) => v < 40 } ] },
-  stress: { color: '#8B5CF6', trendMax: 100, label: '스트레스', unit: '', digits: 0, normal: [0, 40], yMin: 0, yMax: 100, zoneUnit: '%', zones: [
+  stress: { color: '#8B5CF6', trendMax: 100, label: '스트레스', unit: '점', digits: 0, normal: [0, 40], yMin: 0, yMax: 100, zoneUnit: '%', zones: [
     { label: '매우 낮음', color: '#50B83D', test: (v) => v < 21 }, { label: '낮음', color: '#A8D45A', test: (v) => v >= 21 && v < 41 }, { label: '보통', color: '#E9C34A', test: (v) => v >= 41 && v < 61 }, { label: '높음', color: '#F2994A', test: (v) => v >= 61 && v < 81 }, { label: '매우 높음', color: '#E4605A', test: (v) => v >= 81 } ] },
 }
 
@@ -192,22 +192,27 @@ export function VitalDayBodyV2({
       <DateLine date={date} today={today} onDate={onDate} />
 
       <section className={`v2-hero v2-m-${metric}`}>
-        <div className="v2-say">
+        {/* 1행: 항목 아이콘 + 큰 숫자, 2행: 해석 + 조언 */}
+        <div className="v2-top">
           <span className="v2-say-ico"><Ri name={{ hr: 'heart-pulse', spo2: 'drop', temp: 'temp-hot', hrv: 'pulse', stress: 'brain' }[metric]} size={22} /></span>
+          {has ? (
+            <div className="v2-val">
+              <strong>{fmt(isToday ? latest : mean, s.digits)}<small>{s.unit}</small></strong>
+              <span className="v2-val-sub">
+                {isToday ? `${rows[0].time.slice(0, 5)} 측정` : `${date.getMonth() + 1}월 ${date.getDate()}일 하루 평균`}
+                {usual !== null && ` · 평소 ${fmt(usual, s.digits)}${s.unit}`}
+              </span>
+            </div>
+          ) : (
+            <div className="v2-val"><strong>--<small>{s.unit}</small></strong><span className="v2-val-sub">기록 없음</span></div>
+          )}
+        </div>
+        <div className="v2-say">
           <div>
             <b>{say ? say.head : isToday ? '아직 오늘 기록이 없어요.' : '이 날은 기록이 없어요.'}</b>
             <p>{say ? say.tip : metric === 'stress' ? '편안히 앉아 1분이면 돼요. 아래에서 바로 측정해 보세요.' : '반지를 끼고 있으면 자동으로 재요. 지금 바로 잴 수도 있어요.'}</p>
           </div>
         </div>
-        {has && (
-          <div className="v2-val">
-            <strong>{fmt(isToday ? latest : mean, s.digits)}<small>{s.unit}</small></strong>
-            <span className="v2-val-sub">
-              {isToday ? `${rows[0].time.slice(0, 5)} 측정` : `${date.getMonth() + 1}월 ${date.getDate()}일 하루 평균`}
-              {usual !== null && ` · 평소 ${fmt(usual, s.digits)}${s.unit}`}
-            </span>
-          </div>
-        )}
       </section>
 
       {metric === 'stress' && isToday && (

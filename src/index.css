@@ -13527,3 +13527,13 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 설문 카드 설명 가운데 */
 .elder-home .elder-fit-card.survey .elder-fit-num { text-align: center; }
 .elder-home .elder-fit-card.survey .elder-fit-num em { display: block; text-align: center; }
+
+/* 상세 히어로: 1행 아이콘+숫자, 2행 해석 */
+.v2-page .v2-top { display: flex; align-items: center; gap: 14px; }
+.v2-page .v2-top .v2-val { margin: 0; gap: 2px; }
+.v2-page .v2-top .v2-val strong { font-size: 48px; }
+.v2-page .v2-say { margin-top: 16px; }
+.v2-page .v2-say b { font-size: 18px; }
+/* 상세 히어로 1행: 값은 왼쪽, 아이콘은 오른쪽 끝 */
+.v2-page .v2-top { flex-direction: row-reverse; justify-content: space-between; }
+.v2-page .v2-top .v2-val { margin-right: auto; }

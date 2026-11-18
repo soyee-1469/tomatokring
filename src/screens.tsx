@@ -642,7 +642,7 @@ function SurveyRewardCard({
         </div>
         <div className="elder-fit-body">
           <div className="elder-fit-num">
-            <em>3문항 · 약 1분 · 매월 1회</em>
+
           </div>
         </div>
       </button>
