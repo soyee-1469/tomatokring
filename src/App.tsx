@@ -4,7 +4,6 @@ import {
   HelpScreen,
   HomeScreen,
   PairScreen,
-  ServiceScreen,
   SettingsScreen,
   SerialScreen,
   TermsScreen,
@@ -28,7 +27,6 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/vitaling/home" replace />} />
-        <Route path="/service" element={<ServiceScreen />} />
         <Route path="/vitaling" element={<Navigate to="/vitaling/home" replace />} />
         <Route path="/vitaling/serial" element={<SerialScreen />} />
         <Route path="/vitaling/terms" element={<TermsScreen />} />

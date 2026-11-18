@@ -17,7 +17,6 @@ export function BottomNav({ active = 'service' }: { active?: NavTab }) {
     { id: 'friends', label: '친구', icon: 'user-3' },
     { id: 'chat', label: '대화', icon: 'chat-3', badge: '88' },
     { id: 'wallet', label: '지갑', icon: 'wallet-3', fab: true, to: '/wallet' },
-    { id: 'service', label: '서비스', icon: 'grid', to: '/service' },
     { id: 'more', label: '더보기', icon: 'more' },
   ]
 

@@ -13407,3 +13407,10 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 
 .day-score-page .rd-details.open-always .v2-head { margin-bottom: 6px; }
 .day-score-page .rd-details.open-always .v2-label { font-size: 16px; font-weight: 700; }
+/* 실제 폰: 래퍼가 가운데 수축되지 않도록 강제 */
+@media (max-width: 520px) {
+  html, body { width: 100%; overflow-x: hidden; }
+  #root { display: block !important; width: 100% !important; padding: 0 !important; }
+  .stage { display: block !important; width: 100% !important; max-width: none !important; margin: 0 !important; }
+  .phone { width: 100% !important; max-width: none !important; margin: 0 !important; }
+}

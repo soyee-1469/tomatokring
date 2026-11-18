@@ -1,21 +1,12 @@
 import {
   Moon,
   CaretRight,
-  ChatCircle,
   Check,
-  CheckCircle,
   Drop,
-  GameController,
   Heart,
-  HeartStraight,
-  List,
-  MagnifyingGlass,
-  Robot,
   ShoppingBag,
-  Smiley,
   Sparkle,
   Thermometer,
-  UsersThree,
   Waveform,
   Wind,
   X,
@@ -41,247 +32,8 @@ import {
 } from './palette'
 import { TERMS_DOCS, TERMS_LIST, type TermsDocId } from './termsDocs'
 import { useSession } from './useSession'
-import { BALANCES, getExchangeStatus } from './screens/RewardHistoryScreen'
 
 
-export function ServiceScreen() {
-  const navigate = useNavigate()
-  const favs = [
-    {
-      name: '번역상담 기기등록',
-      bg: '#FFE4EC',
-      icon: <ChatCircle size={24} weight="fill" color="#E53935" />,
-      path: '/biz/device',
-    },
-    {
-      name: '번역상담 상담사용',
-      bg: '#FFE4EC',
-      icon: <ChatCircle size={24} weight="fill" color="#E53935" />,
-      path: '/biz',
-    },
-    {
-      name: '번역상담 고객용',
-      bg: '#E8F1FF',
-      icon: <UsersThree size={24} weight="fill" color="#3B82F6" />,
-      path: '/biz/customer',
-    },
-    {
-      name: '캐릭터 만들기',
-      bg: '#FFE4EC',
-      icon: <Sparkle size={24} weight="fill" color="#E53935" />,
-      path: '/character',
-    },
-    { name: '이모티콘', bg: '#FFE8A3', icon: <Smiley size={26} weight="fill" color="#F5A623" /> },
-  ]
-  const list = [
-    {
-      name: '번역상담 기기등록',
-      desc: '설치 후 상담사용/고객용 선택 · 서버 발급 계정 로그인',
-      bg: '#FFE4EC',
-      icon: <ChatCircle size={22} weight="fill" color="#E53935" />,
-      liked: true,
-      path: '/biz/device',
-      highlight: true,
-    },
-    {
-      name: '번역상담 상담사용',
-      desc: '공공기관 다국어 번역상담 · 담당자 태블릿',
-      bg: '#FFE4EC',
-      icon: <ChatCircle size={22} weight="fill" color="#E53935" />,
-      liked: true,
-      path: '/biz',
-      highlight: true,
-    },
-    {
-      name: '번역상담 고객용',
-      desc: '민원인용 실시간 번역상담 · 고객 태블릿',
-      bg: '#E8F1FF',
-      icon: <UsersThree size={22} weight="fill" color="#3B82F6" />,
-      liked: true,
-      path: '/biz/customer',
-      highlight: true,
-    },
-    {
-      name: '캐릭터 만들기',
-      desc: '사진으로 3D 캐릭터 만들기',
-      bg: '#FFE4EC',
-      icon: <Sparkle size={22} weight="fill" color="#E53935" />,
-      liked: true,
-      path: '/character',
-      highlight: true,
-    },
-    {
-      name: '토마톡 게임',
-      desc: '미니게임에 참여하고 포인트 받기',
-      bg: '#E8F1FF',
-      icon: <GameController size={22} weight="fill" color="#3B82F6" />,
-    },
-    {
-      name: '이모티콘',
-      desc: '다양한 이모티콘으로 감정을 표현하세요',
-      bg: '#FFF4CC',
-      icon: <Smiley size={22} weight="fill" color="#F5A623" />,
-      liked: true,
-    },
-    {
-      name: '지니 콩즈',
-      desc: 'AI 지니 콩즈에게 무엇이든 물어보세요',
-      bg: '#FFE0EF',
-      icon: <Robot size={22} weight="fill" color="#E91E8C" />,
-      liked: true,
-    },
-    {
-      name: '출석 체크',
-      desc: '매일 출석하고 포인트 받기',
-      bg: '#D9F5E5',
-      icon: <CheckCircle size={22} weight="fill" color="#2BB673" />,
-      liked: true,
-    },
-    {
-      name: '토마톡 링',
-      desc: '신체 활동을 실시간으로 측정합니다',
-      bg: '#FFE8E8',
-      icon: <Heart size={22} weight="fill" color="#E53935" />,
-      liked: true,
-      path: '/vitaling',
-      highlight: true,
-    },
-    {
-      name: '친구 초대',
-      desc: '친구를 초대하고 혜택을 받으세요',
-      bg: '#E8F8FF',
-      icon: <UsersThree size={22} weight="fill" color="#0EA5E9" />,
-      liked: true,
-    },
-    {
-      name: '토마톡 페이',
-      desc: 'TOTT로 간편하게 결제하세요',
-      bg: '#FFE4E8',
-      icon: <HeartStraight size={22} weight="fill" color="#E53935" />,
-    },
-    {
-      name: '블록체인 게임',
-      desc: '자산 연동 블록체인 게임',
-      bg: '#FFE8E8',
-      icon: <GameController size={22} weight="fill" color="#E53935" />,
-    },
-  ]
-
-  return (
-    <div className="stage">
-      <Phone>
-        <div className="screen">
-          <Header
-            title="서비스"
-            right={
-              <>
-                <button type="button" className="icon-btn" aria-label="검색">
-                  <MagnifyingGlass size={22} weight="light" />
-                </button>
-                <button type="button" className="icon-btn" aria-label="메뉴">
-                  <List size={22} weight="light" />
-                </button>
-              </>
-            }
-          />
-          <div className="scroll service-page">
-            <p className="section-label" style={{ marginTop: 2 }}>즐겨찾는 서비스</p>
-            <div className="fav-row">
-              {favs.map((f) => (
-                <button
-                  key={f.name}
-                  type="button"
-                  className="fav-item"
-                  onClick={() => 'path' in f && f.path && navigate(f.path)}
-                >
-                  <div className="orb" style={{ background: f.bg }}>{f.icon}</div>
-                  <span>{f.name}</span>
-                </button>
-              ))}
-              <button type="button" className="fav-item">
-                <div className="orb fav-plus">
-                  <span className="fav-plus-mark">+</span>
-                </div>
-                <span className="plus-label">&nbsp;</span>
-              </button>
-            </div>
-
-            {(() => {
-              const ex = getExchangeStatus()
-              return (
-                <div className={`svc-balance ${ex.canExchange ? 'is-ready' : ''}`}>
-                  <div className="svc-balance-head">
-                    <div className="svc-balance-title">
-                      <span>보유 포인트</span>
-                      <em className="svc-balance-unit">P</em>
-                    </div>
-                    <button
-                      type="button"
-                      className="svc-balance-more"
-                      onClick={() => navigate('/reward/history')}
-                    >
-                      상세내역
-                      <CaretRight size={14} weight="bold" />
-                    </button>
-                  </div>
-                  <strong className="svc-balance-hero">
-                    {BALANCES.pointAvailable.toLocaleString('ko-KR')}
-                  </strong>
-                  {ex.canExchange ? (
-                    <>
-                      <p className="svc-balance-ready-msg">교환 가능!!</p>
-                      <button
-                        type="button"
-                        className="svc-balance-cta"
-                        onClick={() => navigate('/reward')}
-                      >
-                        {ex.maxTott} TOTT 교환하기
-                      </button>
-                    </>
-                  ) : (
-                    <div className="ex-status">
-                      <p>
-                        <b>{ex.remain.toLocaleString('ko-KR')} P</b> 더 모으면{' '}
-                        {ex.unlockTott} TOTT 교환 가능
-                      </p>
-                      <div className="ex-bar" aria-hidden>
-                        <i style={{ width: `${ex.progress}%` }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
-
-            <p className="section-label">서비스 전체</p>
-            {list.map((s) => (
-              <button
-                key={s.name + s.desc}
-                type="button"
-                className={`svc-item ${s.highlight ? 'highlight' : ''}`}
-                onClick={() => s.path && navigate(s.path)}
-              >
-                <div className="orb" style={{ background: s.bg }}>{s.icon}</div>
-                <div>
-                  <div className="name">{s.name}</div>
-                  <div className="desc">{s.desc}</div>
-                </div>
-                <HeartStraight
-                  size={22}
-                  weight={s.liked ? 'fill' : 'light'}
-                  color={s.liked ? '#E53935' : '#D0D0D0'}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      </Phone>
-    </div>
-  )
-}
-
-
-/** 브링 앱 고유번호 최초 등록 (토마톡 링 연동) */
 export function SerialScreen() {
   const navigate = useNavigate()
   const session = useSession()
@@ -1405,7 +1157,7 @@ export function HomeScreen() {
       <Phone statusTone="dark">
         <div className="screen elder-home">
           <header className="elder-top">
-            <button type="button" className="elder-gear" aria-label="뒤로" onClick={() => navigate('/service')}>
+            <button type="button" className="elder-gear" aria-label="뒤로" onClick={() => (window.history.length > 1 ? navigate(-1) : undefined)}>
               <Ri name="arrow-left-s" size={24} />
             </button>
             <h1>토마톡 링</h1>
