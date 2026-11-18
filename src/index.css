@@ -13514,3 +13514,10 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .v2-page .v2-chart.v2-m-spo2 .mline { stroke: #2F80ED; }
 .v2-page .v2-chart.v2-m-temp .mline { stroke: var(--c-orange); }
 .v2-page .v2-chart.v2-m-hrv .mline, .v2-page .v2-chart.v2-m-stress .mline { stroke: #8B5CF6; }
+/* 상세 히어로: 큰 숫자를 해석 글줄과 같은 열에 맞추고 간격 정리 */
+.v2-page .v2-say { align-items: flex-start; }
+.v2-page .v2-say-ico { margin-top: 1px; }
+.v2-page .v2-val { margin: 16px 0 0 56px; gap: 4px; }
+.v2-page .v2-val strong { font-size: 56px; line-height: 1; }
+.v2-page .v2-val-sub { font-size: 14px; }
+.v2-page .v2-hero { padding: 22px 20px 24px; }
