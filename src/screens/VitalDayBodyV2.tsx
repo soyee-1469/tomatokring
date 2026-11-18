@@ -193,7 +193,7 @@ export function VitalDayBodyV2({
 
       <section className={`v2-hero v2-m-${metric}`}>
         <div className="v2-say">
-          <span className="v2-say-ico"><Ri name="chat-smile-3" fill size={20} /></span>
+          <span className="v2-say-ico"><Ri name={{ hr: 'heart-pulse', spo2: 'drop', temp: 'temp-hot', hrv: 'pulse', stress: 'brain' }[metric]} size={22} /></span>
           <div>
             <b>{say ? say.head : isToday ? '아직 오늘 기록이 없어요.' : '이 날은 기록이 없어요.'}</b>
             <p>{say ? say.tip : metric === 'stress' ? '편안히 앉아 1분이면 돼요. 아래에서 바로 측정해 보세요.' : '반지를 끼고 있으면 자동으로 재요. 지금 바로 잴 수도 있어요.'}</p>
