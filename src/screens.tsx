@@ -406,7 +406,7 @@ function statusFromScore(score: number) {
 
 /** 포인트 지급 정책 (11/09 수정본 · 50~70대 기준) — 항목당 1일 1회, 설문은 월 1회 */
 const STRESS_REWARD_MAX = 30 // 스트레스 30점 이하(0~30)일 때 지급
-const STRESS_AVG_REF = 40 // 또래 평균 39.98점
+// 또래 평균(초기 스펙 참고값 39.98)은 실제 데이터가 없어 쓰지 않는다. 대신 내 최근 7일 평균을 보여준다
 const WALK_REWARD_STEPS = 8_000 // 8,000걸음 이상일 때 지급
 // 또래 평균 걸음 5,680 (스펙 참고값, 화면에는 미표시)
 const STRESS_REWARD_P = 200_000
@@ -819,6 +819,9 @@ export function HomeScreen() {
     return i === 6 ? rs[0].value : Math.round(rs.reduce((acc, r) => acc + r.value, 0) / rs.length)
   })
   const stressSel = stressSeries[stressSeries.length - 1]
+  // 내 평균: 오늘을 뺀 최근 6일 중 기록 있는 날의 평균
+  const stressPast = stressSeries.slice(0, 6).filter((v) => v > 0)
+  const stressMyAvg = stressPast.length ? Math.round(stressPast.reduce((a, b) => a + b, 0) / stressPast.length) : null
   const stressInfo = stressLevel(stressSel)
   const stressEligible = stressSel <= STRESS_REWARD_MAX
   const sleepInfo = sleepEfficiencyLevel(day.efficiency)
@@ -884,7 +887,7 @@ export function HomeScreen() {
               <>
                 <div className="elder-fit-num">
                   <strong>{stressSel}<small>점</small></strong>
-                  <em>또래 평균 {STRESS_AVG_REF}점</em>
+                  <em>{stressMyAvg !== null ? `내 평균 ${stressMyAvg}점` : '첫 측정'}</em>
                 </div>
                 <div className="elder-fit-chart-wrap">
                   <MiniBars values={stressSeries} labels={day.labels} color={HOME_COLORS.beet} yMax={100} unit="점" />
@@ -919,7 +922,7 @@ export function HomeScreen() {
           repeatLabel="다시 측정하기"
           readyText="측정 완료"
           doneLabel={`오늘 ${formatClaimP(STRESS_REWARD_P)} 받았어요`}
-          tip={`오늘 ${stressSel}점 (또래 평균 ${STRESS_AVG_REF}점) · ${STRESS_REWARD_MAX}점 이하일 때 지급`}
+          tip={`오늘 ${stressSel}점${stressMyAvg !== null ? ` (내 평균 ${stressMyAvg}점)` : ''} · ${STRESS_REWARD_MAX}점 이하일 때 지급`}
           onMeasure={() => goMeasure('stress', true)}
           onClaim={() => markClaimed('stress')}
         />
