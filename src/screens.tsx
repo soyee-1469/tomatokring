@@ -21,7 +21,7 @@ import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { TrendLine as MiniBars } from './components/TrendLine'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
-import { completeOnboarding, DEFAULT_CARD_ORDER, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, RHYTHM_MIN_DAYS, saveVitalId, setCardOrder, todayDietPhoto, unpairRing, validDayCount, type HomeCardKind, type MeasureKind } from './session'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, todayDietPhoto, type HomeCardKind, type MeasureKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -528,6 +528,8 @@ function RewardBlock({
   tip,
   onMeasure,
   onClaim,
+  busy = false,
+  busyLabel = '측정 중',
 }: {
   measured: boolean
   claimed: boolean
@@ -542,8 +544,22 @@ function RewardBlock({
   tip?: string
   onMeasure: () => void
   onClaim: () => void
+  /** 카드 안에서 측정/불러오기 진행 중 */
+  busy?: boolean
+  busyLabel?: string
 }) {
   const navigate = useNavigate()
+  if (busy) {
+    return (
+      <div className="elder-score-reward">
+        <button type="button" className="elder-claim-btn busy" disabled>
+          <Ri name="loader-4" size={18} className="spin" />
+          <span>{busyLabel}</span>
+        </button>
+        <p className="elder-claim-guide under">끝나면 여기서 바로 결과가 보여요</p>
+      </div>
+    )
+  }
   return (
     <div className="elder-score-reward">
       {!measured ? (
@@ -841,6 +857,27 @@ export function HomeScreen() {
   const walkShow = walkMeasured
   const sleepShow = sleepMeasured
   /** 카드 탭 → 상세 보기(start=false), 측정 버튼 → 상세에서 바로 측정 시작(start=true, run=1) */
+  // 홈 카드 안에서 바로 측정/불러오기: 버튼이 '측정 중'으로 바뀌고 끝나면 값이 그 자리에서 갱신된다
+  const [busyKind, setBusyKind] = useState<MeasureKind | null>(null)
+  const runInline = (kind: MeasureKind) => {
+    if (busyKind) return
+    setBusyKind(kind)
+    const ms = kind === 'stress' ? 3000 : 1500
+    window.setTimeout(() => {
+      if (kind === 'stress') {
+        if (isMeasureDone(getSession(), 'stress')) {
+          // 재측정: 25~45 사이 값 (시각 기반 흔들림)
+          const v = 25 + (Math.floor(Date.now() / 1000) % 21)
+          addStressReading(v)
+        } else {
+          markMeasureDone('stress')
+        }
+      } else {
+        markMeasureDone(kind)
+      }
+      setBusyKind(null)
+    }, ms)
+  }
   const goMeasure = (kind: MeasureKind, start = false) => {
     const run = start ? '?run=1' : ''
     if (kind === 'sleep') {
@@ -895,7 +932,9 @@ export function HomeScreen() {
           readyText="측정 완료"
           doneLabel={`오늘 ${formatClaimP(STRESS_REWARD_P)} 받았어요`}
           tip={`오늘 ${stressSel}점${stressMyAvg !== null ? ` (내 평균 ${stressMyAvg}점)` : ''} · ${STRESS_REWARD_MAX}점 이하일 때 지급`}
-          onMeasure={() => goMeasure('stress', true)}
+          onMeasure={() => runInline('stress')}
+          busy={busyKind === 'stress'}
+          busyLabel="측정 중 · 편안히 계세요"
           onClaim={() => markClaimed('stress')}
         />
         {/* 7일 그래프는 포인트 버튼 아래 (받는 게 먼저) */}
@@ -969,7 +1008,9 @@ export function HomeScreen() {
           readyText="걸음 확인 완료"
           doneLabel={`오늘 ${formatClaimP(WALK_REWARD_P)} 받았어요`}
           tip={`오늘 ${stepsLabel}걸음 · ${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상일 때 지급`}
-          onMeasure={() => goMeasure('walk', true)}
+          onMeasure={() => runInline('walk')}
+          busy={busyKind === 'walk'}
+          busyLabel="걸음 불러오는 중"
           onClaim={() => markClaimed('walk')}
         />
         {hasPrev(day.steps) && (
@@ -1019,7 +1060,9 @@ export function HomeScreen() {
           measureLabel="수면 확인하고"
           readyText="확인 완료"
           doneLabel={`오늘 ${formatClaimP(SLEEP_REWARD_P)} 받았어요`}
-          onMeasure={() => goMeasure('sleep', true)}
+          onMeasure={() => runInline('sleep')}
+          busy={busyKind === 'sleep'}
+          busyLabel="수면 기록 불러오는 중"
           onClaim={() => markClaimed('sleep')}
         />
         {hasPrev(day.sleepHours) && (

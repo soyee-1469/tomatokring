@@ -61,13 +61,12 @@ export function dayLog(metric: LiveMetricId, date: Date): LogRow[] {
   const today = isSameDay(date, now)
   if (metric === 'stress') {
     if (today) {
-      if (!isMeasureDone(getSession(), 'stress')) return []
-      return [...STRESS_DAY_POINTS].reverse().map((pt) => ({
-        id: `m-${pt.h}`,
-        time: hhmmss(Math.round(pt.h * 60)),
-        value: pt.v,
-        mode: 'manual' as const,
-      }))
+      const ses = getSession()
+      if (!isMeasureDone(ses, 'stress')) return []
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const extra = (ses.stressExtra?.[key] ?? []).map((e, i) => ({ id: `x-${i}`, time: e.time, value: e.value, mode: 'manual' as const }))
+      const base = STRESS_DAY_POINTS.map((pt) => ({ id: `m-${pt.h}`, time: hhmmss(Math.round(pt.h * 60)), value: pt.v, mode: 'manual' as const }))
+      return [...base, ...extra].sort((a, b) => (a.time < b.time ? 1 : -1))
     }
     // 지난 날: 날짜 시드로 1~3회 직접 측정 (며칠에 한 번은 건너뜀) — 7일·한 달 추세용 샘플
     const ds = date.getFullYear() * 400 + date.getMonth() * 31 + date.getDate()

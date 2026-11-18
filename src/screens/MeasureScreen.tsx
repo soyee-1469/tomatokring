@@ -10,7 +10,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Header, Phone } from '../components/ui'
-import { getSession, isMeasureDone, markMeasureDone, saveDietPhoto, todayDietPhoto, type MeasureKind } from '../session'
+import { getSession, isMeasureDone, markMeasureDone, saveDietPhoto, todayDietPhoto, type MeasureKind, addStressReading } from '../session'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
 import { VitalDayBodyV2 } from './VitalDayBodyV2'
@@ -309,8 +309,11 @@ function LiveBody({
     setBusy(true)
     window.setTimeout(() => {
       setBusy(false)
-      // 스트레스 측정이 실제로 끝났을 때만 완료 처리
-      if (!initialMetric || initialMetric === 'stress') markMeasureDone('stress')
+      // 스트레스 측정이 실제로 끝났을 때만 완료 처리 (재측정이면 값 추가)
+      if (!initialMetric || initialMetric === 'stress') {
+        if (isMeasureDone(getSession(), 'stress')) addStressReading(25 + (Math.floor(Date.now() / 1000) % 21))
+        else markMeasureDone('stress')
+      }
     }, 900)
   }
   useEffect(() => {

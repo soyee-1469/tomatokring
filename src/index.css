@@ -13576,3 +13576,10 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-claim-guide.under.links { justify-content: center; gap: 6px; }
 .elder-home .elder-claim-guide.under.links button { border: 0; background: transparent; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer; }
 .elder-home .elder-claim-guide.under.links i { font-style: normal; color: var(--text-3); }
+
+/* 카드 안 측정 중 버튼 */
+.elder-home .elder-claim-btn.busy { width: 100%; height: var(--btn-h); border-radius: 14px; background: var(--brand-blue); color: #fff; opacity: 0.85; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 700; position: relative; overflow: hidden; }
+.elder-home .elder-claim-btn.busy::after { content: ''; position: absolute; left: 0; bottom: 0; height: 4px; background: rgba(255,255,255,0.7); animation: busy-fill 3s linear forwards; }
+@keyframes busy-fill { from { width: 0 } to { width: 100% } }
+.spin { animation: spin 1s linear infinite; display: inline-flex; }
+@keyframes spin { to { transform: rotate(360deg) } }

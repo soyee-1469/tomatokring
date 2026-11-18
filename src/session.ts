@@ -27,6 +27,8 @@ export type VitalingSession = {
   /** 오늘 측정 완료 여부 — 처음 진입 시에는 보상 대신 측정하기 */
   measuredToday: boolean
   doneMeasures: DoneMeasures
+  /** 오늘 홈/상세에서 추가로 직접 잰 스트레스 값들 (날짜 키 → [{time:'HH:MM:SS', value}]) */
+  stressExtra: Record<string, { time: string; value: number }[]>
   /** 실제 측정/업로드/확인을 마친 날짜 — 00:00 지나면 자동으로 초기화된 것으로 취급 */
   doneDates: DateKeys
   /** 포인트를 수령한 날짜 — 화면을 다시 열어도 유지 */
@@ -52,6 +54,7 @@ const defaultSession: VitalingSession = {
   vitalId: null,
   measuredToday: false,
   doneMeasures: {},
+  stressExtra: {},
   doneDates: {},
   claimedDates: {},
   dietPhoto: null,
@@ -100,6 +103,7 @@ function read(): VitalingSession {
         doneDates: { ...defaultSession.doneDates, ...parsed.doneDates },
         claimedDates: { ...defaultSession.claimedDates, ...parsed.claimedDates },
         autoMeasure: { ...defaultSession.autoMeasure, ...parsed.autoMeasure },
+        stressExtra: parsed.stressExtra ?? {},
         cardOrder: normalizeCardOrder(parsed.cardOrder),
         healthProfile: { ...defaultSession.healthProfile, ...parsed.healthProfile },
         healthGoals: { ...defaultSession.healthGoals, ...parsed.healthGoals },
@@ -160,6 +164,21 @@ export function markMeasureDone(kind: MeasureKind) {
     doneMeasures: { ...cur.doneMeasures, [kind]: true },
     doneDates: { ...cur.doneDates, [kind]: periodKey(kind) },
     validDays,
+  })
+}
+
+/** 스트레스 재측정: 오늘 기록에 값 하나 추가 (첫 측정이면 완료 처리까지) */
+export function addStressReading(value: number) {
+  const cur = read()
+  const key = periodKey('stress')
+  const now = new Date()
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`
+  const list = [...(cur.stressExtra[key] ?? []), { time, value }]
+  write({
+    ...cur,
+    doneMeasures: { ...cur.doneMeasures, stress: true },
+    doneDates: { ...cur.doneDates, stress: key },
+    stressExtra: { ...cur.stressExtra, [key]: list },
   })
 }
 
