@@ -1,6 +1,35 @@
 import type { CSSProperties } from 'react'
+import {
+  BookOpen, Brain, ChatCircleDots, ClipboardText, Drop, Flag, ForkKnife, Gear, Heartbeat,
+  MoonStars, PersonSimpleWalk, Pulse, Question, ArrowsClockwise, Thermometer, UserGear,
+} from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
 
-/** Remix Icon 래퍼. name은 'heart-pulse'처럼 접두사·접미사 없이 전달 */
+/**
+ * 아이콘 래퍼.
+ * - 기능·바이탈 아이콘(홈 카드, 바이탈 칸, 상세 히어로, 항목별 점수, 마이 메뉴)은 Phosphor 듀오톤으로 그린다.
+ * - 화살표·체크·닫기 같은 UI 아이콘은 Remix Icon 그대로.
+ * name은 Remix 이름('heart-pulse')을 그대로 받고, 아래 표에 있으면 듀오톤으로 바뀐다.
+ */
+const DUOTONE: Record<string, Icon> = {
+  brain: Brain,
+  restaurant: ForkKnife,
+  walk: PersonSimpleWalk,
+  moon: MoonStars,
+  survey: ClipboardText,
+  'heart-pulse': Heartbeat,
+  drop: Drop,
+  'temp-hot': Thermometer,
+  pulse: Pulse,
+  'chat-smile-3': ChatCircleDots,
+  flag: Flag,
+  'book-open': BookOpen,
+  question: Question,
+  refresh: ArrowsClockwise,
+  'settings-3': Gear,
+  'user-settings': UserGear,
+}
+
 export function Ri({
   name,
   fill = false,
@@ -14,6 +43,14 @@ export function Ri({
   className?: string
   style?: CSSProperties
 }) {
+  const Duo = DUOTONE[name]
+  if (Duo) {
+    return (
+      <i className={`ico-duo ${className}`.trim()} style={{ fontSize: size, lineHeight: 0, display: 'inline-flex', ...style }} aria-hidden>
+        <Duo size={size} weight="duotone" />
+      </i>
+    )
+  }
   return (
     <i
       className={`ri-${name}-${fill ? 'fill' : 'line'} ${className}`.trim()}
