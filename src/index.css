@@ -13447,3 +13447,8 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .week-strip.scrollable .week-day-wd, .week-strip.scrollable .week-day-n { line-height: 1; }
 
 .week-strip.scrollable .week-day.future { opacity: 0.3; cursor: default; }
+
+/* 날짜 스트립 헤더: 월만 작게 왼쪽, 선택한 날짜는 아래 히어로가 말해 줌 */
+.week-strip.scrollable .week-head { justify-content: flex-start; padding: 2px 20px 6px; }
+.week-strip.scrollable .week-head b { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.week-strip.scrollable .week-head button { top: 0; }

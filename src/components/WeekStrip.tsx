@@ -48,7 +48,7 @@ export function WeekStrip(props: {
   return (
     <div className="week-strip scrollable">
       <div className="week-head">
-        <b>{selected.getFullYear()}년 {selected.getMonth() + 1}월 {selected.getDate()}일 {WEEKDAYS[selected.getDay()]}요일</b>
+        <b>{selected.getMonth() + 1}월</b>
         {!sameDay(selected, today) && <button type="button" onClick={() => onSelect(today)}>오늘로</button>}
       </div>
       <div className="week-days" role="tablist" aria-label="날짜 선택" ref={listRef}>
