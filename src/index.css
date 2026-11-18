@@ -13381,3 +13381,29 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 
 .v2-page .v2-chart .normal { display: none; }
 .v2-page .v2-key i { display: none; }
+/* ——— 상세 화면: 홈처럼 회색 바탕 + 섹션별 흰 카드 (히어로만 색 배경) ——— */
+.v2-page, .v2-page .elder-body, .day-score-screen, .day-score-page { background: var(--cream); }
+.v2-page .elder-body, .day-score-page { padding: 0 16px 40px; }
+.v2-page .week-strip, .day-score-screen .week-strip { background: #fff; border-radius: 16px; padding: 12px 8px 10px; margin: 8px 0 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.v2-page .v2-hero { margin: 0 0 12px; border-radius: 16px; padding: 24px 20px 26px; }
+.v2-page .v2-hero.v2-m-hr { background: linear-gradient(180deg, #FFF0F1 0%, #fff 100%); }
+.v2-page .v2-hero.v2-m-spo2 { background: linear-gradient(180deg, #EEF4FF 0%, #fff 100%); }
+.v2-page .v2-hero.v2-m-temp { background: linear-gradient(180deg, #FFF6E6 0%, #fff 100%); }
+.v2-page .v2-hero.v2-m-hrv, .v2-page .v2-hero.v2-m-stress { background: linear-gradient(180deg, #F6EEFF 0%, #fff 100%); }
+.v2-page .v2-card, .v2-page .v2-claim, .v2-page .v2-details.open-always { background: #fff; border-radius: 16px; padding: 18px 16px; margin: 0 0 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.v2-page .v2-claim { margin: 0 0 12px; }
+.v2-page .v2-claim .claim-banner { margin-top: 0; }
+.v2-page .v2-card .v2-log { margin-bottom: 14px; }
+.v2-page .v2-stat3 { padding: 0 0 20px; }
+.v2-page .v2-link { margin-top: 4px; }
+/* 바디 리듬 */
+.day-score-page .rd-gauge { margin: 0 0 12px; border-radius: 16px; padding: 18px 16px 20px; background: linear-gradient(180deg, #F3F4F1 0%, #fff 100%); }
+.day-score-page .rhythm-hero { margin: 0 0 12px; border-radius: 16px; }
+.day-score-page .rd-say, .day-score-page .rd-week, .day-score-page .rd-details { background: #fff; border-radius: 16px; padding: 18px 16px; margin: 0 0 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.day-score-page .rd-pair { margin-bottom: 12px; }
+.day-score-page .rd-pair > div { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); padding: 16px; }
+.day-score-page .rd-details summary { padding-bottom: 0; }
+.day-score-page .rd-details[open] summary { padding-bottom: 12px; }
+
+.day-score-page .rd-details.open-always .v2-head { margin-bottom: 6px; }
+.day-score-page .rd-details.open-always .v2-label { font-size: 16px; font-weight: 700; }

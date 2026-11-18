@@ -203,14 +203,14 @@ export function DayScoreScreen() {
               </>
             )}
 
-            <details className="v2-details rd-details">
-              <summary>항목별 점수 보기 <Ri name="arrow-down-s" size={20} /></summary>
+            <section className="v2-details rd-details open-always">
+              <div className="v2-head"><b className="v2-label">항목별 점수</b></div>
             <div className="day-metric-list">
               {bundle.metrics.map((m) => (
                 <MetricRow key={m.id} metric={m} onOpen={() => navigate(m.to)} />
               ))}
             </div>
-            </details>
+            </section>
           </div>
         </div>
       </Phone>
