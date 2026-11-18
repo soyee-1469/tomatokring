@@ -7,7 +7,9 @@ import { Header, Phone } from '../components/ui'
 import { isMeasureDone, markMeasureDone } from '../session'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
-import { DateBar, parseDateKey, recentDate, todayStart, type Period } from './MeasureScreen'
+import { parseDateKey, recentDate, todayStart } from './MeasureScreen'
+import { DateLine } from '../components/DateLine'
+import { Ri } from '../components/Ri'
 import {
   SLEEP_COLORS,
 } from '../palette'
@@ -102,7 +104,6 @@ export function SleepAnalysisScreen() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [date, setDate] = useState(() => parseDateKey(params.get('d')) ?? todayStart())
-  const [period, setPeriod] = useState<Period>('day')
   const session = useSession()
   const sleepDone = isMeasureDone(session, 'sleep')
   const autoStart = params.get('run') === '1'
@@ -117,7 +118,7 @@ export function SleepAnalysisScreen() {
   return (
     <div className="stage">
       <Phone>
-        <div className="screen elder-home">
+        <div className="screen elder-home v2-page">
           <Header
             title="수면"
             backTo="/vitaling/home"
@@ -128,14 +129,25 @@ export function SleepAnalysisScreen() {
             }
           />
 
-          <DateBar period={period} date={date} onDate={setDate} onPeriod={setPeriod} />
+          <div className="scroll elder-body v2-page">
+            <DateLine date={date} today={todayStart()} onDate={setDate} />
 
-          <div className="scroll elder-body">
-            <div className="ms-act-hero">
-              <em>총 수면 시간</em>
-              <strong>7시간 12분</strong>
-              <span>수면 효율 84% · 최상 · {SLEEP_NIGHT.time}</span>
-            </div>
+            {/* 바이탈 상세와 같은 히어로: 1행 값(왼쪽)+아이콘(오른쪽), 2행 해석 */}
+            <section className="v2-hero v2-m-sleep">
+              <div className="v2-top">
+                <span className="v2-say-ico"><Ri name="moon" size={22} /></span>
+                <div className="v2-val">
+                  <strong className="text">7시간 12분</strong>
+                  <span className="v2-val-sub">수면 효율 84% · {SLEEP_NIGHT.time}</span>
+                </div>
+              </div>
+              <div className="v2-say">
+                <div>
+                  <b>푹 잘 잔 밤이에요.</b>
+                  <p>깊은 수면이 충분했어요. 오늘도 같은 시간에 잠자리에 들어 보세요.</p>
+                </div>
+              </div>
+            </section>
 
             <div className="elder-sleep-card ms-chart-card">
               <div className="ms-sleep-stages">

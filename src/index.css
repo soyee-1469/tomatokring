@@ -13593,3 +13593,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-claim-btn.busy > * { mix-blend-mode: normal; color: var(--text); }
 
 .elder-home .elder-claim-btn.busy::after { animation-duration: var(--busy-ms, 3s); }
+
+/* 수면 상세 히어로: 파랑 그라데이션, 아이콘 파랑 */
+.v2-page .v2-hero.v2-m-sleep { background: linear-gradient(180deg, #E8EFFF 0%, #fff 100%); }
+.v2-page .v2-hero.v2-m-sleep .v2-say-ico { color: #2F80ED; box-shadow: 0 2px 8px rgba(47,128,237,0.14); }
+.v2-page .v2-val strong.text { font-size: 40px; letter-spacing: -0.03em; }
+.v2-page.elder-home .elder-sleep-card { margin-bottom: 12px; }
