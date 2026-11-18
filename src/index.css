@@ -13437,3 +13437,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .week-strip.scrollable .week-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 8px; }
 .week-strip.scrollable .week-head b { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
 .week-strip.scrollable .week-head button { height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--chip-gray); font-size: 12px; font-weight: 600; color: var(--text); cursor: pointer; }
+/* 날짜 헤더 가운데, 선택한 날이 항상 가운데 오도록 스트립 양끝 여백 */
+.week-strip.scrollable .week-head { position: relative; justify-content: center; }
+.week-strip.scrollable .week-head button { position: absolute; right: 16px; top: 2px; }
+.week-strip.scrollable .week-days { padding: 0 calc(50% - 23px); }
