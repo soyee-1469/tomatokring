@@ -530,6 +530,7 @@ function RewardBlock({
   onClaim,
   busy = false,
   busyLabel = '측정 중',
+  busyMs = 3000,
 }: {
   measured: boolean
   claimed: boolean
@@ -547,12 +548,14 @@ function RewardBlock({
   /** 카드 안에서 측정/불러오기 진행 중 */
   busy?: boolean
   busyLabel?: string
+  /** 진행 그래프가 차오르는 시간 */
+  busyMs?: number
 }) {
   const navigate = useNavigate()
   if (busy) {
     return (
       <div className="elder-score-reward">
-        <button type="button" className="elder-claim-btn busy" disabled>
+        <button type="button" className="elder-claim-btn busy" disabled style={{ ['--busy-ms' as string]: `${busyMs}ms` }}>
           <Ri name="loader-4" size={18} className="spin" />
           <span>{busyLabel}</span>
         </button>
@@ -1011,6 +1014,7 @@ export function HomeScreen() {
           onMeasure={() => runInline('walk')}
           busy={busyKind === 'walk'}
           busyLabel="걸음 불러오는 중"
+          busyMs={1500}
           onClaim={() => markClaimed('walk')}
         />
         {hasPrev(day.steps) && (
@@ -1063,6 +1067,7 @@ export function HomeScreen() {
           onMeasure={() => runInline('sleep')}
           busy={busyKind === 'sleep'}
           busyLabel="수면 기록 불러오는 중"
+          busyMs={1500}
           onClaim={() => markClaimed('sleep')}
         />
         {hasPrev(day.sleepHours) && (

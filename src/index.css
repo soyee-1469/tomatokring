@@ -13583,3 +13583,13 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 @keyframes busy-fill { from { width: 0 } to { width: 100% } }
 .spin { animation: spin 1s linear infinite; display: inline-flex; }
 @keyframes spin { to { transform: rotate(360deg) } }
+/* 측정 중 버튼: 버튼 전체가 왼쪽부터 차오르는 진행 그래프 */
+.elder-home .elder-claim-btn.busy { background: #DCE8FB; color: var(--brand-blue); opacity: 1; }
+.elder-home .elder-claim-btn.busy::after { top: 0; bottom: 0; height: auto; background: var(--brand-blue); opacity: 1; animation: busy-fill 3s linear forwards; z-index: 0; }
+.elder-home .elder-claim-btn.busy > * { position: relative; z-index: 1; mix-blend-mode: difference; color: #fff; }
+/* 측정 중 버튼 글자: 혼합 모드 제거, 차오르는 영역은 반투명 파랑이라 글자는 항상 진한 색 */
+.elder-home .elder-claim-btn.busy { background: #E8EFFF; color: var(--text); }
+.elder-home .elder-claim-btn.busy::after { background: var(--brand-blue); opacity: 0.35; }
+.elder-home .elder-claim-btn.busy > * { mix-blend-mode: normal; color: var(--text); }
+
+.elder-home .elder-claim-btn.busy::after { animation-duration: var(--busy-ms, 3s); }
