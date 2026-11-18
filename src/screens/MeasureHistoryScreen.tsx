@@ -110,10 +110,6 @@ const LIVE_ICONS: Record<LiveMetricId, typeof Heartbeat> = { hr: Heartbeat, hrv:
 function isLiveMetric(v: string | null): v is LiveMetricId {
   return !!v && v in LIVE_TITLES
 }
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-function dateHeading(d: Date) {
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${WEEKDAY_KO[d.getDay()]}`
-}
 
 /** 브링 '전체 기록' 화면: 날짜 아래 그날의 모든 측정(자동/실시간)을 시각 순으로 */
 function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initialDate: Date }) {
@@ -132,7 +128,6 @@ function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initial
           <div className="scroll elder-body">
             <div className="elder-sleep-card ms-hist-card">
               <div className="ms-hist-head">
-                <b>{dateHeading(date)}</b>
                 <em>{rows.length}건 · 자동 {autoCount} · 직접 {manualCount}</em>
               </div>
               {rows.length === 0 ? (

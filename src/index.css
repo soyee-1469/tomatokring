@@ -13452,3 +13452,14 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .week-strip.scrollable .week-head { justify-content: flex-start; padding: 2px 20px 6px; }
 .week-strip.scrollable .week-head b { font-size: 13px; font-weight: 600; color: var(--text-2); }
 .week-strip.scrollable .week-head button { top: 0; }
+
+/* 해석 카드 서브타이틀 아래 날짜 */
+.v2-say-date { display: block; margin-top: 8px; font-size: 13px; color: var(--text-3); }
+/* 오늘 기록 목록 간격 */
+.v2-page .v2-card .v2-log { gap: 0; }
+.v2-page .v2-card .v2-log li { padding: 12px 0; }
+.day-score-page .rd-gauge { padding-top: 10px; }
+
+/* 전체 기록 날짜 바: 날짜·화살표 박스 없이 글자만 */
+.ms-date-center, .ms-date-center.static { background: transparent; box-shadow: none; padding: 8px 4px; }
+.ms-date-arrow { background: transparent; box-shadow: none; border: 0; }

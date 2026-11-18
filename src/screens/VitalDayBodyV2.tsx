@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Ri } from '../components/Ri'
-import { WeekStrip, addDays, sameDay, startOfDay } from '../components/WeekStrip'
+import { addDays, startOfDay } from '../components/WeekStrip'
+import { TrendBars } from '../components/TrendBars'
 import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measureLog'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
@@ -21,9 +22,15 @@ type Spec = {
   yMax: number
   zones: { label: string; color: string; test: (v: number) => boolean }[]
   zoneUnit: '분' | '%'
+  /** 최근 7일 선 색 (홈과 같은 항목 색) */
+  color: string
+  /** 최근 7일 위 눈금 (없으면 값 중 최대) */
+  trendMax?: number
+  trendMin?: number
 }
 const SPEC: Record<LiveMetricId, Spec> = {
   hr: {
+    color: '#CD313E', trendMin: 50, trendMax: 100,
     label: '심박수', unit: 'bpm', digits: 0, normal: [60, 100], yMin: 40, yMax: 120, zoneUnit: '분',
     zones: [
       { label: '일상생활', color: '#50B83D', test: (v) => v < 96 },
@@ -33,13 +40,13 @@ const SPEC: Record<LiveMetricId, Spec> = {
       { label: '최대 심박', color: '#E4605A', test: (v) => v >= 144 },
     ],
   },
-  spo2: { label: '혈중 산소', unit: '%', digits: 0, normal: [95, 100], yMin: 94, yMax: 100, zoneUnit: '%', zones: [
+  spo2: { color: '#2F80ED', trendMax: 100, trendMin: 90, label: '혈중 산소', unit: '%', digits: 0, normal: [95, 100], yMin: 94, yMax: 100, zoneUnit: '%', zones: [
     { label: '보통', color: '#50B83D', test: (v) => v >= 95 }, { label: '약간 낮음', color: '#F2994A', test: (v) => v >= 90 && v < 95 }, { label: '낮음', color: '#E4605A', test: (v) => v < 90 } ] },
-  temp: { label: '피부 온도', unit: '°C', digits: 1, normal: [36.0, 37.0], yMin: 36.0, yMax: 37.0, zoneUnit: '분', zones: [
+  temp: { color: '#FF6B4A', trendMin: 35, trendMax: 38, label: '피부 온도', unit: '°C', digits: 1, normal: [36.0, 37.0], yMin: 36.0, yMax: 37.0, zoneUnit: '분', zones: [
     { label: '정상', color: '#50B83D', test: (v) => v >= 36.0 && v < 37.0 }, { label: '약간 높음', color: '#F2994A', test: (v) => v >= 37.0 && v < 37.5 }, { label: '고온', color: '#E4605A', test: (v) => v >= 37.5 }, { label: '약간 낮음', color: '#9DBBE8', test: (v) => v >= 35.5 && v < 36.0 }, { label: '저온', color: '#2F80ED', test: (v) => v < 35.5 } ] },
-  hrv: { label: 'HRV 회복력', unit: 'ms', digits: 0, normal: [40, 60], yMin: 30, yMax: 50, zoneUnit: '%', zones: [
+  hrv: { color: '#8B5CF6', trendMin: 0, trendMax: 80, label: 'HRV 회복력', unit: 'ms', digits: 0, normal: [40, 60], yMin: 30, yMax: 50, zoneUnit: '%', zones: [
     { label: '평균', color: '#50B83D', test: (v) => v >= 40 && v < 50 }, { label: '평균 이상', color: '#9DBBE8', test: (v) => v >= 50 && v < 60 }, { label: '높음', color: '#2F80ED', test: (v) => v >= 60 }, { label: '평균 이하', color: '#F2994A', test: (v) => v < 40 } ] },
-  stress: { label: '스트레스', unit: '', digits: 0, normal: [0, 40], yMin: 0, yMax: 100, zoneUnit: '%', zones: [
+  stress: { color: '#8B5CF6', trendMax: 100, label: '스트레스', unit: '', digits: 0, normal: [0, 40], yMin: 0, yMax: 100, zoneUnit: '%', zones: [
     { label: '매우 낮음', color: '#50B83D', test: (v) => v < 21 }, { label: '낮음', color: '#A8D45A', test: (v) => v >= 21 && v < 41 }, { label: '보통', color: '#E9C34A', test: (v) => v >= 41 && v < 61 }, { label: '높음', color: '#F2994A', test: (v) => v >= 61 && v < 81 }, { label: '매우 높음', color: '#E4605A', test: (v) => v >= 81 } ] },
 }
 
@@ -147,14 +154,14 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
 }
 
 export function VitalDayBodyV2({
-  metric, date, onDate, busy, onMeasure, onHistory,
-}: { metric: LiveMetricId; date: Date; onDate: (d: Date) => void; busy: boolean; onMeasure: () => void; onHistory: () => void }) {
+  metric, busy, onMeasure, onHistory,
+}: { metric: LiveMetricId; busy: boolean; onMeasure: () => void; onHistory: () => void }) {
   const navigate = useNavigate()
   const session = useSession()
   const s = SPEC[metric]
   const today = useMemo(() => startOfDay(new Date()), [])
-  const [weekEnd, setWeekEnd] = useState(today)
-  const isToday = sameDay(date, today)
+  const date = today
+  const isToday = true
   const rows = useMemo(() => dayLog(metric, date), [metric, date, session.autoMeasure, session.doneDates])
   const vals = rows.map((r) => r.value)
   const has = vals.length > 0
@@ -165,18 +172,20 @@ export function VitalDayBodyV2({
     return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
   }, [metric, date])
   const say = has ? interpret(metric, isToday ? latest : mean, usual, isToday) : null
-  const dayScore = (d: Date) => {
-    const rs = dayLog(metric, d); if (!rs.length) return 0
-    const m = rs.reduce((a, r) => a + r.value, 0) / rs.length
-    return Math.round(((m - s.yMin) / (s.yMax - s.yMin)) * 100)
-  }
+  const week = useMemo(() => {
+    const WD = ['일', '월', '화', '수', '목', '금', '토']
+    const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
+    return {
+      values: days.map((d) => { const rs = dayLog(metric, d); return rs.length ? rs.reduce((a, r) => a + r.value, 0) / rs.length : 0 }),
+      labels: days.map((d, i) => (i === 6 ? '오늘' : WD[d.getDay()])),
+    }
+  }, [metric, today, session.autoMeasure, session.doneDates])
   const zoneCounts = s.zones.map((z) => vals.filter(z.test).length)
   const zoneTotal = zoneCounts.reduce((a, b) => a + b, 0)
   const manual = rows.find((r) => r.mode === 'manual')
 
   return (
     <>
-      <WeekStrip selected={date} weekEnd={weekEnd} today={today} onSelect={onDate} onShift={(dir) => { const n = addDays(weekEnd, dir * 7); setWeekEnd(n > today ? today : n) }} scoreOf={dayScore} />
 
       {/* 2) 한 줄 해석 + 오늘 값 */}
       <section className={`v2-hero v2-m-${metric}`}>
@@ -185,6 +194,7 @@ export function VitalDayBodyV2({
           <div>
             <b>{say ? say.head : isToday ? '아직 오늘 기록이 없어요.' : '이 날은 기록이 없어요.'}</b>
             <p>{say ? say.tip : metric === 'stress' ? '편안히 앉아 1분이면 돼요. 아래에서 바로 측정해 보세요.' : '반지를 끼고 있으면 자동으로 재요. 지금 바로 잴 수도 있어요.'}</p>
+            <span className="v2-say-date">{`오늘 · ${date.getMonth() + 1}월 ${date.getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][date.getDay()]}요일`}</span>
           </div>
         </div>
         {has && (
@@ -211,6 +221,12 @@ export function VitalDayBodyV2({
       </section>
 
       {/* 4) 오늘 기록 + 지금 측정하기 */}
+      {/* 최근 7일 — 홈 카드와 같은 선 그래프 (오늘은 지금까지 평균) */}
+      <section className="v2-card">
+        <div className="v2-head"><b className="v2-label">최근 7일</b><span className="v2-key">하루 평균{s.unit ? ` · ${s.unit}` : ''}</span></div>
+        <TrendBars values={week.values} labels={week.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
+      </section>
+
       <section className="v2-card">
         <div className="v2-head"><b className="v2-label">{isToday ? '오늘 기록' : '이 날 기록'}</b><button type="button" className="v2-more" onClick={onHistory}>전체 보기 <Ri name="arrow-right-s" size={16} /></button></div>
         <ul className="v2-log">
