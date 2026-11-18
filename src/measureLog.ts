@@ -10,9 +10,9 @@ export const AUTO_MODE_LABEL: Record<AutoMeasureMode, string> = { standard: '표
 
 const BASE: Record<LiveMetricId, { base: number; spread: number; digits: number; unit: string; auto: AutoMeasureKind | null }> = {
   hr: { base: 74, spread: 10, digits: 0, unit: 'bpm', auto: 'hr' },
-  hrv: { base: 40, spread: 7, digits: 0, unit: 'ms', auto: 'hr' },
+  hrv: { base: 40, spread: 7, digits: 0, unit: 'ms', auto: null }, // 반지는 HRV·피부 온도를 한 시간에 한 번 잰다 (심박수 주기와 무관)
   spo2: { base: 97, spread: 1.5, digits: 0, unit: '%', auto: 'spo2' },
-  temp: { base: 36.5, spread: 0.3, digits: 1, unit: '°C', auto: 'hr' },
+  temp: { base: 36.5, spread: 0.3, digits: 1, unit: '°C', auto: null },
   stress: { base: 36, spread: 8, digits: 0, unit: '점', auto: null },
 }
 

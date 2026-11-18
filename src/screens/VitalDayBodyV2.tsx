@@ -130,6 +130,10 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
         if (bot - top < 2) return null
         return <rect key={`r${p.h}`} x={cx(p.h) - bandW / 2} y={top} width={bandW} height={bot - top} rx={bandW / 2} className="rangeband" />
       })}
+      {/* 평균 점을 얇은 선으로 연결 */}
+      {hourly.length > 1 && (
+        <path d={hourly.map((p, i) => `${i === 0 ? 'M' : 'L'} ${cx(p.h)} ${y(p.mean)}`).join(' ')} className="mline" />
+      )}
       {/* 시간대별 평균 점 (마지막만 조금 크게) */}
       {hourly.map((p, i) => {
         const last = i === hourly.length - 1
