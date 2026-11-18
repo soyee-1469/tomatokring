@@ -13521,3 +13521,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .v2-page .v2-val strong { font-size: 56px; line-height: 1; }
 .v2-page .v2-val-sub { font-size: 14px; }
 .v2-page .v2-hero { padding: 22px 20px 24px; }
+/* 듀오톤 아이콘: 칩 정중앙 */
+.ico-duo { display: inline-flex !important; align-items: center; justify-content: center; line-height: 0; vertical-align: middle; }
+.ico-duo svg { display: block; }
+/* 설문 카드 설명 가운데 */
+.elder-home .elder-fit-card.survey .elder-fit-num { text-align: center; }
+.elder-home .elder-fit-card.survey .elder-fit-num em { display: block; text-align: center; }
