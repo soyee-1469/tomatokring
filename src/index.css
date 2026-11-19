@@ -13599,3 +13599,98 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .v2-page .v2-hero.v2-m-sleep .v2-say-ico { color: #2F80ED; box-shadow: 0 2px 8px rgba(47,128,237,0.14); }
 .v2-page .v2-val strong.text { font-size: 40px; letter-spacing: -0.03em; }
 .v2-page.elder-home .elder-sleep-card { margin-bottom: 12px; }
+
+/* ——— 홈 맨 위 '오늘의 포인트' 카드: 토마톡 링만의 차별점(건강 확인 = 포인트) ——— */
+.elder-home .elder-point-card {
+  margin: 0 0 14px;
+  padding: 14px 16px 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--cream-line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.elder-home .elder-point-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.elder-home .elder-point-main { display: grid; gap: 2px; min-width: 0; }
+.elder-home .elder-point-main em {
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+  letter-spacing: -0.02em;
+}
+.elder-home .elder-point-main strong {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  color: var(--tomato);
+  font-variant-numeric: tabular-nums;
+}
+.elder-home .elder-point-main span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: -0.02em;
+}
+.elder-home .elder-point-wallet {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--cream-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+.elder-home .elder-point-wallet em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--text-3); }
+.elder-home .elder-point-wallet b { font-size: 14px; font-weight: 800; letter-spacing: -0.02em; }
+.elder-home .elder-point-wallet i { color: var(--text-3); font-size: 16px; line-height: 1; }
+.elder-home .elder-point-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+.elder-home .elder-point-list button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  color: var(--text);
+  cursor: pointer;
+}
+.elder-home .elder-point-ico {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+}
+/* 아이콘은 전부 회색 한 가지 — 색은 큰 숫자(토마토) 하나만 */
+.elder-home .elder-point-list .elder-point-ico { background: var(--chip-gray); color: var(--text-2); }
+.elder-home .elder-point-list li.done .elder-point-ico { background: var(--text); color: #fff; }
+.elder-home .elder-point-list b { font-size: 13px; font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; }
+.elder-home .elder-point-list li.done b { color: var(--text); }
+/* 포인트 카드에서 항목을 누르면 해당 카드가 잠깐 강조됨 */
+.elder-home .elder-fit-card.flash { animation: elder-card-flash 1.2s ease-out; }
+@keyframes elder-card-flash {
+  0% { box-shadow: 0 0 0 3px rgba(205, 49, 62, 0.35); }
+  100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+}

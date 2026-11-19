@@ -33,6 +33,7 @@ import {
 } from './palette'
 import { TERMS_DOCS, TERMS_LIST, type TermsDocId } from './termsDocs'
 import { useSession } from './useSession'
+import { BALANCES } from './screens/RewardHistoryScreen'
 
 
 export function SerialScreen() {
@@ -447,6 +448,52 @@ function sleepEfficiencyLevel(pct: number) {
   if (pct >= 41) return { label: '보통', tone: 'warn' as const }
   if (pct >= 21) return { label: '하', tone: 'bad' as const }
   return { label: '최하', tone: 'bad' as const }
+}
+
+
+/** 홈 맨 위 '오늘의 포인트' 카드 — 토마톡 링만의 차별점(건강 챙기면 포인트)을 첫 화면에서 바로 보여준다.
+ *  큰 숫자 = 오늘 더 받을 수 있는 포인트(설문은 이달 미수령 시 포함), 아래 다섯 칸 = 항목별 체크리스트 */
+const POINT_ITEMS: readonly { kind: HomeCardKind; label: string; icon: string; points: number }[] = [
+  { kind: 'stress', label: '스트레스', icon: 'brain', points: STRESS_REWARD_P },
+  { kind: 'diet', label: '식단', icon: 'restaurant', points: DIET_REWARD_P },
+  { kind: 'walk', label: '걷기', icon: 'walk', points: WALK_REWARD_P },
+  { kind: 'sleep', label: '수면', icon: 'moon', points: SLEEP_REWARD_P },
+  { kind: 'survey', label: '설문', icon: 'survey', points: SURVEY_REWARD_P },
+]
+function TodayPointsCard({ claimed, onItem, onHistory }: { claimed: Record<HomeCardKind, boolean>; onItem: (kind: HomeCardKind) => void; onHistory: () => void }) {
+  const got = POINT_ITEMS.filter((it) => claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
+  const left = POINT_ITEMS.filter((it) => !claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
+  const allDone = left === 0
+  return (
+    <section className="elder-point-card" aria-label="오늘의 포인트">
+      <div className="elder-point-head">
+        <div className="elder-point-main">
+          <em>{allDone ? '오늘 포인트를 다 받았어요' : '오늘 받을 수 있는 포인트'}</em>
+          <strong>{formatClaimP(allDone ? got : left)}</strong>
+        </div>
+        <button type="button" className="elder-point-wallet" onClick={onHistory}>
+          <em>보유</em>
+          <b>{formatClaimP(BALANCES.pointAvailable)}</b>
+          <Ri name="arrow-right-s" size={16} />
+        </button>
+      </div>
+      <ul className="elder-point-list">
+        {POINT_ITEMS.map((it) => {
+          const done = claimed[it.kind]
+          return (
+            <li key={it.kind} className={`${it.kind} ${done ? 'done' : ''}`}>
+              <button type="button" onClick={() => onItem(it.kind)} aria-label={`${it.label} ${formatClaimP(it.points)} ${done ? '받음' : '받기'}`}>
+                <span className="elder-point-ico">
+                  <Ri name={done ? 'check' : it.icon} fill={!done} size={22} />
+                </span>
+                <b>{it.label}</b>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
 }
 
 /** 점수 + 이상 바이탈을 반영한 오늘 종합 요약 (무지개) — 요약 전용, 보상 없음 */
@@ -881,6 +928,18 @@ export function HomeScreen() {
       setBusyKind(null)
     }, ms)
   }
+  /** 포인트 카드의 항목을 누르면 홈의 해당 카드로 스크롤 (카드가 없으면 상세로) */
+  const CARD_CLASS: Record<HomeCardKind, string> = { stress: 'stress', diet: 'diet', walk: 'activity', sleep: 'sleep', survey: 'survey' }
+  const focusCard = (kind: HomeCardKind) => {
+    const el = document.querySelector<HTMLElement>(`.elder-home .elder-fit-card.${CARD_CLASS[kind]}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      el.classList.add('flash')
+      window.setTimeout(() => el.classList.remove('flash'), 1200)
+    } else {
+      goMeasure(kind)
+    }
+  }
   const goMeasure = (kind: MeasureKind, start = false) => {
     const run = start ? '?run=1' : ''
     if (kind === 'sleep') {
@@ -1142,18 +1201,16 @@ export function HomeScreen() {
               </div>
             ) : (
               <>
+                <TodayPointsCard
+                  claimed={{ stress: stressClaimed, diet: dietClaimed, walk: walkClaimed, sleep: sleepClaimed, survey: surveyClaimed }}
+                  onItem={focusCard}
+                  onHistory={() => navigate('/reward/history')}
+                />
                 <div className="elder-section-row">
                   <p className="elder-section-label">
                     {statusLabel}
                     <MetricInfoButton metric="health" className="elder-section-info" />
                   </p>
-                  <button
-                    type="button"
-                    className="elder-device-id"
-                    onClick={() => navigate('/reward/history')}
-                  >
-                    보상내역
-                  </button>
                 </div>
                 {validDays >= RHYTHM_MIN_DAYS ? (
                   <TodayScoreCard
