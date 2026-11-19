@@ -900,10 +900,10 @@ function SleepTimeline({ start, end, segments }: { start: string; end: string; s
 
 /** 홈 오늘 바이탈 — 값 + 최근 7일 선 (마지막이 오늘). 브링처럼 홈에서 추세가 보이게 */
 const HOME_VITALS = [
-  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', status: '일상생활', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: HOME_SOFT.tomato, week: [68, 71, 74, 70, 73, 69, 72] },
-  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', status: '보통', icon: 'drop', color: HOME_COLORS.berry, soft: HOME_SOFT.berry, week: [97, 98, 96, 98, 97, 98, 98] },
-  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', status: '정상', icon: 'temp-hot', color: HOME_COLORS.orange, soft: HOME_SOFT.orange, week: [36.4, 36.5, 36.6, 36.7, 36.5, 36.6, 36.6] },
-  { id: 'hrv', label: '심박변이도', value: 42, unit: 'ms', status: '평균', icon: 'pulse', color: HOME_COLORS.beet, soft: HOME_SOFT.beet, week: [40, 38, 45, 41, 44, 39, 42] },
+  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: HOME_SOFT.tomato, week: [68, 71, 74, 70, 73, 69, 72] },
+  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', icon: 'drop', color: HOME_COLORS.berry, soft: HOME_SOFT.berry, week: [97, 98, 96, 98, 97, 98, 98] },
+  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', icon: 'temp-hot', color: HOME_COLORS.orange, soft: HOME_SOFT.orange, week: [36.4, 36.5, 36.6, 36.7, 36.5, 36.6, 36.6] },
+  { id: 'hrv', label: '심박변이도', value: 42, unit: 'ms', icon: 'pulse', color: HOME_COLORS.beet, soft: HOME_SOFT.beet, week: [40, 38, 45, 41, 44, 39, 42] },
 ] as const
 
 /** 아주 작은 7일 선 그래프 (홈 바이탈 칸용) — 축·눈금 없이 흐름만, 마지막 점은 오늘 */
@@ -1459,7 +1459,7 @@ export function HomeScreen() {
                         <span className="home-vital-body">
                           <span className="home-vital-copy">
                             <strong>{value}<small>{v.unit}</small></strong>
-                            <span>{vitalNow ? '방금 측정' : v.status}</span>
+                            <span>{vitalNow ? '방금 측정' : vitalStatus(v.id, v.value).label}</span>
                           </span>
                           <Spark values={week} color={v.color} />
                         </span>
@@ -1501,12 +1501,13 @@ export function HomeScreen() {
   )
 }
 
-/** 측정 완료 모달 — 방금 잰 네 가지 값과 상태. 브링 실시간 측정 완료 화면과 같은 역할 */
+/** 바이탈 상태 글자 — 네 지표 모두 정상·낮음·높음 한 체계 (홈 칸, 측정 완료 모달 공용) */
 function vitalStatus(id: 'hr' | 'spo2' | 'temp' | 'hrv', v: number): { label: string; tone: 'ok' | 'mid' | 'low' } {
   if (id === 'hr') return v < 60 ? { label: '낮음', tone: 'mid' } : v <= 100 ? { label: '정상', tone: 'ok' } : { label: '높음', tone: 'low' }
   if (id === 'spo2') return v >= 95 ? { label: '정상', tone: 'ok' } : v >= 90 ? { label: '낮음', tone: 'mid' } : { label: '매우 낮음', tone: 'low' }
   if (id === 'temp') return v < 36 ? { label: '낮음', tone: 'mid' } : v <= 37.2 ? { label: '정상', tone: 'ok' } : { label: '높음', tone: 'low' }
-  return v >= 40 ? { label: '좋음', tone: 'ok' } : v >= 30 ? { label: '보통', tone: 'mid' } : { label: '낮음', tone: 'low' }
+  // 심박변이도: 높을수록 좋음. 글자는 다른 지표와 같은 정상·낮음·높음 체계
+  return v > 60 ? { label: '높음', tone: 'ok' } : v >= 40 ? { label: '정상', tone: 'ok' } : v >= 30 ? { label: '낮음', tone: 'mid' } : { label: '낮음', tone: 'low' }
 }
 function VitalResultSheet({ values, onClose }: { values: Record<'hr' | 'spo2' | 'temp' | 'hrv', number>; onClose: () => void }) {
   const now = new Date()
