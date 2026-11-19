@@ -63,17 +63,16 @@ export function SerialScreen() {
       return
     }
     saveVitalId(normalized)
-    // 이미 반지가 연결된 사용자(설정에서 번호만 바꾸는 경우)는 홈으로, 처음이면 반지 연결로
-    navigate(session.paired ? '/vitaling/home' : '/vitaling/pair', { replace: true })
+    // 고유번호 연동은 처음 시작 흐름에서 뺐고 설정에서만 한다 (2026-11-19)
+    navigate('/vitaling/settings', { replace: true })
   }
 
   return (
     <div className="stage">
       <Phone>
         <div className="screen">
-          <Header title="고유번호 연동" backTo={session.onboarded && session.paired ? '/vitaling/settings' : '/vitaling/terms'} />
+          <Header title="고유번호 연동" backTo="/vitaling/settings" />
           <div className="scroll">
-            <Steps step={2} total={3} />
             <p className="eyebrow">토마톡 링 연동</p>
             <h2 className="headline">
               브링 앱의<br />
@@ -123,7 +122,7 @@ export function TermsScreen() {
         <div className="screen">
           <Header title="서비스 동의" backTo="/service" />
           <div className="scroll">
-            <Steps step={1} total={3} />
+            <Steps step={1} total={2} />
             <div className="terms-head">
               <p className="eyebrow">서비스 시작</p>
               <h2 className="headline">토마톡 링을 쓰려면<br />동의가 필요해요</h2>
@@ -155,7 +154,7 @@ export function TermsScreen() {
             </div>
           </div>
           <div className="footer shadow">
-            <PrimaryButton disabled={!all} onClick={() => { completeOnboarding(''); navigate('/vitaling/serial', { replace: true }) }}>
+            <PrimaryButton disabled={!all} onClick={() => { completeOnboarding(''); navigate('/vitaling/pair', { replace: true }) }}>
               동의하고 계속하기
             </PrimaryButton>
           </div>
@@ -468,12 +467,12 @@ function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, b
       {leftCount === 0 ? (
         <div className="elder-mission-done">
           <Ri name="checkbox-circle" fill size={22} />
-          <b>오늘 미션을 다 했어요</b>
+          <b>미션을 모두 완료했어요</b>
           <span>{got.toLocaleString('ko-KR')} 포인트 받았어요</span>
         </div>
       ) : (
         <p className="elder-mission-say">
-          <b>{leftCount}</b>개만 더 하면 <b>{left.toLocaleString('ko-KR')}</b> 포인트 획득
+          <b>{leftCount}</b>개 더 완료하면 <b>{left.toLocaleString('ko-KR')}</b> 포인트를 받아요
         </p>
       )}
       <div className="elder-mission-row">
@@ -501,7 +500,7 @@ function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, b
 
 /** 홈 '이상 징후' 카드 — 브링 판정이 '감지'인 날에만 홈에 나온다. 컨디션 체크(좋아요·보통·안 좋아요)를 받는다.
  *  토마토 연한 배경은 이 카드에만 쓴다 (홈에서 빨강 계열을 쓰는 유일한 자리). 평소와 비슷·준비 중 상태는 상세 화면에서만 본다 */
-const CONDITION_OPTIONS: readonly { id: ConditionAnswer; label: string; icon: string; advice: string }[] = [
+export const CONDITION_OPTIONS: readonly { id: ConditionAnswer; label: string; icon: string; advice: string }[] = [
   { id: 'good', label: '좋아요', icon: 'emotion-happy', advice: '지금처럼 좋은 생활 리듬을 유지해 보세요.' },
   { id: 'so-so', label: '보통이에요', icon: 'emotion-normal', advice: '가벼운 활동과 휴식으로 하루의 균형을 맞춰 보세요.' },
   { id: 'bad', label: '안 좋아요', icon: 'emotion-unhappy', advice: '오늘은 무리하지 말고 쉬어 주세요. 불편함이 계속되면 전문가와 상의해 보세요.' },
@@ -546,7 +545,7 @@ function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }
         </span>
         <strong>{days}<small>/ {RHYTHM_MIN_DAYS}일</small></strong>
         <b>바디 리듬을 준비하고 있어요</b>
-        <p>잘 때 반지를 끼고 자면 하루가 쌓여요.<br />수면 기록이 있는 날만 인정돼요.</p>
+        <p>반지를 끼고 자면 수면 기록이 쌓여요.</p>
       </button>
     </div>
   )
@@ -644,7 +643,7 @@ function RewardBlock({
           <Ri name="loader-4" size={18} className="spin" />
           <span>{busyLabel}</span>
         </button>
-        <p className="elder-claim-guide under">끝나면 여기서 바로 결과가 보여요</p>
+        <p className="elder-claim-guide under">측정이 끝나면 결과를 보여드려요.</p>
       </div>
     )
   }
@@ -752,11 +751,11 @@ function SurveyRewardCard({
       <RewardBlock
         measured={joined}
         claimed={claimed}
-        guide="설문 3문항에 답하면 지급 · 월 1회"
+        guide="3문항 응답 시 지급 · 월 1회"
         points={formatClaimP(SURVEY_REWARD_P)}
-        measureLabel="설문하고"
-        readyText="설문 완료"
-        doneLabel={`오늘 ${formatClaimP(SURVEY_REWARD_P)} 받았어요`}
+        measureLabel="설문 참여하고"
+        readyText=""
+        doneLabel={`이번 달 ${formatClaimP(SURVEY_REWARD_P)} 받았어요`}
         onMeasure={onJoin}
         onClaim={onClaim}
       />
@@ -827,8 +826,8 @@ function DietUploadCard({
           ) : (
             <button type="button" className="diet-drop" onClick={onMeasure} aria-label="식단 사진 올리기">
               <Ri name="restaurant" size={30} />
-              <span>오늘의 식단 등록 전</span>
-              <em>여기를 눌러 식사 사진을 올려 보세요</em>
+              <span>오늘 식단 사진이 없어요</span>
+              <em>식사 사진을 올려 보세요.</em>
             </button>
           )}
         </div>
@@ -836,11 +835,11 @@ function DietUploadCard({
       <RewardBlock
         measured={measured}
         claimed={claimed}
-        guide="아침·점심·저녁 중 1회 올리면 지급 · 1일 1회"
+        guide="식단 사진 등록 시 지급 · 하루 1회"
         points={formatClaimP(DIET_REWARD_P)}
         measureLabel="사진 올리고"
-        repeatLabel="식단 더 올리기"
-        readyText="등록 완료"
+        repeatLabel="사진 더 올리기"
+        readyText=""
         doneLabel={`오늘 ${formatClaimP(DIET_REWARD_P)} 받았어요`}
         onMeasure={onMeasure}
         onClaim={onClaim}
@@ -985,7 +984,7 @@ export function HomeScreen() {
     setSyncing(true)
     window.setTimeout(() => {
       setSyncing(false)
-      setToast('반지에서 최신 기록을 불러왔어요')
+      setToast('반지 기록을 불러왔어요')
       window.setTimeout(() => setToast(null), 1600)
     }, 1200)
   }
@@ -1013,7 +1012,6 @@ export function HomeScreen() {
   }
 
   if (!session.onboarded) return <Navigate to="/vitaling/terms" replace />
-  if (!session.vitalId) return <Navigate to="/vitaling/serial" replace />
 
   const tiles = profile.tiles
   // 홈은 항상 오늘 기준. 지난 날짜는 상세 화면에서 본다
@@ -1130,7 +1128,7 @@ export function HomeScreen() {
                 </div>
               </div>
             ) : (
-              <p className="elder-fit-hint">편안히 앉아 오늘의 스트레스를 측정해 보세요.</p>
+              <p className="elder-fit-hint">편안히 앉아 스트레스를 측정해 보세요.</p>
             )}
           </div>
         </button>
@@ -1138,16 +1136,16 @@ export function HomeScreen() {
             measured={stressMeasured}
           claimed={stressClaimed}
           eligible={stressEligible}
-          guide={`${STRESS_REWARD_MAX}점 이하면 지급 · 1일 1회`}
+          guide={`${STRESS_REWARD_MAX}점 이하일 때 지급 · 하루 1회`}
           points={formatClaimP(STRESS_REWARD_P)}
           measureLabel="측정하고"
           repeatLabel="다시 측정하기"
-          readyText="측정 완료"
+          readyText=""
           doneLabel={`오늘 ${formatClaimP(STRESS_REWARD_P)} 받았어요`}
           tip={`오늘 ${stressSel}점${stressMyAvg !== null ? ` (내 평균 ${stressMyAvg}점)` : ''} · ${STRESS_REWARD_MAX}점 이하일 때 지급`}
           onMeasure={() => runInline('stress')}
           busy={busyKind === 'stress'}
-          busyLabel="측정 중 · 편안히 계세요"
+          busyLabel="측정 중 · 손을 가만히 두세요"
           onClaim={() => markClaimed('stress')}
         />
         {/* 7일 그래프는 포인트 버튼 아래 (받는 게 먼저) */}
@@ -1208,7 +1206,7 @@ export function HomeScreen() {
                 />
               </>
             ) : (
-              <p className="elder-fit-hint">오늘 걸음이 아직 없어요. 반지를 끼고 걸으면 자동으로 쌓여요.</p>
+              <p className="elder-fit-hint">반지를 끼고 걸으면 자동으로 기록돼요.</p>
             )}
           </div>
         </button>
@@ -1221,7 +1219,7 @@ export function HomeScreen() {
           measureLabel=""
           readyText=""
           doneLabel={`오늘 ${formatClaimP(WALK_REWARD_P)} 받았어요`}
-          tip={`${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음까지 ${walkRemain.toLocaleString('ko-KR')}걸음 더 걸으면 ${formatClaimP(WALK_REWARD_P)} · 1일 1회`}
+          tip={`하루 ${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 달성 시 ${formatClaimP(WALK_REWARD_P)}`}
           onMeasure={() => goMeasure('walk')}
           onClaim={() => markClaimed('walk')}
         />
@@ -1252,10 +1250,10 @@ export function HomeScreen() {
             ) : hasPrev(day.sleepHours) ? (
               <div className="elder-fit-num">
                 <strong className="text">{hoursLabel(sleepYday)}</strong>
-                <em>그제 밤 수면 · 지난밤 기록은 아직 없어요</em>
+                <em>그제 밤 기록 · 지난밤 기록 없음</em>
               </div>
             ) : (
-              <p className="elder-fit-hint">지난밤 기록이 아직 없어요. 잘 때 반지를 끼면 자동으로 기록돼요.</p>
+              <p className="elder-fit-hint">반지를 끼고 자면 수면이 기록돼요.</p>
             )}
           </div>
         </button>
@@ -1266,7 +1264,7 @@ export function HomeScreen() {
             guide=""
             points={formatClaimP(SLEEP_REWARD_P)}
             measureLabel=""
-            readyText="지난밤 수면"
+            readyText=""
             doneLabel={`오늘 ${formatClaimP(SLEEP_REWARD_P)} 받았어요`}
             onMeasure={() => goMeasure('sleep')}
             onClaim={() => markClaimed('sleep')}
@@ -1274,7 +1272,7 @@ export function HomeScreen() {
         ) : (
           <p className="elder-claim-tip">
             <Ri name="heart-3" fill size={12} />
-            지난밤 기록이 들어오면 {formatClaimP(SLEEP_REWARD_P)} 받을 수 있어요 · 1일 1회
+            수면 기록이 있으면 {formatClaimP(SLEEP_REWARD_P)} · 하루 1회
           </p>
         )}
         {sleepShow && (
@@ -1302,7 +1300,7 @@ export function HomeScreen() {
 
   const validDays = validDayCount(session)
   const dateLabel = formatHomeDate(HOME_TODAY)
-  const statusLabel = '오늘 나의 상태'
+  const statusLabel = '오늘의 상태'
 
   return (
     <div className="stage">
@@ -1351,7 +1349,7 @@ export function HomeScreen() {
                     )}
                   </span>
                   <span className={`elder-date-battery ${battery.tone}`} aria-label={`반지 배터리 ${battery.text}`}>
-                    <Ri name={battery.icon} fill size={18} />
+                    <svg className="elder-ring-ico" viewBox="0 0 20 20" aria-hidden><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.6" /></svg><Ri name={battery.icon} fill size={18} />
                     {battery.text}
                   </span>
                 </div>
@@ -1363,8 +1361,8 @@ export function HomeScreen() {
                 <div className="elder-ble-ico">
                   <Ri name="bluetooth" fill size={36} />
                 </div>
-                <b>블루투스를 켜고<br />반지와 연결해 주세요</b>
-                <p>휴대폰 블루투스를 켠 뒤<br />토마톡 링을 가까이 두면 찾을 수 있어요.</p>
+                <b>토마톡 링을 연결해 주세요</b>
+                <p>블루투스를 켜고 반지를 휴대폰 가까이에 두세요.</p>
                 <PrimaryButton onClick={() => navigate('/vitaling/pair')}>반지 연결하기</PrimaryButton>
                 <button type="button" className="ghost-link" onClick={openVitalingShop}>
                   반지가 없어요 · 구매하기
@@ -1375,7 +1373,7 @@ export function HomeScreen() {
                 <div className="elder-section-row">
                   <p className="elder-section-label">오늘의 미션</p>
                   <button type="button" className="elder-mission-link" onClick={() => navigate('/reward/history')}>
-                    보상내역 <Ri name="arrow-right" size={14} />
+                    보상 내역 <Ri name="arrow-right" size={14} />
                   </button>
                 </div>
                 <TodayMissionCard
@@ -1431,7 +1429,7 @@ export function HomeScreen() {
                       )
                     })}
                   </div>
-                  {/* 지금 한 번 더 재기: 다른 측정 버튼과 같은 60px 파란 버튼 (포인트 유무로 크기·모양을 다르게 하지 않는다). 자동 측정은 계속된다 */}
+                  {/* 지금 한 번 더 재기: 크기는 다른 측정 버튼과 같은 60px, 색은 흰 바탕 (파랑·초록은 포인트가 걸린 동작에만). 자동 측정은 계속된다 */}
                   <div className="elder-vital-measure">
                     {vitalBusy ? (
                       <button type="button" className="elder-claim-btn busy" disabled style={{ ['--busy-ms' as string]: '3000ms' }}>
@@ -1439,11 +1437,11 @@ export function HomeScreen() {
                         <span>측정 중 · 손을 가만히 두세요</span>
                       </button>
                     ) : (
-                      <button type="button" className="elder-claim-btn secondary with-points" onClick={measureVitalsNow}>
+                      <button type="button" className="elder-claim-btn plain" onClick={measureVitalsNow}>
                         <span>지금 측정하기</span>
                       </button>
                     )}
-                    <p className="elder-claim-guide under">네 가지를 한 번에 재요 · 평소에는 반지가 자동으로 재요</p>
+                    <p className="elder-claim-guide under">반지가 자동으로 측정해요.</p>
                   </div>
                 </section>
 
@@ -1809,19 +1807,3 @@ export function HelpScreen() {
 
 
 /** 이상 징후 상세 — 다음 단계에서 채움 (상태 히어로 · 5일 징후 변화 · 수면 중 지표 슬라이더 · 컨디션 체크) */
-export function SignalScreen() {
-  const navigate = useNavigate()
-  return (
-    <div className="stage">
-      <Phone>
-        <div className="screen">
-          <Header title="이상 징후" backTo="/vitaling/home" />
-          <div className="scroll" style={{ padding: 24, textAlign: 'center', color: 'var(--text-2)' }}>
-            <p style={{ marginTop: 40, fontSize: 15, lineHeight: 1.6 }}>상세 화면은 다음 단계에서 만들어요.<br />상태 히어로 · 징후 변화 · 수면 중 지표 · 컨디션 체크</p>
-            <PrimaryButton onClick={() => navigate('/vitaling/home')}>홈으로</PrimaryButton>
-          </div>
-        </div>
-      </Phone>
-    </div>
-  )
-}

@@ -6,7 +6,6 @@ import {
   PairScreen,
   SettingsScreen,
   SerialScreen,
-  SignalScreen,
   TermsScreen,
 } from './screens'
 import { DayScoreScreen } from './screens/DayScoreScreen'
@@ -16,6 +15,7 @@ import { MeasureScreen } from './screens/MeasureScreen'
 import { AutoMeasureScreen } from './screens/AutoMeasureScreen'
 import { SurveyReportScreen } from './screens/SurveyReportScreen'
 import { MyScreen } from './screens/MyScreen'
+import { SignalScreen } from './screens/SignalScreen'
 import { GoalsScreen, ProfileScreenMy } from './screens/ProfileGoalsScreen'
 import { RewardHistoryAllScreen, RewardHistoryScreen } from './screens/RewardHistoryScreen'
 import {

@@ -3,6 +3,7 @@ import {
   BatteryCharging, BatteryEmpty, BatteryFull, BatteryHigh, BatteryLow, BatteryMedium, BatteryWarning,
   BookOpen, Brain, ChatCircleDots, ClipboardText, Drop, Flag, ForkKnife, Gear, Heartbeat,
   Moon, Footprints, Question, Siren, ArrowsClockwise, Thermometer, UserGear,
+  Smiley, SmileyMeh, SmileySad,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 
@@ -35,6 +36,10 @@ const DUOTONE: Record<string, Icon> = {
   flag: Flag,
   'book-open': BookOpen,
   question: Question,
+  // 컨디션 체크 얼굴 3개 (이상 징후 카드·상세)
+  'emotion-happy': Smiley,
+  'emotion-normal': SmileyMeh,
+  'emotion-unhappy': SmileySad,
   refresh: ArrowsClockwise,
   'settings-3': Gear,
   'user-settings': UserGear,
