@@ -4,7 +4,7 @@ import { X } from '@phosphor-icons/react'
 import { Header, Phone, PrimaryButton } from '../components/ui'
 import { Ri } from '../components/Ri'
 import { useSession } from '../useSession'
-import { restoreValidDays, RHYTHM_MIN_DAYS, setDemoValidDays, validDayCount } from '../session'
+import { restoreValidDays, RHYTHM_MIN_DAYS, setDemoValidDays, setSignalDemo, validDayCount, type SignalState } from '../session'
 
 /** 마이 페이지: 내 정보 · 기기 정보 · 기기 설정 · 데이터 복원 · 가이드 */
 export function MyScreen() {
@@ -68,6 +68,16 @@ export function MyScreen() {
                 ))}
               </div>
               <span>0일은 처음 쓴 날, 4일은 모으는 중, 7일은 점수가 보이는 상태예요.</span>
+            </div>
+            {/* 시연용: 이상 징후 상태 전환 — 홈 카드는 '감지'일 때만 나온다 (출시 전 제거) */}
+            <div className="demo-box">
+              <b>시연용 · 이상 징후 상태</b>
+              <div className="demo-row">
+                {([['collecting', '준비 중'], ['normal', '평소와 비슷'], ['detected', '감지']] as [SignalState, string][]).map(([id, label]) => (
+                  <button key={id} type="button" className={session.signalDemo === id ? 'on' : ''} onClick={() => setSignalDemo(id)}>{label}</button>
+                ))}
+              </div>
+              <span>홈에는 '감지'일 때만 이상 징후 카드가 나와요. 나머지는 상세 화면에서만 보여요.</span>
             </div>
           </div>
           {restoreOpen && <RestoreSheet onClose={() => setRestoreOpen(false)} />}

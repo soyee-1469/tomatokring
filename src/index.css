@@ -13748,11 +13748,6 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-signal-options button b { font-size: 13px; font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; }
 .elder-home .elder-signal-options button.on { background: var(--text); border-color: var(--text); color: #fff; }
 .elder-home .elder-signal-advice { margin: 10px 0 2px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
-/* 목업 전용 샘플 토글 */
-.elder-home .elder-signal-demo { display: flex; align-items: center; gap: 4px; padding: 4px 0 2px; }
-.elder-home .elder-signal-demo span { font-size: 11px; color: var(--text-3); margin-right: 4px; }
-.elder-home .elder-signal-demo button { border: 1px solid var(--cream-line); background: #fff; border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--text-3); cursor: pointer; }
-.elder-home .elder-signal-demo button.on { background: var(--text); border-color: var(--text); color: #fff; }
 /* 감지 카드 안에서는 연한 분홍 태그가 배경에 묻히므로 토마토 바탕 + 흰 글자 (위험 태그에만 허용되는 원색) */
 .elder-home .elder-signal-card.detected .elder-menu-tag.low { background: var(--tomato); color: #fff; }
 
@@ -13776,10 +13771,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-pull-arrow { transition: transform 0.2s; }
 .elder-home .elder-pull.ready .elder-pull-arrow { transform: rotate(180deg); }
 .elder-home .elder-pull.ready { color: var(--text-2); }
-.elder-home .elder-date-right { display: inline-flex; align-items: center; gap: 6px; }
+.elder-home .elder-date-center { align-items: center; gap: 8px; }
 /* 배터리 칩과 같은 높이·배경·알약 모양 (padding 6px, 아이콘 16px) */
 .elder-home .elder-date-sync {
-  align-self: stretch;
   padding: 6px 9px;
   border-radius: 999px;
   border: 0;
@@ -13817,3 +13811,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
   animation: elder-toast-in 0.2s ease-out;
 }
 @keyframes elder-toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* 날짜 줄: 배터리는 알약 배경 없이 아이콘+숫자만, 새로고침 글자는 가늘게 */
+.elder-home .elder-date-battery { background: transparent; padding: 6px 2px; }
+.elder-home .elder-date-battery.low { background: transparent; }
+.elder-home .elder-date-sync { font-weight: 500; }

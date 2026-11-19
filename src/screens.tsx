@@ -27,7 +27,7 @@ import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { TrendLine as MiniBars } from './components/TrendLine'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, setSignalDemo, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type SignalState, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -502,50 +502,18 @@ function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, b
 }
 
 
-/** 홈 '이상 징후' 카드 — 브링 판정(평소와 비슷 / 감지)을 보여 주고, 감지된 날은 컨디션 체크를 받는다.
- *  28일이 안 찼으면 한 줄 '준비 중'만. 토마토 연한 배경은 '감지' 상태에서만 쓴다 (홈에서 빨강 계열을 쓰는 유일한 자리) */
+/** 홈 '이상 징후' 카드 — 브링 판정이 '감지'인 날에만 홈에 나온다. 컨디션 체크(좋아요·보통·안 좋아요)를 받는다.
+ *  토마토 연한 배경은 이 카드에만 쓴다 (홈에서 빨강 계열을 쓰는 유일한 자리). 평소와 비슷·준비 중 상태는 상세 화면에서만 본다 */
 const CONDITION_OPTIONS: readonly { id: ConditionAnswer; label: string; icon: string; advice: string }[] = [
   { id: 'good', label: '좋아요', icon: 'emotion-happy', advice: '지금처럼 좋은 생활 리듬을 유지해 보세요.' },
   { id: 'so-so', label: '보통이에요', icon: 'emotion-normal', advice: '가벼운 활동과 휴식으로 하루의 균형을 맞춰 보세요.' },
   { id: 'bad', label: '안 좋아요', icon: 'emotion-unhappy', advice: '오늘은 무리하지 말고 쉬어 주세요. 불편함이 계속되면 전문가와 상의해 보세요.' },
 ]
-const SIGNAL_DEMO: readonly { id: SignalState; label: string }[] = [
-  { id: 'collecting', label: '준비 중' },
-  { id: 'normal', label: '비슷' },
-  { id: 'detected', label: '감지' },
-]
-function SignalCard({ state, condition, onOpen, onCondition, onDemo }: {
-  state: SignalState
+function SignalCard({ condition, onOpen, onCondition }: {
   condition: ConditionAnswer | null
   onOpen: () => void
   onCondition: (a: ConditionAnswer | null) => void
-  onDemo: (s: SignalState) => void
 }) {
-  const demo = (
-    <div className="elder-signal-demo" aria-label="샘플 상태 보기">
-      <span>샘플</span>
-      {SIGNAL_DEMO.map((d) => (
-        <button key={d.id} type="button" className={state === d.id ? 'on' : ''} onClick={() => onDemo(d.id)}>{d.label}</button>
-      ))}
-    </div>
-  )
-  if (state !== 'detected') {
-    return (
-      <div className={`elder-signal-card ${state}`}>
-        <button type="button" className="elder-signal-row" onClick={onOpen} aria-label="이상 징후 자세히 보기">
-          <Ri name="siren" fill />
-          <b>이상 징후</b>
-          {state === 'collecting' ? (
-            <StatusTag tone="pending">준비 중</StatusTag>
-          ) : (
-            <span className="elder-menu-tag calm">평소와 비슷해요</span>
-          )}
-          <Ri name="arrow-right-s" size={20} className="elder-signal-arrow" />
-        </button>
-        {demo}
-      </div>
-    )
-  }
   const picked = condition ? CONDITION_OPTIONS.find((o) => o.id === condition) : null
   return (
     <div className="elder-signal-card detected">
@@ -566,7 +534,6 @@ function SignalCard({ state, condition, onOpen, onCondition, onDemo }: {
         ))}
       </div>
       <p className="elder-signal-advice">{picked ? picked.advice : '여러 지표가 평소와 달라요. 일정을 줄이고 쉬는 시간을 늘려 주세요.'}</p>
-      {demo}
     </div>
   )
 }
@@ -1310,18 +1277,16 @@ export function HomeScreen() {
                 <div className="elder-date-row">
                   <span className="elder-date-center">
                     <b>{dateLabel}</b>
-                  </span>
-                  <span className="elder-date-right">
-                    <span className={`elder-date-battery ${device.battery <= 20 ? 'low' : ''}`}>
-                      <Ri name={device.battery <= 20 ? 'battery-low' : device.battery <= 60 ? 'battery' : 'battery'} fill size={16} />
-                      {device.battery}%
-                    </span>
                     {session.paired && (
                       <button type="button" className={`elder-date-sync ${syncing ? 'busy' : ''}`} onClick={runSync} aria-label="반지 기록 새로고침" disabled={syncing}>
                         <Ri name="refresh" size={16} className={syncing ? 'spin' : ''} />
                         {syncing ? '새로고침 중' : '새로고침'}
                       </button>
                     )}
+                  </span>
+                  <span className={`elder-date-battery ${device.battery <= 20 ? 'low' : ''}`}>
+                    <Ri name={device.battery <= 20 ? 'battery-low' : device.battery <= 60 ? 'battery' : 'battery'} fill size={16} />
+                    {device.battery}%
                   </span>
                 </div>
               </div>
@@ -1368,14 +1333,14 @@ export function HomeScreen() {
                   <RhythmCollecting days={validDays} onOpen={() => navigate('/vitaling/day')} />
                 )}
 
-                {/* 이상 징후: 바디 리듬 아래, 바이탈 위 (수면 중 바이탈로 판정하는 기능) */}
-                <SignalCard
-                  state={session.signalDemo}
-                  condition={todayCondition(session)}
-                  onOpen={() => navigate('/vitaling/signal')}
-                  onCondition={setConditionCheck}
-                  onDemo={setSignalDemo}
-                />
+                {/* 이상 징후: 감지된 날에만 홈에 나온다 (바디 리듬 아래, 바이탈 위). 평소와 비슷·준비 중은 상세에서만 */}
+                {session.signalDemo === 'detected' && (
+                  <SignalCard
+                    condition={todayCondition(session)}
+                    onOpen={() => navigate('/vitaling/signal')}
+                    onCondition={setConditionCheck}
+                  />
+                )}
 
                 {/* 오늘 바이탈: 심박수·혈중 산소·피부 온도·HRV — 값 + 상태 한 줄, 누르면 상세 */}
                 <section className="elder-fit-card vitals" aria-label="오늘 바이탈">
