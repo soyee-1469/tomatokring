@@ -667,14 +667,20 @@ function RewardBlock({
         </>
       ) : claimed ? (
         <>
-          <button type="button" className="elder-claim-btn done" disabled>
+          {/* 받은 뒤: 회색 알약을 누르면 보상 내역으로. 카드마다 '적립 내역 보기' 버튼을 따로 두지 않는다 (입구는 미션 머리글의 보상내역) */}
+          <button type="button" className="elder-claim-btn done link" onClick={() => navigate('/reward/history')} aria-label={`${doneLabel} · 보상 내역 보기`}>
             <Ri name="checkbox-circle" fill size={18} />
             {doneLabel}
+            <Ri name="arrow-right-s" size={18} className="elder-claim-done-arrow" />
           </button>
-          <p className="elder-claim-guide under links">
-            {repeatLabel && <><button type="button" onClick={onMeasure}>{repeatLabel}</button><i>·</i></>}
-            <button type="button" onClick={() => navigate('/reward/history')}>적립 내역 보기</button>
-          </p>
+          {repeatLabel && (
+            <div className="elder-claim-actions">
+              <button type="button" onClick={onMeasure}>
+                <Ri name={repeatLabel.includes('올리기') ? 'add' : 'refresh'} size={16} />
+                {repeatLabel}
+              </button>
+            </div>
+          )}
         </>
       ) : eligible ? (
         <>
@@ -683,7 +689,12 @@ function RewardBlock({
             <span>{readyText} · {points} 받기</span>
           </button>
           {repeatLabel && (
-            <p className="elder-claim-guide under links"><button type="button" onClick={onMeasure}>{repeatLabel}</button></p>
+            <div className="elder-claim-actions">
+              <button type="button" onClick={onMeasure}>
+                <Ri name={repeatLabel.includes('올리기') ? 'add' : 'refresh'} size={16} />
+                {repeatLabel}
+              </button>
+            </div>
           )}
         </>
       ) : (
@@ -765,6 +776,8 @@ function DietUploadCard({
   kcal,
   goal,
   photo,
+  weekDone,
+  labels,
   measured,
   claimed,
   onOpen,
@@ -774,6 +787,9 @@ function DietUploadCard({
   kcal: number
   goal: number
   photo?: string | null
+  /** 최근 7일 사진 올린 날 (마지막이 오늘) */
+  weekDone: readonly boolean[]
+  labels: readonly string[]
   measured: boolean
   claimed: boolean
   /** 카드 탭 → 식단 상세 보기 */
@@ -837,11 +853,52 @@ function DietUploadCard({
         onMeasure={onMeasure}
         onClaim={onClaim}
       />
+      {/* 최근 7일 기록 스트립: 사진 올린 날만 채움 (숫자 없음) */}
+      <div className="elder-fit-chart-wrap tail">
+        <ul className="diet-strip" aria-label="최근 7일 식단 기록">
+          {weekDone.map((done, i) => (
+            <li key={i} className={`${done ? 'on' : ''} ${i === weekDone.length - 1 ? 'today' : ''}`}>
+              <i>{done && <Ri name="check" size={14} />}</i>
+              <b>{labels[i]}</b>
+            </li>
+          ))}
+        </ul>
+        <span className="elder-fit-cap">최근 7일 식단 기록</span>
+      </div>
     </div>
   )
 }
 
 /** 홈 바이탈 4종 — 최신 자동 측정값과 상태 한 단어 */
+/** 지난밤 수면 타임라인 — 취침~기상 시간축 위에 단계를 색으로. 홈용이라 숫자는 시작·끝 시각만 */
+const SLEEP_TONES = { awake: '#EDE7F6', light: '#C4B0EA', rem: '#9575CD', deep: '#5E35B1' } as const
+type SleepStage = keyof typeof SLEEP_TONES
+const SLEEP_LAST_NIGHT: readonly { stage: SleepStage; min: number }[] = [
+  { stage: 'light', min: 18 }, { stage: 'deep', min: 52 }, { stage: 'light', min: 26 }, { stage: 'rem', min: 24 },
+  { stage: 'light', min: 38 }, { stage: 'deep', min: 46 }, { stage: 'light', min: 30 }, { stage: 'rem', min: 32 },
+  { stage: 'awake', min: 8 }, { stage: 'light', min: 44 }, { stage: 'rem', min: 36 }, { stage: 'light', min: 28 },
+  { stage: 'awake', min: 10 }, { stage: 'light', min: 40 },
+] // 합 432분 = 7시간 12분
+function SleepTimeline({ start, end, segments }: { start: string; end: string; segments: readonly { stage: SleepStage; min: number }[] }) {
+  const total = segments.reduce((a, s) => a + s.min, 0)
+  return (
+    <div className="sleep-timeline" aria-label={`지난밤 수면 ${start}부터 ${end}까지`}>
+      <div className="sleep-timeline-bar">
+        {segments.map((s, i) => (
+          <span key={i} className={`st-${s.stage}`} style={{ flex: s.min / total, background: SLEEP_TONES[s.stage] }} />
+        ))}
+      </div>
+      <div className="sleep-timeline-axis"><span>{start} 취침</span><span>{end} 기상</span></div>
+      <ul className="sleep-timeline-legend">
+        <li><i style={{ background: SLEEP_TONES.deep }} />깊은</li>
+        <li><i style={{ background: SLEEP_TONES.rem }} />렘</li>
+        <li><i style={{ background: SLEEP_TONES.light }} />얕은</li>
+        <li><i style={{ background: SLEEP_TONES.awake }} />깸</li>
+      </ul>
+    </div>
+  )
+}
+
 /** 홈 오늘 바이탈 — 값 + 최근 7일 선 (마지막이 오늘). 브링처럼 홈에서 추세가 보이게 */
 const HOME_VITALS = [
   { id: 'hr', label: '심박수', value: 72, unit: 'bpm', status: '일상생활', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: HOME_SOFT.tomato, week: [68, 71, 74, 70, 73, 69, 72] },
@@ -894,7 +951,7 @@ const TEAM_HOME = {
       scores: [0, 0, 0, 0, 0, 0, 0],
     },
     stepsWeek: [6_120, 7_340, 5_980, 8_010, 6_650, 9_120, 8_412],
-    diet: { kcal: 1_120, goal: 2_300, count: 2 },
+    diet: { kcal: 1_120, goal: 2_300, count: 2, weekDone: [true, true, false, true, true, true] as readonly boolean[] },
     activityDay: {
       score: 53,
       stepsCount: 8_412,
@@ -1024,8 +1081,6 @@ export function HomeScreen() {
   const stressMeasured = isMeasureDone(session, 'stress')
   // 오늘은 실제 측정 후에만 값·그래프 표시, 지난 날짜는 기록 그대로 표시
   const dietMeasured = isMeasureDone(session, 'diet')
-  const walkMeasured = isMeasureDone(session, 'walk')
-  const sleepMeasured = isMeasureDone(session, 'sleep')
   const surveyMeasured = isMeasureDone(session, 'survey')
   const stressClaimed = isClaimed(session, 'stress')
   const dietClaimed = isClaimed(session, 'diet')
@@ -1036,8 +1091,9 @@ export function HomeScreen() {
   // 선택한 날 값이 없어도 그 이전 기록이 있으면 마지막 기록 + 빈 막대, 아예 없으면 안내만
   const hasPrev = (vals: readonly number[]) => vals.slice(0, -1).some((v) => v > 0)
   const sleepYday = day.sleepHours[day.sleepHours.length - 2]
-  const walkShow = walkMeasured
-  const sleepShow = sleepMeasured
+  // 걷기·수면은 반지가 자동으로 재므로 '측정 전' 단계가 없다. 불러온 값을 바로 보여 주고 받기 버튼만 둔다
+  const walkShow = true
+  const sleepShow = day.sleepHours[day.sleepHours.length - 1] > 0
   /** 카드 탭 → 상세 보기(start=false), 측정 버튼 → 상세에서 바로 측정 시작(start=true, run=1) */
   // 홈 카드 안에서 바로 측정/불러오기: 버튼이 '측정 중'으로 바뀌고 끝나면 값이 그 자리에서 갱신된다
   const [busyKind, setBusyKind] = useState<MeasureKind | null>(null)
@@ -1134,7 +1190,7 @@ export function HomeScreen() {
         {/* 7일 그래프는 포인트 버튼 아래 (받는 게 먼저) */}
         {(stressShow || stressHasPrev) && (
           <div className="elder-fit-chart-wrap tail">
-            <MiniBars values={stressSeries} labels={day.labels} color={HOME_COLORS.beet} yMax={100} unit="점" todayEmpty={!stressShow} />
+            <MiniBars values={stressSeries} labels={day.labels} color={HOME_COLORS.beet} yMax={100} unit="점" todayEmpty={!stressShow} compact />
             <span className="elder-fit-cap">최근 7일 스트레스</span>
           </div>
         )}
@@ -1148,6 +1204,8 @@ export function HomeScreen() {
         kcal={day.dietKcal}
         goal={profile.diet.goal}
         photo={todayDietPhoto(session)}
+        weekDone={[...profile.diet.weekDone.slice(0, 6), dietMeasured]}
+        labels={day.labels}
         measured={dietMeasured}
         claimed={dietClaimed}
         onOpen={() => goMeasure('diet')}
@@ -1187,33 +1245,24 @@ export function HomeScreen() {
                 />
               </>
             ) : (
-              <p className="elder-fit-hint">반지에 기록된 오늘 걸음을 아직 불러오지 않았어요.</p>
+              <p className="elder-fit-hint">오늘 걸음이 아직 없어요. 반지를 끼고 걸으면 자동으로 쌓여요.</p>
             )}
           </div>
         </button>
         <RewardBlock
-            measured={walkMeasured}
+          measured
           claimed={walkClaimed}
           eligible={walkEligible}
-          guide={`${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상이면 지급 · 1일 1회`}
+          guide=""
           points={formatClaimP(WALK_REWARD_P)}
-          measureLabel="걸음 확인하고"
-          repeatLabel="걸음 다시 불러오기"
-          readyText="걸음 확인 완료"
+          measureLabel=""
+          readyText="목표 달성"
           doneLabel={`오늘 ${formatClaimP(WALK_REWARD_P)} 받았어요`}
-          tip={`오늘 ${stepsLabel}걸음 · ${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상일 때 지급`}
-          onMeasure={() => runInline('walk')}
-          busy={busyKind === 'walk'}
-          busyLabel="걸음 불러오는 중"
-          busyMs={1500}
+          tip={`${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음까지 ${walkRemain.toLocaleString('ko-KR')}걸음 더 걸으면 ${formatClaimP(WALK_REWARD_P)} · 1일 1회`}
+          onMeasure={() => goMeasure('walk')}
           onClaim={() => markClaimed('walk')}
         />
-        {hasPrev(day.steps) && (
-          <div className="elder-fit-chart-wrap tail">
-            <MiniBars values={day.steps} labels={day.labels} color={HOME_COLORS.leaf} unit="걸음" todayEmpty={!walkShow} />
-            <span className="elder-fit-cap">최근 7일 걸음</span>
-          </div>
-        )}
+        {/* 홈에서는 가로 목표 막대만. 일별 세로 막대는 상세에서 */}
       </div>
           </Fragment>
         )
@@ -1228,7 +1277,7 @@ export function HomeScreen() {
             {sleepShow ? (
               <StatusTag tone={tagTone(sleepInfo.tone)}>{sleepInfo.label}</StatusTag>
             ) : (
-              <StatusTag tone="pending">확인 전</StatusTag>
+              <StatusTag tone="pending">기록 전</StatusTag>
             )}
           </div>
           <div className="elder-fit-body">
@@ -1240,31 +1289,35 @@ export function HomeScreen() {
             ) : hasPrev(day.sleepHours) ? (
               <div className="elder-fit-num">
                 <strong className="text">{hoursLabel(sleepYday)}</strong>
-                <em>지난밤 수면</em>
+                <em>그제 밤 수면 · 지난밤 기록은 아직 없어요</em>
               </div>
             ) : (
-              <p className="elder-fit-hint">지난밤 수면 시간과 수면 효율을 확인해 보세요.</p>
+              <p className="elder-fit-hint">지난밤 기록이 아직 없어요. 잘 때 반지를 끼면 자동으로 기록돼요.</p>
             )}
           </div>
         </button>
-        <RewardBlock
-            measured={sleepMeasured}
-          claimed={sleepClaimed}
-          guide="지난밤 수면 확인 시 지급 · 1일 1회"
-          points={formatClaimP(SLEEP_REWARD_P)}
-          measureLabel="수면 확인하고"
-          readyText="확인 완료"
-          doneLabel={`오늘 ${formatClaimP(SLEEP_REWARD_P)} 받았어요`}
-          onMeasure={() => runInline('sleep')}
-          busy={busyKind === 'sleep'}
-          busyLabel="수면 기록 불러오는 중"
-          busyMs={1500}
-          onClaim={() => markClaimed('sleep')}
-        />
-        {hasPrev(day.sleepHours) && (
+        {sleepShow ? (
+          <RewardBlock
+            measured
+            claimed={sleepClaimed}
+            guide=""
+            points={formatClaimP(SLEEP_REWARD_P)}
+            measureLabel=""
+            readyText="지난밤 수면"
+            doneLabel={`오늘 ${formatClaimP(SLEEP_REWARD_P)} 받았어요`}
+            onMeasure={() => goMeasure('sleep')}
+            onClaim={() => markClaimed('sleep')}
+          />
+        ) : (
+          <p className="elder-claim-tip">
+            <Ri name="heart-3" fill size={12} />
+            지난밤 기록이 들어오면 {formatClaimP(SLEEP_REWARD_P)} 받을 수 있어요 · 1일 1회
+          </p>
+        )}
+        {sleepShow && (
           <div className="elder-fit-chart-wrap tail">
-            <MiniBars values={day.sleepHours} labels={day.labels} color={HOME_COLORS.berry} yMax={10} unit="시간" todayEmpty={!sleepShow} />
-            <span className="elder-fit-cap">최근 7일 수면 시간</span>
+            {/* 지난밤 취침~기상 타임라인: 단계는 보라 한 색의 농담 */}
+            <SleepTimeline start="22:21" end="06:21" segments={SLEEP_LAST_NIGHT} />
           </div>
         )}
       </div>

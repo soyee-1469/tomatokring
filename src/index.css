@@ -13886,3 +13886,51 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-mission-list { margin-top: 0; }
 .elder-home .elder-mission-list button { gap: 6px; }
 .elder-home .elder-mission-list b { line-height: 1.2; }
+
+/* 받은 뒤 보조 동작(다시 측정·식단 더 올리기·적립 내역 보기): 글자 줄 대신 44px 알약 버튼 (어르신 기준 누를 수 있어 보이게) */
+.elder-home .elder-claim-actions { display: flex; gap: 8px; margin-top: 8px; }
+.elder-home .elder-claim-actions button {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--cream-line);
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.elder-home .elder-claim-actions button i { font-size: 16px; line-height: 1; color: var(--text-2); }
+.elder-home .elder-claim-actions button .ico-duo { display: inline-flex; font-size: 16px; color: var(--text-2); }
+.elder-home .elder-claim-actions { width: 100%; }
+/* 받은 상태 알약: 누르면 보상 내역. 비활성 모양은 유지하고 오른쪽 끝에 작은 화살표만 */
+.elder-home .elder-claim-btn.done.link { cursor: pointer; position: relative; }
+.elder-home .elder-claim-done-arrow { position: absolute; right: 14px; color: var(--text-3); }
+.elder-home .elder-claim-btn.done i.elder-claim-done-arrow { color: var(--text-3); }
+/* 걷기 카드 막대그래프: 선 그래프와 같은 폭·여백 */
+.elder-home .elder-fit-card.activity .rd-bars { width: 100%; height: auto; display: block; }
+
+/* 수면 카드: 지난밤 타임라인 */
+.elder-home .sleep-timeline { display: grid; gap: 6px; padding: 2px 0 0; }
+.elder-home .sleep-timeline-bar { display: flex; height: 18px; border-radius: 6px; overflow: hidden; gap: 1px; background: #F3F0FA; }
+.elder-home .sleep-timeline-bar span { display: block; min-width: 2px; }
+.elder-home .sleep-timeline-axis { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--text-3); }
+.elder-home .sleep-timeline-legend { list-style: none; margin: 2px 0 0; padding: 0; display: flex; gap: 10px; font-size: 11px; color: var(--text-2); }
+.elder-home .sleep-timeline-legend li { display: inline-flex; align-items: center; gap: 4px; }
+.elder-home .sleep-timeline-legend i { width: 10px; height: 10px; border-radius: 3px; }
+/* 식단 카드: 7일 기록 스트립 (올린 날만 채움) */
+.elder-home .diet-strip { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.elder-home .diet-strip li { display: grid; justify-items: center; gap: 4px; }
+.elder-home .diet-strip li i { width: 100%; max-width: 34px; height: 28px; border-radius: 8px; background: var(--chip-gray); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; }
+.elder-home .diet-strip li.on i { background: var(--c-lemon); }
+.elder-home .diet-strip li b { font-size: 11px; font-weight: 500; color: var(--text-3); }
+.elder-home .diet-strip li.today b { color: var(--text); font-weight: 700; }
+.elder-home .diet-strip li.today:not(.on) i { border: 1.5px dashed #D6DAE0; background: transparent; }
+/* 카드 아래 그림 영역 안의 div 기반 그래프(식단 스트립·수면 타임라인)는 카드 폭 전체 */
+.elder-home .elder-fit-chart-wrap .diet-strip, .elder-home .elder-fit-chart-wrap .sleep-timeline { width: 100%; align-self: stretch; }
