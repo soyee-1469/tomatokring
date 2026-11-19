@@ -1,35 +1,20 @@
 import { MetricInfoButton } from '../components/AccuracyInfo'
 import {
 } from '@phosphor-icons/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Header, Phone } from '../components/ui'
+import { Header, Phone, PrimaryButton } from '../components/ui'
 import { isMeasureDone, markMeasureDone } from '../session'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
 import { parseDateKey, recentDate, todayStart } from './MeasureScreen'
 import { DateLine } from '../components/DateLine'
 import { Ri } from '../components/Ri'
+import { SLEEP_LAST_NIGHT, SLEEP_TONES, SleepTimeline, sleepEfficiencyLevel, sleepMinutesLabel, sleepStageTotals, type SleepSegment } from '../components/Sleep'
 import {
   SLEEP_COLORS,
 } from '../palette'
 
-const SLEEP_NIGHT = {
-  avg: '7h 12m',
-  range: '6h 50m-7h 12m',
-  time: '22:21-06:21',
-  recent: [
-    { date: recentDate(0), sub: '22:21-06:21', value: '7시간 12분', today: true },
-    { date: recentDate(1), sub: '23:05-06:40', value: '6시간 50분' },
-    { date: recentDate(2), sub: '22:10-06:05', value: '7시간 40분' },
-  ],
-  stages: [
-    { name: '깊은', full: '깊은 수면', time: '2시간 30분', pct: 31, color: SLEEP_COLORS.stages.deep },
-    { name: '렘', full: '렘 수면', time: '1시간 40분', pct: 21, color: SLEEP_COLORS.stages.rem },
-    { name: '얕은', full: '얕은 수면', time: '3시간 10분', pct: 40, color: SLEEP_COLORS.stages.light },
-    { name: '깸', full: '깬 상태', time: '40분', pct: 8, color: SLEEP_COLORS.stages.awake },
-  ],
-}
 
 
 /** Semi gauge: 0~100 — 점수·상태는 아크 안, 안내는 아래로 분리 */
@@ -100,10 +85,104 @@ export function ScoreArc({
   )
 }
 
+const SLEEP_NIGHTS: readonly {
+  total: number
+  start: string
+  end: string
+  efficiency: number
+  segments: readonly SleepSegment[]
+  hr: readonly [number, number, number]
+  spo2: readonly [number, number, number]
+  say: { b: string; p: string }
+}[] = [
+  {
+    total: 432, start: '22:21', end: '06:21', efficiency: 84, segments: SLEEP_LAST_NIGHT,
+    hr: [52, 58, 71], spo2: [94, 97, 99],
+    say: { b: '푹 잘 잔 밤이에요.', p: '깊은 수면이 충분했어요. 오늘도 같은 시간에 잠자리에 들어 보세요.' },
+  },
+  {
+    // 브링 캡처 샘플: 잠이 부족한 밤 (4시간 18분, 03:26~07:44, 효율 54%)
+    total: 258, start: '03:26', end: '07:44', efficiency: 54,
+    segments: [
+      { stage: 'light', min: 22 }, { stage: 'deep', min: 34 }, { stage: 'light', min: 48 }, { stage: 'rem', min: 12 },
+      { stage: 'light', min: 40 }, { stage: 'deep', min: 27 }, { stage: 'light', min: 36 }, { stage: 'rem', min: 17 },
+      { stage: 'light', min: 22 },
+    ],
+    hr: [57, 64, 77], spo2: [90, 96, 99],
+    say: { b: '잠이 부족한 밤이었어요.', p: '늦게 잠들어 수면 시간이 짧았어요. 오늘은 조금 일찍 잠자리에 들어 보세요.' },
+  },
+  {
+    total: 460, start: '22:10', end: '06:05', efficiency: 88,
+    segments: [
+      { stage: 'light', min: 20 }, { stage: 'deep', min: 58 }, { stage: 'light', min: 30 }, { stage: 'rem', min: 28 },
+      { stage: 'light', min: 42 }, { stage: 'deep', min: 50 }, { stage: 'light', min: 34 }, { stage: 'rem', min: 38 },
+      { stage: 'awake', min: 6 }, { stage: 'light', min: 48 }, { stage: 'rem', min: 40 }, { stage: 'light', min: 30 },
+      { stage: 'awake', min: 8 }, { stage: 'light', min: 28 },
+    ],
+    hr: [51, 57, 69], spo2: [95, 97, 99],
+    say: { b: '푹 잘 잔 밤이에요.', p: '수면 시간과 깊은 수면 모두 충분했어요.' },
+  },
+]
+const SLEEP_RECENT = [
+  { date: recentDate(1), sub: `${SLEEP_NIGHTS[1].start}-${SLEEP_NIGHTS[1].end}`, value: sleepMinutesLabel(SLEEP_NIGHTS[1].total) },
+  { date: recentDate(2), sub: `${SLEEP_NIGHTS[2].start}-${SLEEP_NIGHTS[2].end}`, value: sleepMinutesLabel(SLEEP_NIGHTS[2].total) },
+]
+
+function SleepTag({ tone, children }: { tone: 'ok' | 'mid' | 'low' | 'pending'; children: ReactNode }) {
+  return (
+    <span className={`elder-menu-tag ${tone}`}>
+      {tone === 'ok' && <Ri name="checkbox-circle" fill size={14} />}
+      {children}
+    </span>
+  )
+}
+
+/** 수면 효율 링 (0~100) */
+function EfficiencyRing({ pct }: { pct: number }) {
+  const r = 34
+  const c = 2 * Math.PI * r
+  const v = Math.min(100, Math.max(0, pct)) / 100
+  return (
+    <div className="sleep-eff-ring" aria-hidden>
+      <svg viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r={r} fill="none" stroke={SLEEP_COLORS.soft} strokeWidth="10" />
+        <circle
+          cx="44" cy="44" r={r} fill="none" stroke={SLEEP_COLORS.line} strokeWidth="10" strokeLinecap="round"
+          strokeDasharray={`${c * v} ${c * (1 - v)}`} transform="rotate(-90 44 44)"
+        />
+      </svg>
+      <strong>{pct}<small>%</small></strong>
+    </div>
+  )
+}
+
+function SleepEfficiencyInfoSheet({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="sheet-overlay" role="dialog" aria-modal="true" aria-labelledby="sleep-eff-title">
+      <button type="button" className="sheet-backdrop" aria-label="닫기" onClick={onClose} />
+      <div className="sheet-panel sleep-eff-sheet">
+        <div className="sheet-handle" />
+        <h2 id="sleep-eff-title">수면 효율이란?</h2>
+        <p>잠자리에 있던 시간 중 실제로 잠든 시간의 비율이에요. 자다 깬 시간이 많거나 잠드는 데 오래 걸리면 낮아져요.</p>
+        <ul className="sleep-eff-scale">
+          <li><b>81% 이상</b><span>최상</span></li>
+          <li><b>61~80%</b><span>상</span></li>
+          <li><b>41~60%</b><span>보통</span></li>
+          <li><b>21~40%</b><span>하</span></li>
+          <li><b>20% 이하</b><span>최하</span></li>
+        </ul>
+        <p>잠자리에서는 휴대전화를 멀리 두고, 잠이 오지 않으면 잠시 일어났다가 다시 눕는 것이 도움이 돼요.</p>
+        <PrimaryButton onClick={onClose}>확인</PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
 export function SleepAnalysisScreen() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [date, setDate] = useState(() => parseDateKey(params.get('d')) ?? todayStart())
+  const [effInfo, setEffInfo] = useState(false)
   const session = useSession()
   const sleepDone = isMeasureDone(session, 'sleep')
   const autoStart = params.get('run') === '1'
@@ -115,10 +194,19 @@ export function SleepAnalysisScreen() {
     markMeasureDone('sleep')
   }, [autoStart, sleepDone])
 
+  const offset = Math.max(0, Math.round((todayStart().getTime() - date.getTime()) / 86_400_000))
+  const night = SLEEP_NIGHTS[Math.min(offset, SLEEP_NIGHTS.length - 1)]
+  const stages = sleepStageTotals(night.segments)
+  const eff = sleepEfficiencyLevel(night.efficiency)
+  const effTone = eff.tone === 'ok' ? 'ok' : eff.tone === 'warn' ? 'mid' : 'low'
+  const goal = session.healthGoals.sleepMinutes
+  const short = goal - night.total
+  const goalPct = Math.min(100, Math.round((night.total / goal) * 100))
+
   return (
     <div className="stage">
       <Phone>
-        <div className="screen elder-home v2-page">
+        <div className="screen elder-home v2-page sleep-detail">
           <Header
             title="수면"
             backTo="/vitaling/home"
@@ -137,35 +225,88 @@ export function SleepAnalysisScreen() {
               <div className="v2-top">
                 <span className="v2-say-ico"><Ri name="moon" size={22} /></span>
                 <div className="v2-val">
-                  <strong className="text">7시간 12분</strong>
-                  <span className="v2-val-sub">수면 효율 84% · {SLEEP_NIGHT.time}</span>
+                  <strong className="text">{sleepMinutesLabel(night.total)}</strong>
+                  <span className="v2-val-sub">{night.start} 취침 · {night.end} 기상</span>
                 </div>
               </div>
               <div className="v2-say">
                 <div>
-                  <b>푹 잘 잔 밤이에요.</b>
-                  <p>깊은 수면이 충분했어요. 오늘도 같은 시간에 잠자리에 들어 보세요.</p>
+                  <b>{night.say.b}</b>
+                  <p>{night.say.p}</p>
                 </div>
               </div>
             </section>
 
-            <div className="elder-sleep-card ms-chart-card">
-              <div className="ms-sleep-stages">
-                <div className="elder-sleep-stages-bar">
-                  {SLEEP_NIGHT.stages.map((s) => (
-                    <i key={s.name} style={{ width: `${s.pct}%`, background: s.color }} />
-                  ))}
+            {/* 1. 수면 단계: 밤새 흐름 + 단계별 시간·비율 (보라 농담 한 색) */}
+            <section className="elder-sleep-card sleep-stage-card" aria-label="수면 단계">
+              <b className="sleep-card-title">수면 단계</b>
+              <SleepTimeline start={night.start} end={night.end} segments={night.segments} legend={false} />
+              <ul className="sleep-stage-list">
+                {stages.map((s) => (
+                  <li key={s.stage}>
+                    <i style={{ background: SLEEP_TONES[s.stage] }} />
+                    <span>{s.full}</span>
+                    <strong>{sleepMinutesLabel(s.min)}</strong>
+                    <em>{s.pct}%</em>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* 2. 수면 효율 링 */}
+            <section className="elder-sleep-card sleep-eff-card" aria-label="수면 효율">
+              <b className="sleep-card-title">수면 효율</b>
+              <div className="sleep-eff-row">
+                <EfficiencyRing pct={night.efficiency} />
+                <div className="sleep-eff-text">
+                  <SleepTag tone={effTone}>{eff.label}</SleepTag>
+                  <p>{eff.tone === 'ok' ? '수면 효율이 좋은 편이에요.' : eff.tone === 'warn' ? '수면 효율이 보통이에요.' : '수면 효율이 낮은 편이에요.'}</p>
                 </div>
               </div>
-              <div className="ms-sleep-legend-grid">
-                {SLEEP_NIGHT.stages.map((s) => (
-                  <span key={s.name}>
-                    <i style={{ background: s.color }} />
-                    {s.full} {s.time}
-                  </span>
-                ))}
+              <div className="elder-claim-actions">
+                <button type="button" onClick={() => setEffInfo(true)}><Ri name="question" size={16} />수면 효율이란?</button>
               </div>
-            </div>
+            </section>
+
+            {/* 3. 목표 대비 */}
+            <section className="elder-sleep-card sleep-goal-card" aria-label="목표 수면 시간">
+              <div className="sleep-goal-head">
+                <b className="sleep-card-title">목표 수면 시간</b>
+                <SleepTag tone={short > 0 ? 'pending' : 'ok'}>{short > 0 ? '부족' : '달성'}</SleepTag>
+              </div>
+              <p className="sleep-goal-say">
+                {short > 0 ? <>목표보다 <b>{sleepMinutesLabel(short)}</b> 부족해요</> : <>목표를 채웠어요</>}
+              </p>
+              <div className="sleep-goal-bar"><i style={{ width: `${goalPct}%` }} /></div>
+              <div className="sleep-goal-axis"><span>{sleepMinutesLabel(night.total)} 잤어요</span><span>목표 {sleepMinutesLabel(goal)}</span></div>
+              <div className="elder-claim-actions">
+                <button type="button" onClick={() => navigate('/vitaling/goals')}><Ri name="edit" size={16} />목표 바꾸기</button>
+              </div>
+            </section>
+
+            {/* 4. 수면 중 심박수·혈중 산소 */}
+            <section className="elder-sleep-card sleep-vital-card" aria-label="수면 중 심박수와 혈중 산소">
+              <b className="sleep-card-title">수면 중 심박수·혈중 산소</b>
+              <ul className="sleep-vital-list">
+                {([
+                  { id: 'hr', label: '심박수', unit: 'bpm', icon: 'heart-pulse', v: night.hr },
+                  { id: 'spo2', label: '혈중 산소', unit: '%', icon: 'drop', v: night.spo2 },
+                ] as const).map((row) => (
+                  <li key={row.id}>
+                    <div className="sleep-vital-head">
+                      <span className="sleep-vital-ico"><Ri name={row.icon} fill size={18} /></span>
+                      <b>{row.label}</b>
+                      <small>{row.unit}</small>
+                    </div>
+                    <div className="sleep-vital-stats">
+                      <span><em>최저</em><strong>{row.v[0]}</strong></span>
+                      <span><em>평균</em><strong>{row.v[1]}</strong></span>
+                      <span><em>최고</em><strong>{row.v[2]}</strong></span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
             <div className="elder-sleep-card">
               {sleepDone ? (
@@ -189,7 +330,7 @@ export function SleepAnalysisScreen() {
                 </button>
               </div>
               <ul className="ms-hist-list">
-                {SLEEP_NIGHT.recent.filter((row) => !row.today).map((row) => (
+                {SLEEP_RECENT.map((row) => (
                   <li key={row.date}>
                     <button
                       type="button"
@@ -197,10 +338,7 @@ export function SleepAnalysisScreen() {
                       onClick={() => navigate('/vitaling/measure/sleep/history')}
                     >
                       <span>
-                        <b>
-                          {row.date}
-                          {row.today ? <i>오늘</i> : null}
-                        </b>
+                        <b>{row.date}</b>
                         <em>{row.sub}</em>
                       </span>
                       <strong>{row.value}</strong>
@@ -211,9 +349,9 @@ export function SleepAnalysisScreen() {
             </div>
           </div>
 
+          {effInfo && <SleepEfficiencyInfoSheet onClose={() => setEffInfo(false)} />}
         </div>
       </Phone>
     </div>
   )
 }
-

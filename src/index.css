@@ -13936,3 +13936,56 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-fit-chart-wrap .diet-strip, .elder-home .elder-fit-chart-wrap .sleep-timeline { width: 100%; align-self: stretch; }
 /* 섹션 머리글 링크(보상내역 →): 보이는 크기는 그대로, 누르는 영역은 44px */
 .elder-home .elder-mission-link { min-height: 44px; padding: 0 0 0 12px; margin: -12px 0; }
+
+/* ——— 수면 상세: 단계 목록·효율 링·목표 대비·수면 중 심박/산소 (보라 한 색 #5E35B1 농담) ——— */
+.sleep-detail { --sleep: #5E35B1; --sleep-soft: #EDE7F6; }
+.sleep-detail .v2-hero.v2-m-sleep { background: linear-gradient(180deg, #F4EFFF 0%, #fff 100%); }
+.sleep-detail .v2-hero.v2-m-sleep .v2-say-ico { background: #fff; color: var(--sleep); box-shadow: 0 2px 8px rgba(94,53,177,0.14); }
+.sleep-detail .elder-sleep-card { border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.sleep-detail .sleep-card-title { display: block; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+.sleep-detail .elder-menu-tag { margin-top: 0; }
+.sleep-detail .elder-menu-tag.ok { background: var(--sleep-soft); color: var(--text); }
+.sleep-detail .elder-menu-tag.ok i { color: var(--sleep); }
+.sleep-detail .elder-menu-tag.mid { background: var(--chip-gray); color: var(--text-2); }
+.sleep-detail .elder-claim-actions { margin-top: 12px; }
+/* 1. 단계 목록 */
+.sleep-detail .sleep-timeline-bar { height: 22px; }
+.sleep-stage-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.sleep-stage-list li { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.sleep-stage-list li i { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+.sleep-stage-list li span { flex: 1; color: var(--text-2); }
+.sleep-stage-list li strong { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sleep-stage-list li em { font-style: normal; min-width: 40px; text-align: right; color: var(--text-3); font-variant-numeric: tabular-nums; }
+/* 2. 효율 링 */
+.sleep-eff-row { display: flex; align-items: center; gap: 16px; }
+.sleep-eff-ring { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+.sleep-eff-ring svg { width: 100%; height: 100%; display: block; }
+.sleep-eff-ring strong { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+.sleep-eff-ring strong small { font-size: 12px; font-weight: 600; margin-left: 1px; }
+.sleep-eff-text { display: grid; gap: 8px; justify-items: start; }
+.sleep-eff-text p { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; word-break: keep-all; }
+.sleep-eff-sheet h2 { margin: 6px 0 10px; font-size: 19px; font-weight: 800; letter-spacing: -0.03em; }
+.sleep-eff-sheet p { margin: 0 0 12px; font-size: 15px; line-height: 1.55; color: var(--text-2); word-break: keep-all; }
+.sleep-eff-scale { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
+.sleep-eff-scale li { display: flex; justify-content: space-between; padding: 10px 14px; border-radius: 12px; background: var(--cream); font-size: 15px; }
+.sleep-eff-scale li b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sleep-eff-scale li span { color: var(--text-2); font-weight: 600; }
+/* 3. 목표 대비 */
+.sleep-goal-head { display: flex; align-items: center; justify-content: space-between; }
+.sleep-goal-head .sleep-card-title { margin-bottom: 0; }
+.sleep-goal-say { margin: 10px 0 12px; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; word-break: keep-all; }
+.sleep-goal-say b { font-weight: 800; }
+.sleep-goal-bar { height: 14px; border-radius: 999px; background: var(--sleep-soft); overflow: hidden; }
+.sleep-goal-bar i { display: block; height: 100%; border-radius: 999px; background: var(--sleep); }
+.sleep-goal-axis { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--text-3); }
+/* 4. 수면 중 심박·산소 */
+.sleep-vital-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sleep-vital-list li { padding: 12px 14px; border-radius: 14px; background: var(--cream); }
+.sleep-vital-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.sleep-vital-head b { font-size: 15px; font-weight: 700; }
+.sleep-vital-head small { font-size: 12px; color: var(--text-3); font-weight: 600; }
+.sleep-vital-ico { width: 30px; height: 30px; border-radius: 50%; background: var(--sleep-soft); color: var(--sleep); display: grid; place-items: center; }
+.sleep-vital-ico i { font-size: 18px; line-height: 1; }
+.sleep-vital-stats { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; }
+.sleep-vital-stats em { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: var(--text-3); margin-bottom: 2px; }
+.sleep-vital-stats strong { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }

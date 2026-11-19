@@ -29,6 +29,7 @@ import { TrendLine as MiniBars } from './components/TrendLine'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
+import { SLEEP_LAST_NIGHT, SleepTimeline, sleepEfficiencyLevel } from './components/Sleep'
 import {
   ACTIVITY_COLORS,
   ACTIVITY_LEGEND,
@@ -446,14 +447,6 @@ function stressLevel(score: number) {
   return { label: '매우 높음', tone: 'bad' as const }
 }
 
-/** 수면 효율(%) 등급 */
-function sleepEfficiencyLevel(pct: number) {
-  if (pct >= 81) return { label: '최상', tone: 'ok' as const }
-  if (pct >= 61) return { label: '상', tone: 'ok' as const }
-  if (pct >= 41) return { label: '보통', tone: 'warn' as const }
-  if (pct >= 21) return { label: '하', tone: 'bad' as const }
-  return { label: '최하', tone: 'bad' as const }
-}
 
 
 /** 홈 맨 위 '오늘의 미션' 카드 — 토마톡 게임 탭의 미션 카드와 같은 형식(문장 + 도장 체크 5개 + n/5).
@@ -870,35 +863,6 @@ function DietUploadCard({
 
 /** 홈 바이탈 4종 — 최신 자동 측정값과 상태 한 단어 */
 /** 지난밤 수면 타임라인 — 취침~기상 시간축 위에 단계를 색으로. 홈용이라 숫자는 시작·끝 시각만 */
-const SLEEP_TONES = { awake: '#EDE7F6', light: '#C4B0EA', rem: '#9575CD', deep: '#5E35B1' } as const
-type SleepStage = keyof typeof SLEEP_TONES
-const SLEEP_LAST_NIGHT: readonly { stage: SleepStage; min: number }[] = [
-  { stage: 'light', min: 18 }, { stage: 'deep', min: 52 }, { stage: 'light', min: 26 }, { stage: 'rem', min: 24 },
-  { stage: 'light', min: 38 }, { stage: 'deep', min: 46 }, { stage: 'light', min: 30 }, { stage: 'rem', min: 32 },
-  { stage: 'awake', min: 8 }, { stage: 'light', min: 44 }, { stage: 'rem', min: 36 }, { stage: 'light', min: 28 },
-  { stage: 'awake', min: 10 }, { stage: 'light', min: 40 },
-] // 합 432분 = 7시간 12분
-function SleepTimeline({ start, end, segments }: { start: string; end: string; segments: readonly { stage: SleepStage; min: number }[] }) {
-  const total = segments.reduce((a, s) => a + s.min, 0)
-  return (
-    <div className="sleep-timeline" aria-label={`지난밤 수면 ${start}부터 ${end}까지`}>
-      <div className="sleep-timeline-bar">
-        {segments.map((s, i) => (
-          <span key={i} className={`st-${s.stage}`} style={{ flex: s.min / total, background: SLEEP_TONES[s.stage] }} />
-        ))}
-      </div>
-      <div className="sleep-timeline-axis"><span>{start} 취침</span><span>{end} 기상</span></div>
-      <ul className="sleep-timeline-legend">
-        <li><i style={{ background: SLEEP_TONES.deep }} />깊은</li>
-        <li><i style={{ background: SLEEP_TONES.rem }} />렘</li>
-        <li><i style={{ background: SLEEP_TONES.light }} />얕은</li>
-        <li><i style={{ background: SLEEP_TONES.awake }} />깸</li>
-      </ul>
-    </div>
-  )
-}
-
-/** 홈 오늘 바이탈 — 값 + 최근 7일 선 (마지막이 오늘). 브링처럼 홈에서 추세가 보이게 */
 const HOME_VITALS = [
   { id: 'hr', label: '심박수', value: 72, unit: 'bpm', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: HOME_SOFT.tomato, week: [68, 71, 74, 70, 73, 69, 72] },
   { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', icon: 'drop', color: HOME_COLORS.berry, soft: HOME_SOFT.berry, week: [97, 98, 96, 98, 97, 98, 98] },

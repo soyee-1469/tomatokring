@@ -4,10 +4,11 @@ export const SLEEP_COLORS = {
   line: '#5E35B1',
   soft: '#EDE7F6',
   stages: {
+    // 보라 한 색의 농담 4단계 (브링과 같은 방식) — 한 카드에 색 하나
     deep: '#5E35B1',
-    rem: '#CE93D8',
-    light: '#FFCC80',
-    awake: '#90CAF9',
+    rem: '#9575CD',
+    light: '#C4B0EA',
+    awake: '#EDE7F6',
   },
 } as const
 
