@@ -940,6 +940,20 @@ export function HomeScreen() {
   const battery = batteryView(bd === 'none' ? null : bd === 'charging' || bd === null ? device.battery : bd, bd === 'charging')
 
   // 반지 기록 불러오기 — 브링처럼 세 가지로 갱신: 홈에 들어올 때 자동, 아래로 당겨서, 배터리 옆 버튼
+  // 바이탈 '지금 측정하기': 네 가지를 한 번에 재고 오늘 기록에 한 줄 추가 (자동 측정과 별개)
+  const [vitalBusy, setVitalBusy] = useState(false)
+  const [vitalNow, setVitalNow] = useState<Record<'hr' | 'spo2' | 'temp' | 'hrv', number> | null>(null)
+  const [vitalResultOpen, setVitalResultOpen] = useState(false)
+  const measureVitalsNow = () => {
+    if (vitalBusy) return
+    setVitalBusy(true)
+    window.setTimeout(() => {
+      const j = (base: number, spread: number, digits: number) => Number((base + (Math.sin(Date.now() / 997) * spread)).toFixed(digits))
+      setVitalNow({ hr: j(72, 4, 0), spo2: Math.min(99, j(98, 1, 0)), temp: j(36.6, 0.2, 1), hrv: j(42, 4, 0) })
+      setVitalBusy(false)
+      setVitalResultOpen(true) // 브링처럼 측정 완료 시 방금 잰 값을 모달로 보여 준다
+    }, 3000)
+  }
   const [syncing, setSyncing] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [pull, setPull] = useState(0)
@@ -1316,8 +1330,7 @@ export function HomeScreen() {
                     <b>{dateLabel}</b>
                     {session.paired && (
                       <button type="button" className={`elder-date-sync ${syncing ? 'busy' : ''}`} onClick={runSync} aria-label="반지 기록 새로고침" disabled={syncing}>
-                        <Ri name="refresh" size={16} className={syncing ? 'spin' : ''} />
-                        {syncing ? '새로고침 중' : '새로고침'}
+                        <Ri name="refresh" size={18} className={syncing ? 'spin' : ''} />
                       </button>
                     )}
                   </span>
@@ -1382,7 +1395,10 @@ export function HomeScreen() {
                 {/* 오늘 바이탈: 심박수·혈중 산소·피부 온도·심박변이도 — 값 + 상태 한 줄, 누르면 상세 */}
                 <section className="elder-fit-card vitals" aria-label="오늘 바이탈">
                   <div className="home-vitals">
-                    {HOME_VITALS.map((v) => (
+                    {HOME_VITALS.map((v) => {
+                      const value = vitalNow ? vitalNow[v.id] : v.value
+                      const week = vitalNow ? [...v.week.slice(0, -1), vitalNow[v.id]] : v.week
+                      return (
                       <button key={v.id} type="button" className="home-vital" onClick={() => navigate(`/vitaling/measure/stress?m=${v.id}`)}>
                         <span className="home-vital-head">
                           <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={16} /></span>
@@ -1390,13 +1406,28 @@ export function HomeScreen() {
                         </span>
                         <span className="home-vital-body">
                           <span className="home-vital-copy">
-                            <strong>{v.value}<small>{v.unit}</small></strong>
-                            <span>{v.status}</span>
+                            <strong>{value}<small>{v.unit}</small></strong>
+                            <span>{vitalNow ? '방금 측정' : v.status}</span>
                           </span>
-                          <Spark values={v.week} color={v.color} />
+                          <Spark values={week} color={v.color} />
                         </span>
                       </button>
-                    ))}
+                      )
+                    })}
+                  </div>
+                  {/* 지금 한 번 더 재기: 다른 측정 버튼과 같은 60px 파란 버튼 (포인트 유무로 크기·모양을 다르게 하지 않는다). 자동 측정은 계속된다 */}
+                  <div className="elder-vital-measure">
+                    {vitalBusy ? (
+                      <button type="button" className="elder-claim-btn busy" disabled style={{ ['--busy-ms' as string]: '3000ms' }}>
+                        <Ri name="loader-4" size={18} className="spin" />
+                        <span>측정 중 · 손을 가만히 두세요</span>
+                      </button>
+                    ) : (
+                      <button type="button" className="elder-claim-btn secondary with-points" onClick={measureVitalsNow}>
+                        <span>지금 측정하기</span>
+                      </button>
+                    )}
+                    <p className="elder-claim-guide under">네 가지를 한 번에 재요 · 평소에는 반지가 자동으로 재요</p>
                   </div>
                 </section>
 
@@ -1411,8 +1442,52 @@ export function HomeScreen() {
           </div>
           {toast && <div className="elder-toast" role="status">{toast}</div>}
           {orderOpen && <CardOrderSheet order={session.cardOrder} onClose={() => setOrderOpen(false)} />}
+          {vitalResultOpen && vitalNow && <VitalResultSheet values={vitalNow} onClose={() => setVitalResultOpen(false)} />}
         </div>
       </Phone>
+    </div>
+  )
+}
+
+/** 측정 완료 모달 — 방금 잰 네 가지 값과 상태. 브링 실시간 측정 완료 화면과 같은 역할 */
+function vitalStatus(id: 'hr' | 'spo2' | 'temp' | 'hrv', v: number): { label: string; tone: 'ok' | 'mid' | 'low' } {
+  if (id === 'hr') return v < 60 ? { label: '낮음', tone: 'mid' } : v <= 100 ? { label: '정상', tone: 'ok' } : { label: '높음', tone: 'low' }
+  if (id === 'spo2') return v >= 95 ? { label: '정상', tone: 'ok' } : v >= 90 ? { label: '낮음', tone: 'mid' } : { label: '매우 낮음', tone: 'low' }
+  if (id === 'temp') return v < 36 ? { label: '낮음', tone: 'mid' } : v <= 37.2 ? { label: '정상', tone: 'ok' } : { label: '높음', tone: 'low' }
+  return v >= 40 ? { label: '좋음', tone: 'ok' } : v >= 30 ? { label: '보통', tone: 'mid' } : { label: '낮음', tone: 'low' }
+}
+function VitalResultSheet({ values, onClose }: { values: Record<'hr' | 'spo2' | 'temp' | 'hrv', number>; onClose: () => void }) {
+  const now = new Date()
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const worst = HOME_VITALS.map((v) => vitalStatus(v.id, values[v.id]).tone).includes('low') ? 'low' : HOME_VITALS.map((v) => vitalStatus(v.id, values[v.id]).tone).includes('mid') ? 'mid' : 'ok'
+  return (
+    <div className="sheet-overlay" role="dialog" aria-modal="true" aria-labelledby="vital-result-title">
+      <button type="button" className="sheet-backdrop" aria-label="닫기" onClick={onClose} />
+      <div className="sheet-panel vital-result-sheet">
+        <div className="sheet-handle" />
+        <div className="vital-result-head">
+          <Ri name="checkbox-circle" fill size={26} />
+          <h2 id="vital-result-title">측정 완료</h2>
+          <span>{time} · 오늘 기록에 추가됐어요</span>
+        </div>
+        <ul className="vital-result-list">
+          {HOME_VITALS.map((v) => {
+            const st = vitalStatus(v.id, values[v.id])
+            return (
+              <li key={v.id}>
+                <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={18} /></span>
+                <b>{v.label}</b>
+                <strong>{values[v.id]}<small>{v.unit}</small></strong>
+                <StatusTag tone={st.tone}>{st.label}</StatusTag>
+              </li>
+            )
+          })}
+        </ul>
+        <p className="vital-result-say">
+          {worst === 'ok' ? '네 가지 모두 정상 범위예요.' : worst === 'mid' ? '평소와 조금 다른 값이 있어요. 잠시 쉬었다가 다시 재 보세요.' : '범위를 벗어난 값이 있어요. 불편함이 있으면 전문가와 상의해 보세요.'}
+        </p>
+        <PrimaryButton onClick={onClose}>확인</PrimaryButton>
+      </div>
     </div>
   )
 }
