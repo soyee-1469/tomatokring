@@ -17,6 +17,8 @@ export const DEFAULT_GOALS: HealthGoals = { steps: 6000, kcalBurn: 300, distance
 /** 이상 징후 상태 — 브링 API 판정값. 목업에서는 샘플 토글로 바꿔 본다 */
 export type SignalState = 'collecting' | 'normal' | 'detected'
 export type ConditionAnswer = 'good' | 'so-so' | 'bad'
+/** 배터리 시연값 — null이면 실제(샘플) 값, 'none'은 반지에서 못 읽은 상태, 'charging'은 충전 중 */
+export type BatteryDemo = number | 'none' | 'charging' | null
 
 export type HomeCardKind = Exclude<MeasureKind, 'health'>
 export const DEFAULT_CARD_ORDER: readonly HomeCardKind[] = ['stress', 'diet', 'walk', 'sleep', 'survey']
@@ -52,6 +54,7 @@ export type VitalingSession = {
   signalDemo: SignalState
   /** 컨디션 체크 응답 (날짜 키 → 답) */
   conditionChecks: Record<string, ConditionAnswer>
+  batteryDemo: BatteryDemo
 }
 
 const defaultSession: VitalingSession = {
@@ -74,6 +77,7 @@ const defaultSession: VitalingSession = {
   validDays: [],
   signalDemo: 'collecting',
   conditionChecks: {},
+  batteryDemo: null,
 }
 
 function pad2(n: number) {
@@ -120,6 +124,7 @@ function read(): VitalingSession {
         validDays: Array.isArray(parsed.validDays) ? parsed.validDays.filter((v): v is string => typeof v === 'string') : [],
         signalDemo: parsed.signalDemo ?? 'collecting',
         conditionChecks: parsed.conditionChecks ?? {},
+        batteryDemo: parsed.batteryDemo ?? null,
       }
       return cache!
     }
@@ -292,6 +297,9 @@ export function clearMeasureDone(kind: MeasureKind) {
   })
 }
 
+export function setBatteryDemo(v: BatteryDemo) {
+  write({ ...read(), batteryDemo: v })
+}
 export function setSignalDemo(state: SignalState) {
   write({ ...read(), signalDemo: state })
 }

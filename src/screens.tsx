@@ -894,6 +894,17 @@ const TEAM_HOME = {
 
 } as const
 
+/** 반지 배터리 표시 단계 — 못 읽음 / 충전 중(번개) / 비었음(≤5, 빈 아이콘) / 낮음(≤20) / 중간(≤60) / 높음(≤90) / 가득. 20% 이하는 토마토색. 글자는 숫자만 (날짜 줄이 두 줄로 꺾이지 않게) */
+function batteryView(level: number | null, charging = false): { icon: string; text: string; tone: 'none' | 'low' | 'ok' } {
+  if (level === null) return { icon: 'battery-warning', text: '확인 안 됨', tone: 'none' }
+  if (charging) return { icon: 'battery-charging', text: `${level}%`, tone: 'ok' }
+  if (level <= 5) return { icon: 'battery-empty', text: `${level}%`, tone: 'low' }
+  if (level <= 20) return { icon: 'battery-low', text: `${level}%`, tone: 'low' }
+  if (level <= 60) return { icon: 'battery-medium', text: `${level}%`, tone: 'ok' }
+  if (level <= 90) return { icon: 'battery-high', text: `${level}%`, tone: 'ok' }
+  return { icon: 'battery-full', text: `${level}%`, tone: 'ok' }
+}
+
 export function HomeScreen() {
   const navigate = useNavigate()
   const session = useSession()
@@ -901,6 +912,9 @@ export function HomeScreen() {
   const activeMember = 'me' as const
   const profile = TEAM_HOME[activeMember]
   const device = profile.device
+  // 배터리: 시연값이 있으면 그 값, 없으면 샘플 기기 값
+  const bd = session.batteryDemo
+  const battery = batteryView(bd === 'none' ? null : bd === 'charging' || bd === null ? device.battery : bd, bd === 'charging')
 
   // 반지 기록 불러오기 — 브링처럼 세 가지로 갱신: 홈에 들어올 때 자동, 아래로 당겨서, 배터리 옆 버튼
   const [syncing, setSyncing] = useState(false)
@@ -1284,9 +1298,9 @@ export function HomeScreen() {
                       </button>
                     )}
                   </span>
-                  <span className={`elder-date-battery ${device.battery <= 20 ? 'low' : ''}`}>
-                    <Ri name={device.battery <= 20 ? 'battery-low' : device.battery <= 60 ? 'battery' : 'battery'} fill size={16} />
-                    {device.battery}%
+                  <span className={`elder-date-battery ${battery.tone}`} aria-label={`반지 배터리 ${battery.text}`}>
+                    <Ri name={battery.icon} fill size={18} />
+                    {battery.text}
                   </span>
                 </div>
               </div>

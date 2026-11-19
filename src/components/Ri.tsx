@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import {
+  BatteryCharging, BatteryEmpty, BatteryFull, BatteryHigh, BatteryLow, BatteryMedium, BatteryWarning,
   BookOpen, Brain, ChatCircleDots, ClipboardText, Drop, Flag, ForkKnife, Gear, Heartbeat,
   Moon, Footprints, Question, Siren, ArrowsClockwise, Thermometer, UserGear,
 } from '@phosphor-icons/react'
@@ -19,6 +20,14 @@ const DUOTONE: Record<string, Icon> = {
   survey: ClipboardText,
   'heart-pulse': Heartbeat,
   siren: Siren, // 이상 징후 카드 (경광등)
+  // 반지 배터리 단계 (홈 날짜 줄)
+  'battery-empty': BatteryEmpty,
+  'battery-low': BatteryLow,
+  'battery-medium': BatteryMedium,
+  'battery-high': BatteryHigh,
+  'battery-full': BatteryFull,
+  'battery-charging': BatteryCharging,
+  'battery-warning': BatteryWarning,
   drop: Drop,
   'temp-hot': Thermometer,
   // pulse(HRV 회복력)는 Phosphor 채움이 사각 박스 모양이라 Remix 파형 그대로 둔다

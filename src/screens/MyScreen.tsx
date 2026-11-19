@@ -4,7 +4,7 @@ import { X } from '@phosphor-icons/react'
 import { Header, Phone, PrimaryButton } from '../components/ui'
 import { Ri } from '../components/Ri'
 import { useSession } from '../useSession'
-import { restoreValidDays, RHYTHM_MIN_DAYS, setDemoValidDays, setSignalDemo, validDayCount, type SignalState } from '../session'
+import { restoreValidDays, RHYTHM_MIN_DAYS, setBatteryDemo, setDemoValidDays, setSignalDemo, validDayCount, type BatteryDemo, type SignalState } from '../session'
 
 /** 마이 페이지: 내 정보 · 기기 정보 · 기기 설정 · 데이터 복원 · 가이드 */
 export function MyScreen() {
@@ -78,6 +78,16 @@ export function MyScreen() {
                 ))}
               </div>
               <span>홈에는 '감지'일 때만 이상 징후 카드가 나와요. 나머지는 상세 화면에서만 보여요.</span>
+            </div>
+            {/* 시연용: 반지 배터리 단계 (출시 전 제거) */}
+            <div className="demo-box">
+              <b>시연용 · 반지 배터리</b>
+              <div className="demo-row wrap">
+                {([['none', '못 읽음'], [3, '비었음 3%'], [15, '낮음 15%'], [50, '중간 50%'], [null, '높음 78%'], [100, '가득 100%'], ['charging', '충전 중']] as [BatteryDemo, string][]).map(([v, label]) => (
+                  <button key={String(v)} type="button" className={session.batteryDemo === v ? 'on' : ''} onClick={() => setBatteryDemo(v)}>{label}</button>
+                ))}
+              </div>
+              <span>20% 이하는 빨갛게, 5% 이하는 빈 배터리 아이콘, 충전 중은 번개 아이콘이에요. 못 읽음은 반지와 연결이 끊긴 상태예요.</span>
             </div>
           </div>
           {restoreOpen && <RestoreSheet onClose={() => setRestoreOpen(false)} />}

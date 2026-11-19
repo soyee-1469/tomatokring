@@ -13815,3 +13815,12 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-date-battery { background: transparent; padding: 6px 2px; }
 .elder-home .elder-date-battery.low { background: transparent; }
 .elder-home .elder-date-sync { font-weight: 500; }
+
+/* 배터리 단계별 색: 낮음·비었음은 토마토, 못 읽음은 회색 */
+.elder-home .elder-date-battery.none { color: var(--text-3); }
+.elder-home .elder-date-battery.low { color: var(--tomato); }
+.elder-home .elder-date-battery.low i, .elder-home .elder-date-battery.low .ico-duo { color: var(--tomato); }
+.elder-home .elder-date-battery.none .ico-duo { color: var(--text-3); }
+.elder-home .elder-date-battery .ico-duo { display: inline-flex; }
+.demo-row.wrap { flex-wrap: wrap; }
+.elder-home .elder-date-battery, .elder-home .elder-date-center b { white-space: nowrap; }
