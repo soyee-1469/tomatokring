@@ -42,7 +42,7 @@ export function TrendLine({
   const avgLabelFits = nums.length > 0 && Math.abs(y(avg) - top) > 11 && Math.abs(y(avg) - bottom) > 11
   const pts = shown.map((v, i) => (v === null ? null : { x: x(i), y: y(v) }))
   const seg = pts.filter((p): p is { x: number; y: number } => p !== null)
-  // Catmull-Rom → 베지어
+  // 상세는 곡선으로, 홈은 측정값 사이를 직선으로 연결한다.
   let d = ''
   seg.forEach((p, i) => {
     if (i === 0) { d += `M ${p.x} ${p.y}`; return }
@@ -63,17 +63,22 @@ export function TrendLine({
       <line x1={padL} x2={w - padR} y1={bottom} y2={bottom} stroke="#E8EBEE" strokeWidth="1.5" />
       {!compact && <text x={padL - 10} y={top + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{fmt(max)}{unit}</text>}
       {!compact && <text x={padL - 10} y={bottom + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{fmt(yMin)}{unit}</text>}
-      {nums.length > 0 && (
+      {!compact && nums.length > 0 && (
         <>
           <line x1={padL} x2={w - padR} y1={y(avg)} y2={y(avg)} stroke={color} strokeOpacity="0.5" strokeWidth="1.5" strokeDasharray="4 4" />
-          {avgLabelFits && !compact && <text x={padL - 10} y={y(avg) + 4} textAnchor="end" fontSize="11" fontWeight="700" fill="#5a6570">평균</text>}
+          {avgLabelFits && <text x={padL - 10} y={y(avg) + 4} textAnchor="end" fontSize="11" fontWeight="700" fill="#5a6570">평균</text>}
         </>
       )}
-      {d && <path d={d} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+      {compact ? pts.map((p, i) => {
+        const prev = pts[i - 1]
+        return p && prev
+          ? <line key={i} x1={prev.x} y1={prev.y} x2={p.x} y2={p.y} stroke={color} strokeWidth="3" strokeLinecap="round" />
+          : null
+      }) : d && <path d={d} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
       {pts.map((p, i) => {
         const isLast = i === n - 1
         if (!p) {
-          return isLast ? <circle key={i} cx={x(i)} cy={y(avg || max / 2)} r={6} fill="none" stroke="#c5ced6" strokeWidth="2" strokeDasharray="3 2" /> : null
+          return !compact && isLast ? <circle key={i} cx={x(i)} cy={y(avg || max / 2)} r={6} fill="none" stroke="#c5ced6" strokeWidth="2" strokeDasharray="3 2" /> : null
         }
         return isLast
           ? <circle key={i} cx={p.x} cy={p.y} r={7} fill={color} />

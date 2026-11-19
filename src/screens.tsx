@@ -27,7 +27,7 @@ import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { TrendLine as MiniBars } from './components/TrendLine'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import { SLEEP_LAST_NIGHT, SleepTimeline, sleepEfficiencyLevel } from './components/Sleep'
 import {
@@ -334,6 +334,7 @@ function formatHomeDate(d: Date) {
 }
 
 const HOME_CARD_META: Record<HomeCardKind, { label: string; icon: string; cls: string }> = {
+  vitals: { label: '오늘 바이탈', icon: 'heart-pulse', cls: 'vitals' },
   stress: { label: '스트레스', icon: 'brain', cls: 'stress' },
   diet: { label: '식단', icon: 'restaurant', cls: 'diet' },
   walk: { label: '걷기', icon: 'walk', cls: 'activity' },
@@ -450,14 +451,14 @@ function stressLevel(score: number) {
 
 /** 홈 맨 위 '오늘의 미션' 카드 — 토마톡 게임 탭의 미션 카드와 같은 형식(문장 + 도장 체크 5개 + n/5).
  *  토마톡 링만의 차별점(건강 확인 = 포인트)을 첫 화면에서, 메신저 쪽과 같은 모양으로 보여준다 */
-const POINT_ITEMS: readonly { kind: HomeCardKind; label: string; points: number; Icon: Icon }[] = [
+const POINT_ITEMS: readonly { kind: MissionCardKind; label: string; points: number; Icon: Icon }[] = [
   { kind: 'stress', label: '스트레스', points: STRESS_REWARD_P, Icon: Brain },
   { kind: 'diet', label: '식단', points: DIET_REWARD_P, Icon: ForkKnife },
   { kind: 'walk', label: '걷기', points: WALK_REWARD_P, Icon: Footprints },
   { kind: 'sleep', label: '수면', points: SLEEP_REWARD_P, Icon: Moon },
   { kind: 'survey', label: '설문', points: SURVEY_REWARD_P, Icon: ClipboardText },
 ]
-function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, boolean>; onItem: (kind: HomeCardKind) => void }) {
+function TodayMissionCard({ claimed, onItem }: { claimed: Record<MissionCardKind, boolean>; onItem: (kind: MissionCardKind) => void }) {
   const doneCount = POINT_ITEMS.filter((it) => claimed[it.kind]).length
   const leftCount = POINT_ITEMS.length - doneCount
   const got = POINT_ITEMS.filter((it) => claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
@@ -472,7 +473,8 @@ function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, b
         </div>
       ) : (
         <p className="elder-mission-say">
-          <b>{leftCount}</b>개 더 완료하면 <b>{left.toLocaleString('ko-KR')}</b> 포인트를 받아요
+          <strong>{left.toLocaleString('ko-KR')} <small>포인트</small></strong>
+          <span>남은 미션 {leftCount}개를 완료하면 받을 수 있어요</span>
         </p>
       )}
       <div className="elder-mission-row">
@@ -529,7 +531,7 @@ function SignalCard({ condition, onOpen, onCondition }: {
           </button>
         ))}
       </div>
-      <p className="elder-signal-advice">{picked ? picked.advice : '여러 지표가 평소와 달라요. 일정을 줄이고 쉬는 시간을 늘려 주세요.'}</p>
+      <p className="elder-signal-advice">{picked ? picked.advice : '오늘은 쉬는 시간을 조금 더 가져 보세요.'}</p>
     </div>
   )
 }
@@ -767,8 +769,6 @@ function DietUploadCard({
   kcal,
   goal,
   photo,
-  weekDone,
-  labels,
   measured,
   claimed,
   onOpen,
@@ -778,9 +778,6 @@ function DietUploadCard({
   kcal: number
   goal: number
   photo?: string | null
-  /** 최근 7일 사진 올린 날 (마지막이 오늘) */
-  weekDone: readonly boolean[]
-  labels: readonly string[]
   measured: boolean
   claimed: boolean
   /** 카드 탭 → 식단 상세 보기 */
@@ -844,18 +841,6 @@ function DietUploadCard({
         onMeasure={onMeasure}
         onClaim={onClaim}
       />
-      {/* 최근 7일 기록 스트립: 사진 올린 날만 채움 (숫자 없음) */}
-      <div className="elder-fit-chart-wrap tail">
-        <ul className="diet-strip" aria-label="최근 7일 식단 기록">
-          {weekDone.map((done, i) => (
-            <li key={i} className={`${done ? 'on' : ''} ${i === weekDone.length - 1 ? 'today' : ''}`}>
-              <i>{done && <Ri name="check" size={14} />}</i>
-              <b>{labels[i]}</b>
-            </li>
-          ))}
-        </ul>
-        <span className="elder-fit-cap">최근 7일 식단 기록</span>
-      </div>
     </div>
   )
 }
@@ -1078,8 +1063,8 @@ export function HomeScreen() {
     }, ms)
   }
   /** 포인트 카드의 항목을 누르면 홈의 해당 카드로 스크롤 (카드가 없으면 상세로) */
-  const CARD_CLASS: Record<HomeCardKind, string> = { stress: 'stress', diet: 'diet', walk: 'activity', sleep: 'sleep', survey: 'survey' }
-  const focusCard = (kind: HomeCardKind) => {
+  const CARD_CLASS: Record<MissionCardKind, string> = { stress: 'stress', diet: 'diet', walk: 'activity', sleep: 'sleep', survey: 'survey' }
+  const focusCard = (kind: MissionCardKind) => {
     const el = document.querySelector<HTMLElement>(`.elder-home .elder-fit-card.${CARD_CLASS[kind]}`)
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -1142,10 +1127,10 @@ export function HomeScreen() {
           repeatLabel="다시 측정하기"
           readyText=""
           doneLabel={`오늘 ${formatClaimP(STRESS_REWARD_P)} 받았어요`}
-          tip={`오늘 ${stressSel}점${stressMyAvg !== null ? ` (내 평균 ${stressMyAvg}점)` : ''} · ${STRESS_REWARD_MAX}점 이하일 때 지급`}
+          tip={`${STRESS_REWARD_MAX}점 이하일 때 포인트를 받아요`}
           onMeasure={() => runInline('stress')}
           busy={busyKind === 'stress'}
-          busyLabel="측정 중 · 손을 가만히 두세요"
+          busyLabel="재는 중이에요 · 잠깐만 편히 계세요"
           onClaim={() => markClaimed('stress')}
         />
         {/* 7일 그래프는 포인트 버튼 아래 (받는 게 먼저) */}
@@ -1165,8 +1150,6 @@ export function HomeScreen() {
         kcal={day.dietKcal}
         goal={profile.diet.goal}
         photo={todayDietPhoto(session)}
-        weekDone={[...profile.diet.weekDone.slice(0, 6), dietMeasured]}
-        labels={day.labels}
         measured={dietMeasured}
         claimed={dietClaimed}
         onOpen={() => goMeasure('diet')}
@@ -1284,6 +1267,51 @@ export function HomeScreen() {
       </div>
           </Fragment>
         )
+      case 'vitals':
+        return (
+          <Fragment key="vitals">
+      {/* 오늘 바이탈: 심박수·혈중 산소·피부 온도·심박변이도 — 값 + 상태 한 줄, 누르면 상세 */}
+      <section className="elder-fit-card vitals" aria-label="오늘 바이탈">
+        <p className="elder-vital-caption">
+          {vitalNow ? '방금 측정한 값이에요.' : '반지가 자동으로 측정해요.'}
+        </p>
+        <div className="home-vitals">
+          {HOME_VITALS.map((v) => {
+            const value = vitalNow ? vitalNow[v.id] : v.value
+            const week = vitalNow ? [...v.week.slice(0, -1), vitalNow[v.id]] : v.week
+            return (
+            <button key={v.id} type="button" className="home-vital" onClick={() => navigate(`/vitaling/measure/stress?m=${v.id}`)}>
+              <span className="home-vital-head">
+                <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={16} /></span>
+                <em>{v.label}</em>
+              </span>
+              <span className="home-vital-body">
+                <span className="home-vital-copy">
+                  <strong>{value}<small>{v.unit}</small></strong>
+                  {!vitalNow && <span>{vitalStatus(v.id, v.value).label}</span>}
+                </span>
+                <Spark values={week} color={v.color} />
+              </span>
+            </button>
+            )
+          })}
+        </div>
+        {/* 지금 한 번 더 재기: 크기는 다른 측정 버튼과 같은 60px, 색은 흰 바탕 (파랑·초록은 포인트가 걸린 동작에만). 자동 측정은 계속된다 */}
+        <div className="elder-vital-measure">
+          {vitalBusy ? (
+            <button type="button" className="elder-claim-btn busy" disabled style={{ ['--busy-ms' as string]: '3000ms' }}>
+              <Ri name="loader-4" size={18} className="spin" />
+              <span>재는 중이에요 · 잠깐만 편히 계세요</span>
+            </button>
+          ) : (
+            <button type="button" className="elder-claim-btn plain" onClick={measureVitalsNow}>
+              <span>지금 측정하기</span>
+            </button>
+          )}
+        </div>
+      </section>
+          </Fragment>
+        )
       case 'survey':
         return (
           <Fragment key="survey">
@@ -1349,7 +1377,7 @@ export function HomeScreen() {
                     )}
                   </span>
                   <span className={`elder-date-battery ${battery.tone}`} aria-label={`반지 배터리 ${battery.text}`}>
-                    <svg className="elder-ring-ico" viewBox="0 0 20 20" aria-hidden><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.6" /></svg><Ri name={battery.icon} fill size={18} />
+                    <Ri name={battery.icon} fill size={18} />
                     {battery.text}
                   </span>
                 </div>
@@ -1406,45 +1434,6 @@ export function HomeScreen() {
                   />
                 )}
 
-                {/* 오늘 바이탈: 심박수·혈중 산소·피부 온도·심박변이도 — 값 + 상태 한 줄, 누르면 상세 */}
-                <section className="elder-fit-card vitals" aria-label="오늘 바이탈">
-                  <div className="home-vitals">
-                    {HOME_VITALS.map((v) => {
-                      const value = vitalNow ? vitalNow[v.id] : v.value
-                      const week = vitalNow ? [...v.week.slice(0, -1), vitalNow[v.id]] : v.week
-                      return (
-                      <button key={v.id} type="button" className="home-vital" onClick={() => navigate(`/vitaling/measure/stress?m=${v.id}`)}>
-                        <span className="home-vital-head">
-                          <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={16} /></span>
-                          <em>{v.label}</em>
-                        </span>
-                        <span className="home-vital-body">
-                          <span className="home-vital-copy">
-                            <strong>{value}<small>{v.unit}</small></strong>
-                            <span>{vitalNow ? '방금 측정' : vitalStatus(v.id, v.value).label}</span>
-                          </span>
-                          <Spark values={week} color={v.color} />
-                        </span>
-                      </button>
-                      )
-                    })}
-                  </div>
-                  {/* 지금 한 번 더 재기: 크기는 다른 측정 버튼과 같은 60px, 색은 흰 바탕 (파랑·초록은 포인트가 걸린 동작에만). 자동 측정은 계속된다 */}
-                  <div className="elder-vital-measure">
-                    {vitalBusy ? (
-                      <button type="button" className="elder-claim-btn busy" disabled style={{ ['--busy-ms' as string]: '3000ms' }}>
-                        <Ri name="loader-4" size={18} className="spin" />
-                        <span>측정 중 · 손을 가만히 두세요</span>
-                      </button>
-                    ) : (
-                      <button type="button" className="elder-claim-btn plain" onClick={measureVitalsNow}>
-                        <span>지금 측정하기</span>
-                      </button>
-                    )}
-                    <p className="elder-claim-guide under">반지가 자동으로 측정해요.</p>
-                  </div>
-                </section>
-
                 {session.cardOrder.map(renderCard)}
 
                 <button type="button" className="elder-card-order-btn" onClick={() => setOrderOpen(true)}>
@@ -1498,8 +1487,11 @@ function VitalResultSheet({ values, onClose }: { values: Record<'hr' | 'spo2' | 
             )
           })}
         </ul>
+        {/* 안내는 문장마다 한 줄 (둘째 문장은 줄 바꿔서) */}
         <p className="vital-result-say">
-          {worst === 'ok' ? '네 가지 모두 정상 범위예요.' : worst === 'mid' ? '평소와 조금 다른 값이 있어요. 잠시 쉬었다가 다시 재 보세요.' : '범위를 벗어난 값이 있어요. 불편함이 있으면 전문가와 상의해 보세요.'}
+          {(worst === 'ok' ? ['네 가지 모두 정상 범위예요.'] : worst === 'mid' ? ['평소와 조금 다른 값이 있어요.', '잠시 쉬었다가 다시 재 보세요.'] : ['범위를 벗어난 값이 있어요.', '불편함이 있으면 전문가와 상의해 보세요.']).map((line, i) => (
+            <Fragment key={i}>{i > 0 && <br />}{line}</Fragment>
+          ))}
         </p>
         <PrimaryButton onClick={onClose}>확인</PrimaryButton>
       </div>

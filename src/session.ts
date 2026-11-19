@@ -20,8 +20,11 @@ export type ConditionAnswer = 'good' | 'so-so' | 'bad'
 /** 배터리 시연값 — null이면 실제(샘플) 값, 'none'은 반지에서 못 읽은 상태, 'charging'은 충전 중 */
 export type BatteryDemo = number | 'none' | 'charging' | null
 
-export type HomeCardKind = Exclude<MeasureKind, 'health'>
-export const DEFAULT_CARD_ORDER: readonly HomeCardKind[] = ['stress', 'diet', 'walk', 'sleep', 'survey']
+/** 포인트가 걸린 미션 카드 (오늘의 미션 도장과 1:1) */
+export type MissionCardKind = Exclude<MeasureKind, 'health'>
+/** 홈에서 순서를 바꿀 수 있는 카드: 미션 카드 + 반지가 자동으로 재는 '오늘 바이탈' 묶음 카드 */
+export type HomeCardKind = MissionCardKind | 'vitals'
+export const DEFAULT_CARD_ORDER: readonly HomeCardKind[] = ['vitals', 'stress', 'diet', 'walk', 'sleep', 'survey']
 
 export type VitalingSession = {
   onboarded: boolean
@@ -90,14 +93,13 @@ export function periodKey(kind: MeasureKind, now = new Date()) {
   return kind === 'survey' ? ym : `${ym}-${pad2(now.getDate())}`
 }
 
-/** 저장된 순서에 빠진 카드는 뒤에, 모르는 값은 버림 */
+/** 저장된 순서에 빠진 카드는 기본 순서의 자리에 끼워 넣고(새로 생긴 카드가 맨 뒤로 가지 않게), 모르는 값은 버림 */
 export function normalizeCardOrder(order: unknown): HomeCardKind[] {
   const saved = Array.isArray(order) ? (order.filter((k): k is HomeCardKind => (DEFAULT_CARD_ORDER as readonly string[]).includes(k as string)) as HomeCardKind[]) : []
-  const seen = new Set<HomeCardKind>()
-  const out: HomeCardKind[] = []
-  for (const k of [...saved, ...DEFAULT_CARD_ORDER]) {
-    if (!seen.has(k)) { seen.add(k); out.push(k) }
-  }
+  const out: HomeCardKind[] = saved.filter((k, i) => saved.indexOf(k) === i)
+  DEFAULT_CARD_ORDER.forEach((k, i) => {
+    if (!out.includes(k)) out.splice(Math.min(i, out.length), 0, k)
+  })
   return out
 }
 
