@@ -1317,9 +1317,9 @@ export function HomeScreen() {
                       {device.battery}%
                     </span>
                     {session.paired && (
-                      <button type="button" className={`elder-date-sync ${syncing ? 'busy' : ''}`} onClick={runSync} aria-label="반지 기록 불러오기" disabled={syncing}>
+                      <button type="button" className={`elder-date-sync ${syncing ? 'busy' : ''}`} onClick={runSync} aria-label="반지 기록 새로고침" disabled={syncing}>
                         <Ri name="refresh" size={16} className={syncing ? 'spin' : ''} />
-                        {syncing ? '불러오는 중' : '불러오기'}
+                        {syncing ? '새로고침 중' : '새로고침'}
                       </button>
                     )}
                   </span>
