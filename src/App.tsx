@@ -6,6 +6,7 @@ import {
   PairScreen,
   SettingsScreen,
   SerialScreen,
+  SignalScreen,
   TermsScreen,
 } from './screens'
 import { DayScoreScreen } from './screens/DayScoreScreen'
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/vitaling/stress" element={<Navigate to="/vitaling/measure/stress" replace />} />
         <Route path="/vitaling/activity" element={<Navigate to="/vitaling/measure/walk" replace />} />
         <Route path="/vitaling/sleep" element={<SleepAnalysisScreen />} />
+        <Route path="/vitaling/signal" element={<SignalScreen />} />
         <Route path="/vitaling/survey" element={<SurveyReportScreen />} />
         <Route path="/vitaling/my" element={<MyScreen />} />
         <Route path="/vitaling/my/profile" element={<ProfileScreenMy />} />

@@ -13680,3 +13680,83 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
   0% { box-shadow: 0 0 0 3px rgba(205, 49, 62, 0.35); }
   100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
 }
+
+/* ——— 홈 '이상 징후' 카드: 준비 중·비슷은 한 줄, 감지는 토마토 연한 배경 + 컨디션 체크 ——— */
+.elder-home .elder-signal-card {
+  margin: 0 0 12px;
+  padding: 4px 12px 6px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--cream-line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.elder-home .elder-signal-card.detected {
+  background: linear-gradient(180deg, #FFF4F4 0%, #FFFFFF 100%);
+  border-color: #FFE1E0;
+  padding-bottom: 10px;
+}
+.elder-home .elder-signal-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  padding: 8px 0;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.elder-home .elder-signal-row > i:first-child {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--chip-gray);
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.elder-home .elder-signal-card.detected .elder-signal-row > i:first-child { background: var(--tomato-soft); color: var(--tomato); }
+.elder-home .elder-signal-row b { font-size: 17px; font-weight: 700; letter-spacing: -0.03em; }
+.elder-home .elder-signal-row .elder-menu-tag { margin-left: auto; }
+.elder-home .elder-menu-tag.calm { background: var(--brand-blue-soft); color: var(--text); }
+.elder-home .elder-signal-arrow { color: var(--text-3); flex-shrink: 0; }
+.elder-home .elder-signal-say {
+  margin: 2px 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+.elder-home .elder-signal-sub { margin: 0 0 12px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.elder-home .elder-signal-check { border-radius: 14px; background: #fff; border: 1px solid var(--cream-line); padding: 12px; }
+.elder-home .elder-signal-q { margin: 0 0 10px; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; text-align: center; }
+.elder-home .elder-signal-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.elder-home .elder-signal-options button {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px 4px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--cream-line);
+  background: var(--cream);
+  color: var(--text);
+  cursor: pointer;
+}
+.elder-home .elder-signal-options button i { color: var(--text-2); font-size: 26px; line-height: 1; }
+.elder-home .elder-signal-options button b { font-size: 13px; font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; }
+.elder-home .elder-signal-picked-head { display: flex; align-items: center; gap: 8px; }
+.elder-home .elder-signal-picked-head i { color: var(--text); font-size: 22px; line-height: 1; }
+.elder-home .elder-signal-picked-head b { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; }
+.elder-home .elder-signal-picked-head button { margin-left: auto; border: 0; background: transparent; padding: 0; font-size: 13px; font-weight: 600; color: var(--text-3); text-decoration: underline; cursor: pointer; }
+.elder-home .elder-signal-picked p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+/* 목업 전용 샘플 토글 */
+.elder-home .elder-signal-demo { display: flex; align-items: center; gap: 4px; padding: 4px 0 2px; }
+.elder-home .elder-signal-demo span { font-size: 11px; color: var(--text-3); margin-right: 4px; }
+.elder-home .elder-signal-demo button { border: 1px solid var(--cream-line); background: #fff; border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--text-3); cursor: pointer; }
+.elder-home .elder-signal-demo button.on { background: var(--text); border-color: var(--text); color: #fff; }
+/* 감지 카드 안에서는 연한 분홍 태그가 배경에 묻히므로 토마토 바탕 + 흰 글자 (위험 태그에만 허용되는 원색) */
+.elder-home .elder-signal-card.detected .elder-menu-tag.low { background: var(--tomato); color: #fff; }

@@ -14,6 +14,10 @@ export type HealthProfile = { sex: 'female' | 'male' | null; birth: string; heig
 export type HealthGoals = { steps: number; kcalBurn: number; distance: number; sleepMinutes: number; bedtime: number; kcalIntake: number }
 export const DEFAULT_GOALS: HealthGoals = { steps: 6000, kcalBurn: 300, distance: 3, sleepMinutes: 480, bedtime: 22 * 60, kcalIntake: 2300 }
 /** 홈에서 순서를 바꿀 수 있는 카드 */
+/** 이상 징후 상태 — 브링 API 판정값. 목업에서는 샘플 토글로 바꿔 본다 */
+export type SignalState = 'collecting' | 'normal' | 'detected'
+export type ConditionAnswer = 'good' | 'so-so' | 'bad'
+
 export type HomeCardKind = Exclude<MeasureKind, 'health'>
 export const DEFAULT_CARD_ORDER: readonly HomeCardKind[] = ['stress', 'diet', 'walk', 'sleep', 'survey']
 
@@ -44,6 +48,10 @@ export type VitalingSession = {
   healthGoals: HealthGoals
   /** 바디 리듬 계산에 인정된 날 (YYYY-MM-DD). 하루 2개 이상 유효 데이터 + 수면 기록이 있는 날. 7일 쌓여야 점수 표시 */
   validDays: string[]
+  /** 이상 징후 샘플 상태 (목업 전용) */
+  signalDemo: SignalState
+  /** 컨디션 체크 응답 (날짜 키 → 답) */
+  conditionChecks: Record<string, ConditionAnswer>
 }
 
 const defaultSession: VitalingSession = {
@@ -64,6 +72,8 @@ const defaultSession: VitalingSession = {
   healthProfile: { sex: null, birth: '', height: null, weight: null },
   healthGoals: { ...DEFAULT_GOALS },
   validDays: [],
+  signalDemo: 'collecting',
+  conditionChecks: {},
 }
 
 function pad2(n: number) {
@@ -108,6 +118,8 @@ function read(): VitalingSession {
         healthProfile: { ...defaultSession.healthProfile, ...parsed.healthProfile },
         healthGoals: { ...defaultSession.healthGoals, ...parsed.healthGoals },
         validDays: Array.isArray(parsed.validDays) ? parsed.validDays.filter((v): v is string => typeof v === 'string') : [],
+        signalDemo: parsed.signalDemo ?? 'collecting',
+        conditionChecks: parsed.conditionChecks ?? {},
       }
       return cache!
     }
@@ -278,6 +290,22 @@ export function clearMeasureDone(kind: MeasureKind) {
     doneDates: nextDates,
     claimedDates: nextClaimed,
   })
+}
+
+export function setSignalDemo(state: SignalState) {
+  write({ ...read(), signalDemo: state })
+}
+/** 오늘 컨디션 체크 답 저장 (null이면 지움) */
+export function setConditionCheck(answer: ConditionAnswer | null) {
+  const cur = read()
+  const next = { ...cur.conditionChecks }
+  const key = periodKey('stress')
+  if (answer) next[key] = answer
+  else delete next[key]
+  write({ ...cur, conditionChecks: next })
+}
+export function todayCondition(session: VitalingSession): ConditionAnswer | null {
+  return session.conditionChecks?.[periodKey('stress')] ?? null
 }
 
 export function resetSession() {

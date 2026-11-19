@@ -27,7 +27,7 @@ import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { TrendLine as MiniBars } from './components/TrendLine'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, todayDietPhoto, type HomeCardKind, type MeasureKind, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, setSignalDemo, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type SignalState, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -498,6 +498,91 @@ function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, b
         </ul>
       </div>
     </section>
+  )
+}
+
+
+/** 홈 '이상 징후' 카드 — 브링 판정(평소와 비슷 / 감지)을 보여 주고, 감지된 날은 컨디션 체크를 받는다.
+ *  28일이 안 찼으면 한 줄 '준비 중'만. 토마토 연한 배경은 '감지' 상태에서만 쓴다 (홈에서 빨강 계열을 쓰는 유일한 자리) */
+const CONDITION_OPTIONS: readonly { id: ConditionAnswer; label: string; icon: string; advice: string }[] = [
+  { id: 'good', label: '좋아요', icon: 'emotion-happy', advice: '지금처럼 좋은 생활 리듬을 유지해 보세요.' },
+  { id: 'so-so', label: '보통이에요', icon: 'emotion-normal', advice: '가벼운 활동과 휴식으로 하루의 균형을 맞춰 보세요.' },
+  { id: 'bad', label: '안 좋아요', icon: 'emotion-unhappy', advice: '오늘은 무리하지 말고 쉬어 주세요. 불편함이 계속되면 전문가와 상의해 보세요.' },
+]
+const SIGNAL_DEMO: readonly { id: SignalState; label: string }[] = [
+  { id: 'collecting', label: '준비 중' },
+  { id: 'normal', label: '비슷' },
+  { id: 'detected', label: '감지' },
+]
+function SignalCard({ state, condition, onOpen, onCondition, onDemo }: {
+  state: SignalState
+  condition: ConditionAnswer | null
+  onOpen: () => void
+  onCondition: (a: ConditionAnswer | null) => void
+  onDemo: (s: SignalState) => void
+}) {
+  const demo = (
+    <div className="elder-signal-demo" aria-label="샘플 상태 보기">
+      <span>샘플</span>
+      {SIGNAL_DEMO.map((d) => (
+        <button key={d.id} type="button" className={state === d.id ? 'on' : ''} onClick={() => onDemo(d.id)}>{d.label}</button>
+      ))}
+    </div>
+  )
+  if (state !== 'detected') {
+    return (
+      <div className={`elder-signal-card ${state}`}>
+        <button type="button" className="elder-signal-row" onClick={onOpen} aria-label="이상 징후 자세히 보기">
+          <Ri name="heart-pulse" fill />
+          <b>이상 징후</b>
+          {state === 'collecting' ? (
+            <StatusTag tone="pending">준비 중</StatusTag>
+          ) : (
+            <span className="elder-menu-tag calm">평소와 비슷해요</span>
+          )}
+          <Ri name="arrow-right-s" size={20} className="elder-signal-arrow" />
+        </button>
+        {demo}
+      </div>
+    )
+  }
+  const picked = condition ? CONDITION_OPTIONS.find((o) => o.id === condition) : null
+  return (
+    <div className="elder-signal-card detected">
+      <button type="button" className="elder-signal-row" onClick={onOpen} aria-label="이상 징후 자세히 보기">
+        <Ri name="heart-pulse" fill />
+        <b>이상 징후</b>
+        <StatusTag tone="low">감지</StatusTag>
+        <Ri name="arrow-right-s" size={20} className="elder-signal-arrow" />
+      </button>
+      <p className="elder-signal-say">어제에 이어 몸이 평소 같지 않아요</p>
+      <p className="elder-signal-sub">여러 지표가 평소와 달라요. 일정을 줄이고 쉬는 시간을 늘려 주세요.</p>
+      <div className="elder-signal-check">
+        {picked ? (
+          <div className="elder-signal-picked">
+            <div className="elder-signal-picked-head">
+              <Ri name={picked.icon} fill size={22} />
+              <b>{picked.label}</b>
+              <button type="button" onClick={() => onCondition(null)}>수정</button>
+            </div>
+            <p>{picked.advice}</p>
+          </div>
+        ) : (
+          <>
+            <p className="elder-signal-q">오늘 컨디션은 어떤가요?</p>
+            <div className="elder-signal-options">
+              {CONDITION_OPTIONS.map((o) => (
+                <button key={o.id} type="button" onClick={() => onCondition(o.id)}>
+                  <Ri name={o.icon} size={26} />
+                  <b>{o.label}</b>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      {demo}
+    </div>
   )
 }
 
@@ -1233,6 +1318,15 @@ export function HomeScreen() {
                   <RhythmCollecting days={validDays} onOpen={() => navigate('/vitaling/day')} />
                 )}
 
+                {/* 이상 징후: 바디 리듬 아래, 바이탈 위 (수면 중 바이탈로 판정하는 기능) */}
+                <SignalCard
+                  state={session.signalDemo}
+                  condition={todayCondition(session)}
+                  onOpen={() => navigate('/vitaling/signal')}
+                  onCondition={setConditionCheck}
+                  onDemo={setSignalDemo}
+                />
+
                 {/* 오늘 바이탈: 심박수·혈중 산소·피부 온도·HRV — 값 + 상태 한 줄, 누르면 상세 */}
                 <section className="elder-fit-card vitals" aria-label="오늘 바이탈">
                   <div className="home-vitals">
@@ -1556,6 +1650,25 @@ export function HelpScreen() {
               <span>평일 09:00–17:00 (점심시간 12:00–13:00)</span>
               <span>토마톡 앱 &gt; 서비스 &gt; 1:1 문의</span>
             </div>
+          </div>
+        </div>
+      </Phone>
+    </div>
+  )
+}
+
+
+/** 이상 징후 상세 — 다음 단계에서 채움 (상태 히어로 · 5일 징후 변화 · 수면 중 지표 슬라이더 · 컨디션 체크) */
+export function SignalScreen() {
+  const navigate = useNavigate()
+  return (
+    <div className="stage">
+      <Phone>
+        <div className="screen">
+          <Header title="이상 징후" backTo="/vitaling/home" />
+          <div className="scroll" style={{ padding: 24, textAlign: 'center', color: 'var(--text-2)' }}>
+            <p style={{ marginTop: 40, fontSize: 15, lineHeight: 1.6 }}>상세 화면은 다음 단계에서 만들어요.<br />상태 히어로 · 징후 변화 · 수면 중 지표 · 컨디션 체크</p>
+            <PrimaryButton onClick={() => navigate('/vitaling/home')}>홈으로</PrimaryButton>
           </div>
         </div>
       </Phone>
