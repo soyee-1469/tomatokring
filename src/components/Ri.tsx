@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import {
   BookOpen, Brain, ChatCircleDots, ClipboardText, Drop, Flag, ForkKnife, Gear, Heartbeat,
-  Moon, PersonSimpleWalk, Question, ArrowsClockwise, Thermometer, UserGear,
+  Moon, Footprints, Question, ArrowsClockwise, Thermometer, UserGear,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 
@@ -14,7 +14,7 @@ import type { Icon } from '@phosphor-icons/react'
 const DUOTONE: Record<string, Icon> = {
   brain: Brain,
   restaurant: ForkKnife,
-  walk: PersonSimpleWalk,
+  walk: Footprints, // 걷는 사람 대신 발자국 (홈 미션 카드 도장과 같은 그림)
   moon: Moon, // 반짝이 달(MoonStars)은 AI 아이콘처럼 읽혀서 쓰지 않음
   survey: ClipboardText,
   'heart-pulse': Heartbeat,
