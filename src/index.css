@@ -13600,94 +13600,80 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .v2-page .v2-val strong.text { font-size: 40px; letter-spacing: -0.03em; }
 .v2-page.elder-home .elder-sleep-card { margin-bottom: 12px; }
 
-/* ——— 홈 맨 위 '오늘의 포인트' 카드: 토마톡 링만의 차별점(건강 확인 = 포인트) ——— */
-.elder-home .elder-point-card {
+/* ——— 홈 맨 위 '오늘의 미션' 카드: 토마톡 게임 탭 미션 카드와 같은 형식 ——— */
+.elder-home .elder-mission-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.elder-home .elder-mission-card {
   margin: 0 0 14px;
-  padding: 14px 16px 16px;
+  padding: 16px 16px 14px;
   border-radius: 16px;
   background: #fff;
   border: 1px solid var(--cream-line);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
-.elder-home .elder-point-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-.elder-home .elder-point-main { display: grid; gap: 2px; min-width: 0; }
-.elder-home .elder-point-main em {
-  font-style: normal;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-2);
+.elder-home .elder-mission-say {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 500;
   letter-spacing: -0.02em;
-}
-.elder-home .elder-point-main strong {
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
-  color: var(--tomato);
-  font-variant-numeric: tabular-nums;
-}
-.elder-home .elder-point-main span {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-  letter-spacing: -0.02em;
-}
-.elder-home .elder-point-wallet {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-  padding: 8px 8px 8px 12px;
-  border: 1px solid var(--cream-line);
-  border-radius: 999px;
-  background: #fff;
   color: var(--text);
-  cursor: pointer;
 }
-.elder-home .elder-point-wallet em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--text-3); }
-.elder-home .elder-point-wallet b { font-size: 14px; font-weight: 800; letter-spacing: -0.02em; }
-.elder-home .elder-point-wallet i { color: var(--text-3); font-size: 16px; line-height: 1; }
-.elder-home .elder-point-list {
+.elder-home .elder-mission-say b { font-weight: 800; font-size: 17px; }
+.elder-home .elder-mission-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.elder-home .elder-mission-list {
   list-style: none;
-  margin: 14px 0 0;
+  margin: 0;
   padding: 0;
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
+  gap: 2px;
 }
-.elder-home .elder-point-list button {
+.elder-home .elder-mission-list button {
   width: 100%;
   border: 0;
   background: transparent;
   padding: 0;
   display: grid;
   justify-items: center;
-  gap: 5px;
-  color: var(--text);
+  gap: 2px;
+  color: #C9CED5;
   cursor: pointer;
 }
-.elder-home .elder-point-ico {
+.elder-home .elder-mission-list li.done button { color: var(--brand-green); }
+.elder-home .elder-mission-seal {
   position: relative;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  line-height: 1;
 }
-/* 아이콘은 전부 회색 한 가지 — 색은 큰 숫자(토마토) 하나만 */
-.elder-home .elder-point-list .elder-point-ico { background: var(--chip-gray); color: var(--text-2); }
-.elder-home .elder-point-list li.done .elder-point-ico { background: var(--text); color: #fff; }
-.elder-home .elder-point-list b { font-size: 13px; font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; }
-.elder-home .elder-point-list li.done b { color: var(--text); }
+.elder-home .elder-mission-seal svg { position: absolute; inset: 0; margin: auto; }
+.elder-home .elder-mission-seal svg + svg { color: #fff; }
+.elder-home .elder-mission-list b {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.elder-home .elder-mission-list li.done b { color: var(--text); font-weight: 700; }
 /* 포인트 카드에서 항목을 누르면 해당 카드가 잠깐 강조됨 */
 .elder-home .elder-fit-card.flash { animation: elder-card-flash 1.2s ease-out; }
 @keyframes elder-card-flash {

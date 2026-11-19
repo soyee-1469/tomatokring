@@ -1,5 +1,10 @@
 import {
   Moon,
+  Seal,
+  Brain,
+  ForkKnife,
+  Footprints,
+  ClipboardText,
   CaretRight,
   Check,
   Drop,
@@ -11,6 +16,7 @@ import {
   Wind,
   X,
 } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Header, InputComponent, Phone, PrimaryButton, Row, Steps } from './components/ui'
@@ -33,7 +39,6 @@ import {
 } from './palette'
 import { TERMS_DOCS, TERMS_LIST, type TermsDocId } from './termsDocs'
 import { useSession } from './useSession'
-import { BALANCES } from './screens/RewardHistoryScreen'
 
 
 export function SerialScreen() {
@@ -451,47 +456,47 @@ function sleepEfficiencyLevel(pct: number) {
 }
 
 
-/** 홈 맨 위 '오늘의 포인트' 카드 — 토마톡 링만의 차별점(건강 챙기면 포인트)을 첫 화면에서 바로 보여준다.
- *  큰 숫자 = 오늘 더 받을 수 있는 포인트(설문은 이달 미수령 시 포함), 아래 다섯 칸 = 항목별 체크리스트 */
-const POINT_ITEMS: readonly { kind: HomeCardKind; label: string; icon: string; points: number }[] = [
-  { kind: 'stress', label: '스트레스', icon: 'brain', points: STRESS_REWARD_P },
-  { kind: 'diet', label: '식단', icon: 'restaurant', points: DIET_REWARD_P },
-  { kind: 'walk', label: '걷기', icon: 'walk', points: WALK_REWARD_P },
-  { kind: 'sleep', label: '수면', icon: 'moon', points: SLEEP_REWARD_P },
-  { kind: 'survey', label: '설문', icon: 'survey', points: SURVEY_REWARD_P },
+/** 홈 맨 위 '오늘의 미션' 카드 — 토마톡 게임 탭의 미션 카드와 같은 형식(문장 + 도장 체크 5개 + n/5).
+ *  토마톡 링만의 차별점(건강 확인 = 포인트)을 첫 화면에서, 메신저 쪽과 같은 모양으로 보여준다 */
+const POINT_ITEMS: readonly { kind: HomeCardKind; label: string; points: number; Icon: Icon }[] = [
+  { kind: 'stress', label: '스트레스', points: STRESS_REWARD_P, Icon: Brain },
+  { kind: 'diet', label: '식단', points: DIET_REWARD_P, Icon: ForkKnife },
+  { kind: 'walk', label: '걷기', points: WALK_REWARD_P, Icon: Footprints },
+  { kind: 'sleep', label: '수면', points: SLEEP_REWARD_P, Icon: Moon },
+  { kind: 'survey', label: '설문', points: SURVEY_REWARD_P, Icon: ClipboardText },
 ]
-function TodayPointsCard({ claimed, onItem, onHistory }: { claimed: Record<HomeCardKind, boolean>; onItem: (kind: HomeCardKind) => void; onHistory: () => void }) {
+function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, boolean>; onItem: (kind: HomeCardKind) => void }) {
+  const doneCount = POINT_ITEMS.filter((it) => claimed[it.kind]).length
+  const leftCount = POINT_ITEMS.length - doneCount
   const got = POINT_ITEMS.filter((it) => claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
   const left = POINT_ITEMS.filter((it) => !claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
-  const allDone = left === 0
   return (
-    <section className="elder-point-card" aria-label="오늘의 포인트">
-      <div className="elder-point-head">
-        <div className="elder-point-main">
-          <em>{allDone ? '오늘 포인트를 다 받았어요' : '오늘 받을 수 있는 포인트'}</em>
-          <strong>{formatClaimP(allDone ? got : left)}</strong>
-        </div>
-        <button type="button" className="elder-point-wallet" onClick={onHistory}>
-          <em>보유</em>
-          <b>{formatClaimP(BALANCES.pointAvailable)}</b>
-          <Ri name="arrow-right-s" size={16} />
-        </button>
+    <section className="elder-mission-card" aria-label="오늘의 미션">
+      <p className="elder-mission-say">
+        {leftCount === 0 ? (
+          <>오늘 미션 완료! <b>{got.toLocaleString('ko-KR')}</b> 포인트 획득</>
+        ) : (
+          <><b>{leftCount}</b>개만 더 하면 <b>{left.toLocaleString('ko-KR')}</b> 포인트 획득</>
+        )}
+      </p>
+      <div className="elder-mission-row">
+        <ul className="elder-mission-list">
+          {POINT_ITEMS.map((it) => {
+            const done = claimed[it.kind]
+            return (
+              <li key={it.kind} className={done ? 'done' : ''}>
+                <button type="button" onClick={() => onItem(it.kind)} aria-label={`${it.label} ${done ? '완료' : '미완료'}`}>
+                  <span className="elder-mission-seal">
+                    <Seal size={44} weight="fill" />
+                    <it.Icon size={20} weight="fill" />
+                  </span>
+                  <b>{it.label}</b>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
       </div>
-      <ul className="elder-point-list">
-        {POINT_ITEMS.map((it) => {
-          const done = claimed[it.kind]
-          return (
-            <li key={it.kind} className={`${it.kind} ${done ? 'done' : ''}`}>
-              <button type="button" onClick={() => onItem(it.kind)} aria-label={`${it.label} ${formatClaimP(it.points)} ${done ? '받음' : '받기'}`}>
-                <span className="elder-point-ico">
-                  <Ri name={done ? 'check' : it.icon} fill={!done} size={22} />
-                </span>
-                <b>{it.label}</b>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
     </section>
   )
 }
@@ -1201,10 +1206,15 @@ export function HomeScreen() {
               </div>
             ) : (
               <>
-                <TodayPointsCard
+                <div className="elder-section-row">
+                  <p className="elder-section-label">오늘의 미션</p>
+                  <button type="button" className="elder-mission-link" onClick={() => navigate('/reward/history')}>
+                    보상내역 <Ri name="arrow-right" size={14} />
+                  </button>
+                </div>
+                <TodayMissionCard
                   claimed={{ stress: stressClaimed, diet: dietClaimed, walk: walkClaimed, sleep: sleepClaimed, survey: surveyClaimed }}
                   onItem={focusCard}
-                  onHistory={() => navigate('/reward/history')}
                 />
                 <div className="elder-section-row">
                   <p className="elder-section-label">
