@@ -335,10 +335,10 @@ function formatHomeDate(d: Date) {
 
 const HOME_CARD_META: Record<HomeCardKind, { label: string; icon: string; cls: string }> = {
   stress: { label: '스트레스', icon: 'brain', cls: 'stress' },
-  diet: { label: 'AI 식단', icon: 'restaurant', cls: 'diet' },
-  walk: { label: '운동하기 (걷기)', icon: 'walk', cls: 'activity' },
+  diet: { label: '식단', icon: 'restaurant', cls: 'diet' },
+  walk: { label: '걷기', icon: 'walk', cls: 'activity' },
   sleep: { label: '수면', icon: 'moon', cls: 'sleep' },
-  survey: { label: '설문조사', icon: 'survey', cls: 'survey' },
+  survey: { label: '설문', icon: 'survey', cls: 'survey' },
 }
 
 /** 홈 카드 순서 편집: 드래그 대신 위·아래 버튼 (50~70대 기준) */
@@ -545,7 +545,6 @@ function SignalCard({ condition, onOpen, onCondition }: {
 /** 점수 + 이상 바이탈을 반영한 오늘 종합 요약 (무지개) — 요약 전용, 보상 없음 */
 /** 바디 리듬 준비 중: 유효한 날이 7일 미만일 때 점수 대신 진행 상태 */
 function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }) {
-  const left = RHYTHM_MIN_DAYS - days
   return (
     <div className="elder-score-card arc rhythm-collecting">
       <button type="button" className="rhythm-collecting-body" onClick={onOpen}>
@@ -553,7 +552,7 @@ function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }
           {Array.from({ length: RHYTHM_MIN_DAYS }, (_, i) => <i key={i} className={i < days ? 'on' : ''} />)}
         </span>
         <strong>{days}<small>/ {RHYTHM_MIN_DAYS}일</small></strong>
-        <b>{days === 0 ? '바디 리듬을 준비하고 있어요' : `${left}일만 더 모으면 바디 리듬이 보여요`}</b>
+        <b>바디 리듬을 준비하고 있어요</b>
         <p>잘 때 반지를 끼고 자면 하루가 쌓여요.<br />수면 기록이 있는 날만 인정돼요.</p>
       </button>
     </div>
@@ -686,7 +685,7 @@ function RewardBlock({
         <>
           <button type="button" className="elder-claim-btn with-points" onClick={onClaim}>
             <Ri name="checkbox-circle" fill size={18} />
-            <span>{readyText} · {points} 받기</span>
+            <span>{readyText ? `${readyText} · ` : ''}{points} 받기</span>
           </button>
           {repeatLabel && (
             <div className="elder-claim-actions">
@@ -745,10 +744,10 @@ function SurveyRewardCard({
 }) {
   return (
     <div className="elder-fit-card survey">
-      <button type="button" className="elder-card-hit" onClick={onJoin} aria-label="설문조사 (월)">
+      <button type="button" className="elder-card-hit" onClick={onJoin} aria-label="설문">
         <div className="elder-fit-head">
           <Ri name="survey" fill />
-          <b>설문조사</b>
+          <b>설문</b>
           <StatusTag tone={joined ? 'ok' : 'pending'}>{joined ? '이번 달 참여 완료' : '이번 달 참여 전'}</StatusTag>
         </div>
         <div className="elder-fit-body">
@@ -801,10 +800,10 @@ function DietUploadCard({
   const shown = measured ? kcal : 0
   return (
     <div className="elder-fit-card diet">
-      <button type="button" className="elder-card-hit" onClick={onOpen} aria-label="AI 식단 상세">
+      <button type="button" className="elder-card-hit" onClick={onOpen} aria-label="식단">
         <div className="elder-fit-head">
           <Ri name="restaurant" fill />
-          <b>AI 식단</b>
+          <b>식단</b>
           <StatusTag tone={measured ? 'ok' : 'pending'}>{measured ? '기록 완료' : '등록 전'}</StatusTag>
         </div>
         <div className="elder-fit-body">
@@ -1148,7 +1147,7 @@ export function HomeScreen() {
         return (
           <Fragment key="stress">
       <div className="elder-fit-card stress">
-        <button type="button" className="elder-card-hit" onClick={() => goMeasure('stress')} aria-label="스트레스 상세">
+        <button type="button" className="elder-card-hit" onClick={() => goMeasure('stress')} aria-label="스트레스">
           <div className="elder-fit-head">
             <Ri name="brain" fill />
             <b>스트레스</b>
@@ -1218,10 +1217,10 @@ export function HomeScreen() {
         return (
           <Fragment key="walk">
       <div className="elder-fit-card activity">
-        <button type="button" className="elder-card-hit" onClick={() => goMeasure('walk')} aria-label="운동하기 (걷기)">
+        <button type="button" className="elder-card-hit" onClick={() => goMeasure('walk')} aria-label="걷기">
           <div className="elder-fit-head">
             <Ri name="walk" fill />
-            <b>운동하기 (걷기)</b>
+            <b>걷기</b>
             {walkShow ? (
               <StatusTag tone={tagTone(walkStatus.tone)}>{walkStatus.label}</StatusTag>
             ) : (
@@ -1256,7 +1255,7 @@ export function HomeScreen() {
           guide=""
           points={formatClaimP(WALK_REWARD_P)}
           measureLabel=""
-          readyText="목표 달성"
+          readyText=""
           doneLabel={`오늘 ${formatClaimP(WALK_REWARD_P)} 받았어요`}
           tip={`${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음까지 ${walkRemain.toLocaleString('ko-KR')}걸음 더 걸으면 ${formatClaimP(WALK_REWARD_P)} · 1일 1회`}
           onMeasure={() => goMeasure('walk')}
@@ -1270,7 +1269,7 @@ export function HomeScreen() {
         return (
           <Fragment key="sleep">
       <div className="elder-fit-card sleep">
-        <button type="button" className="elder-card-hit" onClick={() => goMeasure('sleep')} aria-label="수면 포인트">
+        <button type="button" className="elder-card-hit" onClick={() => goMeasure('sleep')} aria-label="수면">
           <div className="elder-fit-head">
             <Ri name="moon" fill />
             <b>수면</b>

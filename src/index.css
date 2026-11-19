@@ -13934,3 +13934,5 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .diet-strip li.today:not(.on) i { border: 1.5px dashed #D6DAE0; background: transparent; }
 /* 카드 아래 그림 영역 안의 div 기반 그래프(식단 스트립·수면 타임라인)는 카드 폭 전체 */
 .elder-home .elder-fit-chart-wrap .diet-strip, .elder-home .elder-fit-chart-wrap .sleep-timeline { width: 100%; align-self: stretch; }
+/* 섹션 머리글 링크(보상내역 →): 보이는 크기는 그대로, 누르는 영역은 44px */
+.elder-home .elder-mission-link { min-height: 44px; padding: 0 0 0 12px; margin: -12px 0; }
