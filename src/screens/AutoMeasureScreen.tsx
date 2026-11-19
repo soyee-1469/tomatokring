@@ -87,7 +87,7 @@ function ModeSheet({
 }
 
 const TOGGLES: { id: 'hrv' | 'stress' | 'temp'; title: string; desc: string }[] = [
-  { id: 'hrv', title: 'HRV 회복력', desc: '1시간마다 자동으로 측정해요.' },
+  { id: 'hrv', title: '심박변이도', desc: '1시간마다 자동으로 측정해요.' },
   { id: 'stress', title: '스트레스', desc: '1시간마다 자동으로 계산해요. 직접 측정은 스트레스 화면에서 할 수 있어요.' },
   { id: 'temp', title: '피부 온도', desc: '30분마다 자동으로 측정해요.' },
 ]

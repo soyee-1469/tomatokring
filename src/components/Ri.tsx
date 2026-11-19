@@ -30,7 +30,7 @@ const DUOTONE: Record<string, Icon> = {
   'battery-warning': BatteryWarning,
   drop: Drop,
   'temp-hot': Thermometer,
-  // pulse(HRV 회복력)는 Phosphor 채움이 사각 박스 모양이라 Remix 파형 그대로 둔다
+  // pulse(심박변이도)는 Phosphor 채움이 사각 박스 모양이라 Remix 파형 그대로 둔다
   'chat-smile-3': ChatCircleDots,
   flag: Flag,
   'book-open': BookOpen,

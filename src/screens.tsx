@@ -471,14 +471,18 @@ function TodayMissionCard({ claimed, onItem }: { claimed: Record<HomeCardKind, b
   const got = POINT_ITEMS.filter((it) => claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
   const left = POINT_ITEMS.filter((it) => !claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
   return (
-    <section className="elder-mission-card" aria-label="오늘의 미션">
-      <p className="elder-mission-say">
-        {leftCount === 0 ? (
-          <>오늘 미션 완료! <b>{got.toLocaleString('ko-KR')}</b> 포인트 획득</>
-        ) : (
-          <><b>{leftCount}</b>개만 더 하면 <b>{left.toLocaleString('ko-KR')}</b> 포인트 획득</>
-        )}
-      </p>
+    <section className={`elder-mission-card ${leftCount === 0 ? 'done' : ''}`} aria-label="오늘의 미션">
+      {leftCount === 0 ? (
+        <div className="elder-mission-done">
+          <Ri name="checkbox-circle" fill size={22} />
+          <b>오늘 미션을 다 했어요</b>
+          <span>{got.toLocaleString('ko-KR')} 포인트 받았어요</span>
+        </div>
+      ) : (
+        <p className="elder-mission-say">
+          <b>{leftCount}</b>개만 더 하면 <b>{left.toLocaleString('ko-KR')}</b> 포인트 획득
+        </p>
+      )}
       <div className="elder-mission-row">
         <ul className="elder-mission-list">
           {POINT_ITEMS.map((it) => {
@@ -838,12 +842,31 @@ function DietUploadCard({
 }
 
 /** 홈 바이탈 4종 — 최신 자동 측정값과 상태 한 단어 */
+/** 홈 오늘 바이탈 — 값 + 최근 7일 선 (마지막이 오늘). 브링처럼 홈에서 추세가 보이게 */
 const HOME_VITALS = [
-  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', status: '일상생활', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: HOME_SOFT.tomato },
-  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', status: '보통', icon: 'drop', color: HOME_COLORS.berry, soft: HOME_SOFT.berry },
-  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', status: '정상', icon: 'temp-hot', color: HOME_COLORS.orange, soft: HOME_SOFT.orange },
-  { id: 'hrv', label: 'HRV 회복력', value: 42, unit: 'ms', status: '평균', icon: 'pulse', color: HOME_COLORS.beet, soft: HOME_SOFT.beet },
+  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', status: '일상생활', icon: 'heart-pulse', color: HOME_COLORS.tomato, soft: HOME_SOFT.tomato, week: [68, 71, 74, 70, 73, 69, 72] },
+  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', status: '보통', icon: 'drop', color: HOME_COLORS.berry, soft: HOME_SOFT.berry, week: [97, 98, 96, 98, 97, 98, 98] },
+  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', status: '정상', icon: 'temp-hot', color: HOME_COLORS.orange, soft: HOME_SOFT.orange, week: [36.4, 36.5, 36.6, 36.7, 36.5, 36.6, 36.6] },
+  { id: 'hrv', label: '심박변이도', value: 42, unit: 'ms', status: '평균', icon: 'pulse', color: HOME_COLORS.beet, soft: HOME_SOFT.beet, week: [40, 38, 45, 41, 44, 39, 42] },
 ] as const
+
+/** 아주 작은 7일 선 그래프 (홈 바이탈 칸용) — 축·눈금 없이 흐름만, 마지막 점은 오늘 */
+function Spark({ values, color, width = 60, height = 26 }: { values: readonly number[]; color: string; width?: number; height?: number }) {
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const span = Math.max(0.0001, max - min)
+  const padY = 4
+  const x = (i: number) => 3 + ((width - 6) * i) / (values.length - 1)
+  const y = (v: number) => height - padY - ((v - min) / span) * (height - padY * 2)
+  const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ')
+  const last = values[values.length - 1]
+  return (
+    <svg className="home-vital-spark" viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden>
+      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.9" />
+      <circle cx={x(values.length - 1)} cy={y(last)} r="3" fill={color} />
+    </svg>
+  )
+}
 
 const TEAM_HOME = {
   me: {
@@ -852,7 +875,7 @@ const TEAM_HOME = {
       { id: 'hr', label: '심박수', value: 72, display: '72', unit: '회/분', max: 200, tone: 'ok' as const, ...VITAL_COLORS.hr, Icon: Heart },
       { id: 'spo2', label: '혈중 산소', value: 95, display: '95', unit: '%', max: 100, tone: 'ok' as const, ...VITAL_COLORS.spo2, Icon: Drop },
       { id: 'temp', label: '피부 온도', value: 36.4, display: '36.4', unit: '°C', max: 45, tone: 'ok' as const, ...VITAL_COLORS.temp, Icon: Thermometer },
-      { id: 'hrv', label: 'HRV 회복력', value: 42, display: '42', unit: 'ms', max: 100, tone: 'ok' as const, ...VITAL_COLORS.resp, Icon: Wind },
+      { id: 'hrv', label: '심박변이도', value: 42, display: '42', unit: 'ms', max: 100, tone: 'ok' as const, ...VITAL_COLORS.resp, Icon: Wind },
     ],
     sleepWeek: {
       days: ['월', '화', '수', '목', '금', '토', '일'],
@@ -1356,16 +1379,21 @@ export function HomeScreen() {
                   />
                 )}
 
-                {/* 오늘 바이탈: 심박수·혈중 산소·피부 온도·HRV — 값 + 상태 한 줄, 누르면 상세 */}
+                {/* 오늘 바이탈: 심박수·혈중 산소·피부 온도·심박변이도 — 값 + 상태 한 줄, 누르면 상세 */}
                 <section className="elder-fit-card vitals" aria-label="오늘 바이탈">
                   <div className="home-vitals">
                     {HOME_VITALS.map((v) => (
                       <button key={v.id} type="button" className="home-vital" onClick={() => navigate(`/vitaling/measure/stress?m=${v.id}`)}>
-                        <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={20} /></span>
-                        <span className="home-vital-copy">
+                        <span className="home-vital-head">
+                          <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={16} /></span>
                           <em>{v.label}</em>
-                          <strong>{v.value}<small>{v.unit}</small></strong>
-                          <span>{v.status}</span>
+                        </span>
+                        <span className="home-vital-body">
+                          <span className="home-vital-copy">
+                            <strong>{v.value}<small>{v.unit}</small></strong>
+                            <span>{v.status}</span>
+                          </span>
+                          <Spark values={v.week} color={v.color} />
                         </span>
                       </button>
                     ))}
@@ -1534,7 +1562,7 @@ export function GuideScreen() {
   ]
 
   const features = [
-    { icon: Waveform, title: '바이탈 측정', desc: '심박수 · 혈중 산소 · 피부 온도 · 호흡 · HRV' },
+    { icon: Waveform, title: '바이탈 측정', desc: '심박수 · 혈중 산소 · 피부 온도 · 호흡 · 심박변이도' },
     { icon: Moon, title: '수면 · 스트레스', desc: '수면 단계와 스트레스 구간 분석' },
     { icon: Heart, title: '바디 리듬', desc: '회복 · 피로도 · 활동 지수로 보는 오늘 상태' },
     { icon: Sparkle, title: '포인트 보상', desc: '매일 확인만 해도 쌓이는 토마톡 포인트' },

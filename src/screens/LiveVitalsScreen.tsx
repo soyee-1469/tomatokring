@@ -181,7 +181,7 @@ export function LiveVitalsScreen() {
       min: 10,
       max: 75,
       value: '37',
-      label: 'HRV 회복력',
+      label: '심박변이도',
       unit: 'RMSSD',
       status: '회복 중',
       guide: 40,

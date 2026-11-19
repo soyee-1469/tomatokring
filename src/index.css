@@ -13481,7 +13481,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .date-line button { width: 36px; height: 36px; border: 0; background: transparent; color: var(--text); display: grid; place-items: center; cursor: pointer; border-radius: 50%; }
 .date-line button:disabled { color: #C9CED4; cursor: default; }
 
-/* HRV 회복력 하루 흐름: 심박수와 같은 범위 막대 */
+/* 심박변이도 하루 흐름: 심박수와 같은 범위 막대 */
 .v2-page .v2-chart.v2-m-hrv .range { fill: #8B5CF6; opacity: 0.45; }
 .v2-page .v2-chart.v2-m-hrv .range.last { opacity: 1; }
 
@@ -13824,3 +13824,35 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-date-battery .ico-duo { display: inline-flex; }
 .demo-row.wrap { flex-wrap: wrap; }
 .elder-home .elder-date-battery, .elder-home .elder-date-center b { white-space: nowrap; }
+/* 섹션 머리글 줄: 제목과 오른쪽 링크를 세로 가운데로 (글자 크기가 달라 baseline이 어긋남) */
+.elder-home .elder-section-row { align-items: center; }
+.elder-home .elder-mission-link { line-height: 1; }
+
+/* 오늘의 미션 완료: 연한 초록 배경 + 초록 테두리, 체크와 두 줄 문장 (완료 = 초록 규칙) */
+.elder-home .elder-mission-card.done {
+  background: linear-gradient(180deg, #EEF8EA 0%, #FFFFFF 100%);
+  border-color: #CDEBC4;
+}
+.elder-home .elder-mission-done {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  column-gap: 6px;
+  row-gap: 2px;
+  margin: 0 0 12px;
+  text-align: center;
+}
+.elder-home .elder-mission-done i { color: var(--brand-green); font-size: 22px; line-height: 1; }
+.elder-home .elder-mission-done b { font-size: 18px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); }
+.elder-home .elder-mission-done span { grid-column: 1 / -1; font-size: 14px; font-weight: 600; color: var(--text-2); letter-spacing: -0.02em; }
+
+/* 홈 오늘 바이탈 칸: 위 아이콘+이름, 아래 숫자(왼쪽)+7일 선(오른쪽) */
+.elder-home .home-vital { display: grid; gap: 6px; align-items: start; padding: 10px 8px; }
+.elder-home .home-vital-head { display: inline-flex; align-items: center; gap: 6px; }
+.elder-home .home-vital-head .home-vital-ico { width: 28px; height: 28px; }
+.elder-home .home-vital-head em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.elder-home .home-vital-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; }
+.elder-home .home-vital-spark { flex-shrink: 0; margin-bottom: 2px; }
+.elder-home .home-vital-copy strong { white-space: nowrap; }
+.elder-home .home-vital-spark { width: 52px; height: 26px; }

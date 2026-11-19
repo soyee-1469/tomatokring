@@ -30,7 +30,7 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 const LIVE_METRICS = [
   { id: 'hr', label: '심박수', avg: '68', unit: 'bpm', min: '58', mean: '68', max: '92', zone: '심박수 구간' },
-  { id: 'hrv', label: 'HRV 회복력', avg: '32', unit: 'ms', min: '28', mean: '32', max: '48', zone: '심박변이도 구간' },
+  { id: 'hrv', label: '심박변이도', avg: '32', unit: 'ms', min: '28', mean: '32', max: '48', zone: '심박변이도 구간' },
   { id: 'temp', label: '피부 온도', avg: '36.4', unit: '°C', min: '35.8', mean: '36.4', max: '36.9', zone: '피부 온도 구간' },
   { id: 'spo2', label: '혈중 산소', avg: '97', unit: '%', min: '94', mean: '97', max: '99', zone: '혈중 산소 구간' },
   { id: 'stress', label: '스트레스', avg: '1', unit: '점', min: '1', mean: '3', max: '8', zone: '스트레스 구간' },

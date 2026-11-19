@@ -24,7 +24,8 @@ export function TrendLine({
   // 매끄러운 선 + 점 (레퍼런스: 위/아래 눈금, 평균 점선, 마지막 점만 채움)
   const w = 320
   const h = 120
-  const padL = 44
+  // 왼쪽 눈금 글자 자리: '9,120걸음'까지 들어가고 그래프와 10px 띄움
+  const padL = 62
   const padR = 14
   const top = 16
   const bottom = 92
@@ -57,12 +58,12 @@ export function TrendLine({
     <svg className="elder-fit-chart line" viewBox={`0 0 ${w} ${h}`} aria-hidden>
       <line x1={padL} x2={w - padR} y1={top} y2={top} stroke="#E8EBEE" strokeWidth="1.5" />
       <line x1={padL} x2={w - padR} y1={bottom} y2={bottom} stroke="#E8EBEE" strokeWidth="1.5" />
-      <text x={padL - 8} y={top + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{fmt(max)}{unit}</text>
-      <text x={padL - 8} y={bottom + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{fmt(yMin)}{unit}</text>
+      <text x={padL - 10} y={top + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{fmt(max)}{unit}</text>
+      <text x={padL - 10} y={bottom + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#9aa3ad">{fmt(yMin)}{unit}</text>
       {nums.length > 0 && (
         <>
           <line x1={padL} x2={w - padR} y1={y(avg)} y2={y(avg)} stroke={color} strokeOpacity="0.5" strokeWidth="1.5" strokeDasharray="4 4" />
-          {avgLabelFits && <text x={padL - 8} y={y(avg) + 4} textAnchor="end" fontSize="11" fontWeight="700" fill="#5a6570">평균</text>}
+          {avgLabelFits && <text x={padL - 10} y={y(avg) + 4} textAnchor="end" fontSize="11" fontWeight="700" fill="#5a6570">평균</text>}
         </>
       )}
       {d && <path d={d} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
