@@ -11881,11 +11881,8 @@ a.btn {
   font-size: 24px;
   line-height: 1;
 }
-.elder-home .elder-fit-card.stress .elder-fit-head i { background: var(--c-beet-soft); color: var(--c-beet); }
-.elder-home .elder-fit-card.diet .elder-fit-head i { background: var(--c-lemon-soft); color: var(--c-lemon); }
-.elder-home .elder-fit-card.activity .elder-fit-head i { background: var(--c-leaf-soft); color: var(--c-leaf); }
-.elder-home .elder-fit-card.sleep .elder-fit-head i { background: var(--c-berry-soft); color: var(--c-berry); }
-.elder-home .elder-fit-card.survey .elder-fit-head i { background: var(--c-pink-soft); color: var(--c-pink); }
+/* 홈 카드 아이콘은 전부 회색 한 가지 — 지표색은 그래프(선·막대·타임라인)에만 쓴다. 상세 히어로의 큰 아이콘은 지표색 유지 */
+.elder-home .elder-fit-card .elder-fit-head i { background: var(--chip-gray); color: var(--text-2); }
 /* 상태 태그: 미완료는 회색, 완료·정상은 녹색 체크, 주의는 주황 파스텔, 위험은 토마토 */
 .elder-home .elder-menu-tag {
   display: inline-flex;
@@ -12053,12 +12050,7 @@ a.btn {
   font-style: normal;
   flex-shrink: 0;
 }
-.card-order-item.vitals .card-order-ico { background: var(--tomato-soft); color: var(--tomato); }
-.card-order-item.stress .card-order-ico { background: var(--c-beet-soft); color: var(--c-beet); }
-.card-order-item.diet .card-order-ico { background: var(--c-orange-soft); color: var(--c-orange); }
-.card-order-item.activity .card-order-ico { background: var(--c-leaf-soft); color: var(--c-leaf); }
-.card-order-item.sleep .card-order-ico { background: var(--c-berry-soft); color: var(--c-berry); }
-.card-order-item.survey .card-order-ico { background: var(--c-pink-soft); color: var(--c-pink); }
+.card-order-item .card-order-ico { background: #fff; color: var(--text-2); } /* 홈과 같이 회색 아이콘 (줄 배경이 회색이라 칩은 흰색) */
 .card-order-item b {
   flex: 1;
   min-width: 0;
@@ -13069,7 +13061,7 @@ a.btn {
 .elder-home .elder-fit-card.vitals .elder-fit-head i { background: var(--chip-gray); color: var(--text-2); }
 .home-vitals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 14px; }
 .home-vital { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border: 0; border-radius: 14px; background: transparent; text-align: left; color: inherit; cursor: pointer; }
-.home-vital-ico { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.home-vital-ico { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--chip-gray); color: var(--text-2); }
 .home-vital-copy { display: grid; gap: 1px; min-width: 0; }
 .home-vital-copy em { font-style: normal; font-size: 12px; color: var(--text-2); }
 .home-vital-copy strong { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; }
@@ -13204,9 +13196,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-claim-btn.with-points { gap: 6px; }
 
 /* AI 식단: 누런 노랑 대신 선명한 오렌지 + 살구색 칩 */
-.elder-home .elder-fit-card.diet .elder-fit-head i { background: var(--c-orange-soft); color: var(--c-orange); }
 .elder-home .elder-fit-card.diet .elder-menu-tag.ok { background: var(--c-orange-soft); }
-.card-order-item.diet .card-order-ico { background: var(--c-orange-soft); color: var(--c-orange); }
 
 /* 시연용 전환 상자 */
 .demo-box { margin: 16px 0 8px; padding: 14px 16px; border: 2px dashed #D6DAE0; border-radius: 16px; background: #fff; }

@@ -1282,7 +1282,7 @@ export function HomeScreen() {
             return (
             <button key={v.id} type="button" className="home-vital" onClick={() => navigate(`/vitaling/measure/stress?m=${v.id}`)}>
               <span className="home-vital-head">
-                <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={16} /></span>
+                <span className="home-vital-ico"><Ri name={v.icon} fill size={16} /></span>
                 <em>{v.label}</em>
               </span>
               <span className="home-vital-body">
@@ -1479,7 +1479,7 @@ function VitalResultSheet({ values, onClose }: { values: Record<'hr' | 'spo2' | 
             const st = vitalStatus(v.id, values[v.id])
             return (
               <li key={v.id}>
-                <span className="home-vital-ico" style={{ background: v.soft, color: v.color }}><Ri name={v.icon} fill size={18} /></span>
+                <span className="home-vital-ico"><Ri name={v.icon} fill size={18} /></span>
                 <b>{v.label}</b>
                 <strong>{values[v.id]}<small>{v.unit}</small></strong>
                 <StatusTag tone={st.tone}>{st.label}</StatusTag>
