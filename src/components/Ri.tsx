@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import {
   BookOpen, Brain, ChatCircleDots, ClipboardText, Drop, Flag, ForkKnife, Gear, Heartbeat,
-  Moon, Footprints, Question, ArrowsClockwise, Thermometer, UserGear,
+  Moon, Footprints, Question, Siren, ArrowsClockwise, Thermometer, UserGear,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 
@@ -18,6 +18,7 @@ const DUOTONE: Record<string, Icon> = {
   moon: Moon, // 반짝이 달(MoonStars)은 AI 아이콘처럼 읽혀서 쓰지 않음
   survey: ClipboardText,
   'heart-pulse': Heartbeat,
+  siren: Siren, // 이상 징후 카드 (경광등)
   drop: Drop,
   'temp-hot': Thermometer,
   // pulse(HRV 회복력)는 Phosphor 채움이 사각 박스 모양이라 Remix 파형 그대로 둔다

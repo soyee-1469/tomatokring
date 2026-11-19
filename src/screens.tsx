@@ -17,7 +17,7 @@ import {
   X,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
-import { Fragment, useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Header, InputComponent, Phone, PrimaryButton, Row, Steps } from './components/ui'
 import { MetricInfoButton } from './components/AccuracyInfo'
@@ -533,7 +533,7 @@ function SignalCard({ state, condition, onOpen, onCondition, onDemo }: {
     return (
       <div className={`elder-signal-card ${state}`}>
         <button type="button" className="elder-signal-row" onClick={onOpen} aria-label="이상 징후 자세히 보기">
-          <Ri name="heart-pulse" fill />
+          <Ri name="siren" fill />
           <b>이상 징후</b>
           {state === 'collecting' ? (
             <StatusTag tone="pending">준비 중</StatusTag>
@@ -550,37 +550,22 @@ function SignalCard({ state, condition, onOpen, onCondition, onDemo }: {
   return (
     <div className="elder-signal-card detected">
       <button type="button" className="elder-signal-row" onClick={onOpen} aria-label="이상 징후 자세히 보기">
-        <Ri name="heart-pulse" fill />
+        <Ri name="siren" fill />
         <b>이상 징후</b>
         <StatusTag tone="low">감지</StatusTag>
         <Ri name="arrow-right-s" size={20} className="elder-signal-arrow" />
       </button>
       <p className="elder-signal-say">어제에 이어 몸이 평소 같지 않아요</p>
-      <p className="elder-signal-sub">여러 지표가 평소와 달라요. 일정을 줄이고 쉬는 시간을 늘려 주세요.</p>
-      <div className="elder-signal-check">
-        {picked ? (
-          <div className="elder-signal-picked">
-            <div className="elder-signal-picked-head">
-              <Ri name={picked.icon} fill size={22} />
-              <b>{picked.label}</b>
-              <button type="button" onClick={() => onCondition(null)}>수정</button>
-            </div>
-            <p>{picked.advice}</p>
-          </div>
-        ) : (
-          <>
-            <p className="elder-signal-q">오늘 컨디션은 어떤가요?</p>
-            <div className="elder-signal-options">
-              {CONDITION_OPTIONS.map((o) => (
-                <button key={o.id} type="button" onClick={() => onCondition(o.id)}>
-                  <Ri name={o.icon} size={26} />
-                  <b>{o.label}</b>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+      <p className="elder-signal-q">오늘 컨디션은 어떤가요?</p>
+      <div className="elder-signal-options">
+        {CONDITION_OPTIONS.map((o) => (
+          <button key={o.id} type="button" className={condition === o.id ? 'on' : ''} onClick={() => onCondition(o.id)} aria-pressed={condition === o.id}>
+            <Ri name={o.icon} fill={condition === o.id} size={26} />
+            <b>{o.label}</b>
+          </button>
+        ))}
       </div>
+      <p className="elder-signal-advice">{picked ? picked.advice : '여러 지표가 평소와 달라요. 일정을 줄이고 쉬는 시간을 늘려 주세요.'}</p>
       {demo}
     </div>
   )
@@ -950,6 +935,45 @@ export function HomeScreen() {
   const profile = TEAM_HOME[activeMember]
   const device = profile.device
 
+  // 반지 기록 불러오기 — 브링처럼 세 가지로 갱신: 홈에 들어올 때 자동, 아래로 당겨서, 배터리 옆 버튼
+  const [syncing, setSyncing] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const [pull, setPull] = useState(0)
+  const pullStart = useRef<number | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const PULL_TRIGGER = 56
+  const runSync = () => {
+    if (syncing) return
+    setSyncing(true)
+    window.setTimeout(() => {
+      setSyncing(false)
+      setToast('반지에서 최신 기록을 불러왔어요')
+      window.setTimeout(() => setToast(null), 1600)
+    }, 1200)
+  }
+  useEffect(() => {
+    if (session.paired) runSync()
+    // 홈에 들어올 때 한 번
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const onPullStart = (y: number) => {
+    const el = scrollRef.current
+    if (!el || el.scrollTop > 0 || syncing) return
+    pullStart.current = y
+  }
+  const onPullMove = (y: number) => {
+    if (pullStart.current === null) return
+    const dy = y - pullStart.current
+    if (dy <= 0) { setPull(0); return }
+    setPull(Math.min(80, dy * 0.5))
+  }
+  const onPullEnd = () => {
+    if (pullStart.current === null) return
+    pullStart.current = null
+    if (pull >= PULL_TRIGGER) runSync()
+    setPull(0)
+  }
+
   if (!session.onboarded) return <Navigate to="/vitaling/terms" replace />
   if (!session.vitalId) return <Navigate to="/vitaling/serial" replace />
 
@@ -1262,16 +1286,42 @@ export function HomeScreen() {
             </div>
           </header>
 
-          <div className="scroll elder-body">
+          <div
+            className="scroll elder-body"
+            ref={scrollRef}
+            onTouchStart={(e) => onPullStart(e.touches[0].clientY)}
+            onTouchMove={(e) => onPullMove(e.touches[0].clientY)}
+            onTouchEnd={onPullEnd}
+            onMouseDown={(e) => onPullStart(e.clientY)}
+            onMouseMove={(e) => { if (e.buttons === 1) onPullMove(e.clientY) }}
+            onMouseUp={onPullEnd}
+            onMouseLeave={onPullEnd}
+          >
+            {/* 당겨서 새로고침 표시: 당기는 만큼 열리고, 불러오는 동안은 고정 높이 */}
+            <div className={`elder-pull ${syncing ? 'busy' : ''} ${pull >= PULL_TRIGGER ? 'ready' : ''}`} style={{ height: syncing ? 44 : pull }} aria-hidden={!syncing}>
+              {syncing ? (
+                <><Ri name="loader-4" size={18} className="spin" /><span>기록 불러오는 중</span></>
+              ) : (
+                <><Ri name="arrow-down" size={18} className="elder-pull-arrow" /><span>{pull >= PULL_TRIGGER ? '놓으면 새로고침' : '당겨서 새로고침'}</span></>
+              )}
+            </div>
             <div className="elder-compact-top">
               <div className="elder-date-weather">
                 <div className="elder-date-row">
                   <span className="elder-date-center">
                     <b>{dateLabel}</b>
                   </span>
-                  <span className={`elder-date-battery ${device.battery <= 20 ? 'low' : ''}`}>
-                    <Ri name={device.battery <= 20 ? 'battery-low' : device.battery <= 60 ? 'battery' : 'battery'} fill size={16} />
-                    {device.battery}%
+                  <span className="elder-date-right">
+                    <span className={`elder-date-battery ${device.battery <= 20 ? 'low' : ''}`}>
+                      <Ri name={device.battery <= 20 ? 'battery-low' : device.battery <= 60 ? 'battery' : 'battery'} fill size={16} />
+                      {device.battery}%
+                    </span>
+                    {session.paired && (
+                      <button type="button" className={`elder-date-sync ${syncing ? 'busy' : ''}`} onClick={runSync} aria-label="반지 기록 불러오기" disabled={syncing}>
+                        <Ri name="refresh" size={16} className={syncing ? 'spin' : ''} />
+                        {syncing ? '불러오는 중' : '불러오기'}
+                      </button>
+                    )}
                   </span>
                 </div>
               </div>
@@ -1352,6 +1402,7 @@ export function HomeScreen() {
               </>
             )}
           </div>
+          {toast && <div className="elder-toast" role="status">{toast}</div>}
           {orderOpen && <CardOrderSheet order={session.cardOrder} onClose={() => setOrderOpen(false)} />}
         </div>
       </Phone>

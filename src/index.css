@@ -13731,28 +13731,23 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
   letter-spacing: -0.03em;
   color: var(--text);
 }
-.elder-home .elder-signal-sub { margin: 0 0 12px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
-.elder-home .elder-signal-check { border-radius: 14px; background: #fff; border: 1px solid var(--cream-line); padding: 12px; }
-.elder-home .elder-signal-q { margin: 0 0 10px; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; text-align: center; }
+.elder-home .elder-signal-q { margin: 8px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: -0.02em; color: var(--text-2); }
 .elder-home .elder-signal-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .elder-home .elder-signal-options button {
   display: grid;
   justify-items: center;
-  gap: 6px;
-  padding: 12px 4px 10px;
+  gap: 5px;
+  padding: 10px 4px 9px;
   border-radius: 14px;
   border: 1px solid var(--cream-line);
-  background: var(--cream);
-  color: var(--text);
+  background: #fff;
+  color: var(--text-2);
   cursor: pointer;
 }
-.elder-home .elder-signal-options button i { color: var(--text-2); font-size: 26px; line-height: 1; }
+.elder-home .elder-signal-options button i { font-size: 26px; line-height: 1; }
 .elder-home .elder-signal-options button b { font-size: 13px; font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; }
-.elder-home .elder-signal-picked-head { display: flex; align-items: center; gap: 8px; }
-.elder-home .elder-signal-picked-head i { color: var(--text); font-size: 22px; line-height: 1; }
-.elder-home .elder-signal-picked-head b { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; }
-.elder-home .elder-signal-picked-head button { margin-left: auto; border: 0; background: transparent; padding: 0; font-size: 13px; font-weight: 600; color: var(--text-3); text-decoration: underline; cursor: pointer; }
-.elder-home .elder-signal-picked p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.elder-home .elder-signal-options button.on { background: var(--text); border-color: var(--text); color: #fff; }
+.elder-home .elder-signal-advice { margin: 10px 0 2px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
 /* 목업 전용 샘플 토글 */
 .elder-home .elder-signal-demo { display: flex; align-items: center; gap: 4px; padding: 4px 0 2px; }
 .elder-home .elder-signal-demo span { font-size: 11px; color: var(--text-3); margin-right: 4px; }
@@ -13760,3 +13755,65 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-signal-demo button.on { background: var(--text); border-color: var(--text); color: #fff; }
 /* 감지 카드 안에서는 연한 분홍 태그가 배경에 묻히므로 토마토 바탕 + 흰 글자 (위험 태그에만 허용되는 원색) */
 .elder-home .elder-signal-card.detected .elder-menu-tag.low { background: var(--tomato); color: #fff; }
+
+/* ——— 홈 기록 불러오기: 당겨서 새로고침 표시, 배터리 옆 동기화 버튼, 완료 토스트 ——— */
+.elder-home .elder-pull {
+  height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  padding-bottom: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  transition: height 0.15s ease-out;
+  box-sizing: border-box;
+}
+.elder-home .elder-pull > * { margin-bottom: 10px; }
+.elder-home .elder-pull.busy { transition: height 0.2s ease-out; color: var(--text-2); }
+.elder-home .elder-pull-arrow { transition: transform 0.2s; }
+.elder-home .elder-pull.ready .elder-pull-arrow { transform: rotate(180deg); }
+.elder-home .elder-pull.ready { color: var(--text-2); }
+.elder-home .elder-date-right { display: inline-flex; align-items: center; gap: 6px; }
+/* 배터리 칩과 같은 높이·배경·알약 모양 (padding 6px, 아이콘 16px) */
+.elder-home .elder-date-sync {
+  align-self: stretch;
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--chip-gray);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.elder-home .elder-date-sync .ico-duo { font-size: 16px; }
+.elder-home .elder-date-sync:disabled { color: var(--text-3); cursor: default; }
+.elder-home .elder-date-sync .ico-duo { display: inline-flex; }
+.elder-toast {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 24px;
+  z-index: 50;
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: rgba(26, 35, 50, 0.92);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-align: center;
+  pointer-events: none;
+  animation: elder-toast-in 0.2s ease-out;
+}
+@keyframes elder-toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
