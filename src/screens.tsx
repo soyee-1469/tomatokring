@@ -22,6 +22,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { Header, InputComponent, Phone, PrimaryButton, Row, Steps } from './components/ui'
 import { MetricInfoButton } from './components/AccuracyInfo'
 import { Ri } from './components/Ri'
+import { SLEEP_LAST_NIGHT, SleepHypnogram } from './components/Sleep'
 import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
 import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
@@ -546,13 +547,10 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
           <span>{formatClaimP(got)} 획득</span>
         </div>
       ) : (
-        // 받은 포인트(큰 숫자) / 총 받을 수 있는 포인트 — 채움 막대로 비율까지
-        <div className="elder-mission-say">
-          <span>오늘 받은 포인트</span>
-          {/* 숫자는 버튼과 같은 '40만 P' 표기 (자릿수가 길면 복잡해 보여서) */}
-          <strong>{formatClaimP(got)} <small>/ {formatClaimP(got + left)}</small></strong>
-          <progress className="elder-mission-progress" value={got} max={got + left} aria-label={`총 ${(got + left).toLocaleString('ko-KR')} 포인트 중 ${got.toLocaleString('ko-KR')} 포인트 받음`} />
-        </div>
+        // 게임 탭 광고 미션 카드와 같은 문장: "N개만 더 하면 X 획득" (숫자는 버튼과 같은 '40만 P' 표기)
+        <p className="elder-mission-say">
+          {leftCount}개만 더 하면 <b>{formatClaimP(left)} 획득</b>
+        </p>
       )}
       <div className="elder-mission-row">
         <ul className="elder-mission-list">
@@ -564,9 +562,8 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
                 <button type="button" onClick={() => onItem(it.kind)} aria-label={`${it.label} ${state}`}>
                   <span className="elder-mission-seal">
                     <Seal size={44} weight="fill" />
+                    {/* 도장 안은 항목 아이콘만 (체크 없음). 상태는 도장 색으로만: 초록 = 받기 가능(누를 것), 회색 = 받음, 연회색 = 조건 남음 */}
                     <it.Icon size={20} weight="fill" />
-                    {/* 받은 도장: 오른쪽 위 흰 원형 체크 배지 (글자 대신) */}
-                    {done && <i className="elder-mission-check"><Ri name="check" size={12} /></i>}
                   </span>
                   <b>{it.label}</b>
                 </button>
@@ -575,6 +572,8 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
           })}
         </ul>
       </div>
+      {/* 도장 아래 n/5 카운터 (게임 탭과 같은 자리) */}
+      {leftCount > 0 && <div className="elder-mission-count">{doneCount}/{POINT_ITEMS.length}</div>}
     </section>
   )
 }
@@ -890,7 +889,7 @@ const HOME_VITALS = [
 ] as const
 
 /** 아주 작은 7일 선 그래프 (홈 바이탈 칸용) — 축·눈금 없이 흐름만, 마지막 점은 오늘 */
-function Spark({ values, color, width = 60, height = 26, skipZero = false }: { values: readonly number[]; color: string; width?: number; height?: number; /** 0을 '기록 없음'으로 보고 건너뜀 (스트레스처럼 안 잰 날이 있는 항목) */ skipZero?: boolean }) {
+function Spark({ values, color, width = 60, height = 26, skipZero = false, fluid = false, avg = false }: { values: readonly number[]; color: string; width?: number; height?: number; /** 0을 '기록 없음'으로 보고 건너뜀 (스트레스처럼 안 잰 날이 있는 항목) */ skipZero?: boolean; /** 담긴 칸의 폭에 맞춰 가로로 늘림 (홈 2열 카드). 선 굵기·점은 늘어나지 않게 non-scaling-stroke */ fluid?: boolean; /** 기록 있는 값들의 평균을 가로 점선으로 */ avg?: boolean }) {
   const pts = values.map((v, i) => ({ i, v, on: !skipZero || v > 0 }))
   const nums = pts.filter((p) => p.on).map((p) => p.v)
   const min = Math.min(...nums)
@@ -902,25 +901,41 @@ function Spark({ values, color, width = 60, height = 26, skipZero = false }: { v
   // 기록 있는 점끼리만 선으로 잇는다 (빈 날은 끊김)
   const d = pts.map((p, i) => (!p.on ? '' : `${i === 0 || !pts[i - 1].on ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(p.v).toFixed(1)}`)).filter(Boolean).join(' ')
   const lastOn = [...pts].reverse().find((p) => p.on)
+  const mean = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null
+  // fluid 모드에선 가로만 늘어나므로 원(circle)이 타원이 됨 → 점은 길이 0의 둥근 선으로 그려 굵기로 크기를 잡는다
+  const ve = fluid ? ('non-scaling-stroke' as const) : undefined
+  const dot = (cx: number, cy: number, r: number, key?: number | string, op = 1) =>
+    fluid
+      ? <path key={key} d={`M ${cx.toFixed(1)} ${cy.toFixed(1)} l 0 0`} stroke={color} strokeOpacity={op} strokeWidth={r * 2} strokeLinecap="round" vectorEffect={ve} />
+      : <circle key={key} cx={cx} cy={cy} r={r} fill={color} fillOpacity={op} />
   return (
-    <svg className="home-vital-spark" viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden>
-      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.9" />
-      {pts.map((p, i) => (p.on && !(pts[i - 1]?.on) && !(pts[i + 1]?.on) && p !== lastOn ? <circle key={i} cx={x(i)} cy={y(p.v)} r="2" fill={color} fillOpacity="0.9" /> : null))}
-      {lastOn && <circle cx={x(lastOn.i)} cy={y(lastOn.v)} r="3" fill={color} />}
+    <svg className="home-vital-spark" viewBox={`0 0 ${width} ${height}`} width={fluid ? '100%' : width} height={height} preserveAspectRatio={fluid ? 'none' : undefined} aria-hidden>
+      {/* 평균 점선: 선 아래에 깔아 값 선이 위로 */}
+      {avg && mean != null && nums.length > 1 && <line x1={0} x2={width} y1={y(mean).toFixed(1)} y2={y(mean).toFixed(1)} stroke={color} strokeOpacity="0.45" strokeWidth="1" strokeDasharray="3 3" vectorEffect={ve} />}
+      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.9" vectorEffect={ve} />
+      {pts.map((p, i) => (p.on && !(pts[i - 1]?.on) && !(pts[i + 1]?.on) && p !== lastOn ? dot(x(i), y(p.v), 2, i, 0.9) : null))}
+      {lastOn && dot(x(lastOn.i), y(lastOn.v), 3)}
     </svg>
   )
 }
 
-/** 목표까지 차오르는 작은 링 (걷기·수면 카드 오른쪽 위) — 선 흐름 대신 '얼마나 채웠나'를 보여 준다 */
-function FillRing({ pct, color, size = 24 }: { pct: number; color: string; size?: number }) {
-  const sw = 4
-  const r = (size - sw) / 2
-  const c = 2 * Math.PI * r
-  const p = Math.max(0, Math.min(1, pct))
+/** 오늘 시간대별 걸음 (0시~23시, 고정 샘플 — 합계 8,412걸음, 16시 이후는 아직 없음). 홈 걷기 카드 막대용 */
+const STEPS_BY_HOUR: readonly number[] = [0, 0, 0, 0, 0, 0, 180, 640, 1_120, 520, 380, 760, 1_340, 410, 560, 1_210, 1_292, 0, 0, 0, 0, 0, 0, 0]
+
+/** 시간대별 세로 막대 (홈 걷기 카드, 그래프 자리 전체 폭). 24칸, 값 없는 시간은 바닥에 연한 눈금만 */
+function HourBars({ values, color, height = 36 }: { values: readonly number[]; color: string; height?: number }) {
+  const width = 170
+  const n = values.length
+  const gap = 2
+  const bw = (width - gap * (n - 1)) / n
+  const max = Math.max(1, ...values)
   return (
-    <svg className="home-vital-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeOpacity="0.18" strokeWidth={sw} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeDasharray={`${(c * p).toFixed(2)} ${c.toFixed(2)}`} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+    <svg className="home-vital-spark" viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none" aria-hidden>
+      {values.map((v, i) => {
+        const x = i * (bw + gap)
+        const h = v > 0 ? Math.max(3, (v / max) * (height - 2)) : 2
+        return <rect key={i} x={x.toFixed(2)} y={(height - h).toFixed(2)} width={bw.toFixed(2)} height={h.toFixed(2)} rx={1} fill={color} fillOpacity={v > 0 ? 0.9 : 0.18} />
+      })}
     </svg>
   )
 }
@@ -1124,21 +1139,19 @@ export function HomeScreen() {
     navigate(`/vitaling/measure/${kind}${run}`)
   }
 
-  /** 2열 작은 카드 한 장 — 아이콘·이름 / 값·상태(왼쪽)+그래프(오른쪽, 크게) / 아래 받기 버튼. 오른쪽 위 모서리엔 작은 원형 측정 버튼이나 자동 기록 표시. 누르면 상세 */
+  /** 2열 작은 카드 한 장 — 아이콘·이름 / 값 / 상태·보조 줄 / 그래프(카드 전체 폭) / 아래 받기 버튼. 세로로 쌓아 숫자가 숨 쉬고 그래프는 흐름이 읽히게. 오른쪽 위 모서리엔 작은 원형 측정 버튼이나 자동 기록 표시. 누르면 상세 */
   const tile = (kind: HomeCardKind, label: string, icon: string, value: ReactNode, state: ReactNode, spark: ReactNode, onOpen: () => void, action: ReactNode = null, corner: ReactNode = null) => (
     <div key={kind} className={`elder-fit-card tile ${kind}`}>
-      {/* 위쪽(이름·값·그래프)을 누르면 상세. 그래프는 값 오른쪽에 크게, 값·상태는 왼쪽 한 덩어리 */}
+      {/* 위쪽(이름·값·상태·그래프)을 누르면 상세 */}
       <button type="button" className="home-tile-hit" onClick={onOpen} aria-label={label}>
         <span className="home-vital-head">
           <span className="home-vital-ico"><Ri name={icon} fill size={18} /></span>
           <em>{label}</em>
         </span>
-        <span className="home-vital-body">
-          <span className="home-vital-copy">{value}</span>
-          {spark}
-        </span>
-        {/* 상태·보조 줄은 그래프 아래 전체 폭으로 (그래프에 밀려 꺾이지 않게) */}
+        <span className="home-vital-copy home-vital-value">{value}</span>
         <span className="home-vital-copy home-vital-state">{state}</span>
+        {/* 그래프 자리는 비어 있어도(측정 전·설문) 높이를 잡아 옆 카드와 버튼 줄을 맞춘다 */}
+        <span className="home-vital-graph">{spark}</span>
       </button>
       {/* 오른쪽 위: 재기(원형 아이콘)·자동 기록 표시 — 버튼 안에 버튼이 못 들어가서 카드에 따로 얹는다 */}
       {corner && <div className="home-tile-corner">{corner}</div>}
@@ -1209,7 +1222,7 @@ export function HomeScreen() {
             <span>{busyTile === kind ? '재는 중…' : vitalStatus(v.id, value).label}</span>
             <span className="sub">{recorded}</span>
           </>,
-          <Spark values={week} color={v.color} width={64} height={32} />,
+          <Spark values={week} color={v.color} width={170} height={36} fluid avg />,
           () => navigate(`/vitaling/measure/stress?m=${v.id}`),
           null,
           measureBtn(kind),
@@ -1224,7 +1237,7 @@ export function HomeScreen() {
             {!stressClaimed && !(stressShow && stressEligible) && <span className="sub">{STRESS_REWARD_MAX}점 이하면 {formatClaimP(STRESS_REWARD_P)}</span>}
           </>,
           // 오늘 잰 값들의 흐름. 7일은 상세에서
-          stressShow ? <Spark values={stressToday} color={HOME_COLORS.beet} width={64} height={32} /> : null,
+          stressShow ? <Spark values={stressToday} color={HOME_COLORS.beet} width={170} height={36} fluid avg /> : null,
           () => goMeasure('stress'),
           // 버튼 자리는 늘 유지(받기·획득·조건 전), 재기는 오른쪽 위 원형
           pointBtn('stress', STRESS_REWARD_P, stressClaimed, stressShow && stressEligible),
@@ -1238,7 +1251,7 @@ export function HomeScreen() {
             <span>{walkEligible ? '목표 달성' : `목표까지 ${(WALK_REWARD_STEPS - stepsSel).toLocaleString('ko-KR')}걸음`}</span>
             {!walkClaimed && !walkEligible && <span className="sub">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음이면 {formatClaimP(WALK_REWARD_P)}</span>}
           </>,
-          <FillRing pct={stepsSel / WALK_REWARD_STEPS} color={HOME_COLORS.leaf} size={40} />,
+          <HourBars values={STEPS_BY_HOUR} color={HOME_COLORS.leaf} />,
           () => goMeasure('walk'),
           // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고(오른쪽 위 '자동'), 버튼 자리는 받기·획득·조건 전으로 늘 유지
           pointBtn('walk', WALK_REWARD_P, walkClaimed, walkEligible),
@@ -1251,7 +1264,7 @@ export function HomeScreen() {
           <>
             <span>{sleepShow ? `효율 ${day.efficiency}%` : '자면 자동 기록'}</span>
           </>,
-          sleepShow ? <FillRing pct={(sleepH * 60) / session.healthGoals.sleepMinutes} color={SLEEP_COLORS.line} size={40} /> : null,
+          sleepShow ? <SleepHypnogram segments={SLEEP_LAST_NIGHT} height={36} className="home-vital-spark" /> : null,
           () => goMeasure('sleep'),
           pointBtn('sleep', SLEEP_REWARD_P, sleepClaimed, sleepShow),
           autoTip,

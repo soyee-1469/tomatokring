@@ -8,7 +8,7 @@ export const SLEEP_COLORS = {
     deep: '#7E3FF2',
     rem: '#A47BF7',
     light: '#CDB6FB',
-    awake: '#EFE8FE',
+    awake: '#E3D6FD', // 흰 바탕 하이프노그램에서 띠가 보일 만큼만 (더 연하면 사라짐)
   },
 } as const
 

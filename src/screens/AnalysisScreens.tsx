@@ -10,7 +10,7 @@ import { ClaimBanner } from '../components/ClaimBanner'
 import { parseDateKey, recentDate, todayStart } from './MeasureScreen'
 import { DateLine } from '../components/DateLine'
 import { Ri } from '../components/Ri'
-import { SLEEP_LAST_NIGHT, SLEEP_TONES, SleepTimeline, sleepEfficiencyLevel, sleepMinutesLabel, sleepStageTotals, type SleepSegment } from '../components/Sleep'
+import { SLEEP_LAST_NIGHT, SLEEP_TONES, SleepHypnogram, sleepEfficiencyLevel, sleepMinutesLabel, sleepStageTotals, type SleepSegment } from '../components/Sleep'
 import {
   SLEEP_COLORS,
 } from '../palette'
@@ -240,7 +240,10 @@ export function SleepAnalysisScreen() {
             {/* 1. 수면 단계: 밤새 흐름 + 단계별 시간·비율 (보라 농담 한 색) */}
             <section className="elder-sleep-card sleep-stage-card" aria-label="수면 단계">
               <b className="sleep-card-title">수면 단계</b>
-              <SleepTimeline start={night.start} end={night.end} segments={night.segments} legend={false} />
+              <div className="sleep-hypno">
+                <SleepHypnogram segments={night.segments} height={120} detail />
+                <div className="sleep-timeline-axis"><span>{night.start} 취침</span><span>{night.end} 기상</span></div>
+              </div>
               <ul className="sleep-stage-list">
                 {stages.map((s) => (
                   <li key={s.stage}>

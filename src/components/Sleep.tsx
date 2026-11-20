@@ -45,6 +45,41 @@ export function sleepStageTotals(segments: readonly SleepSegment[]) {
   })
 }
 
+/** 단계별 층 (위→아래: 깸·렘·얕은·깊은) — 하이프노그램 세로 위치 */
+const HYPNO_LANES: readonly SleepStage[] = ['awake', 'rem', 'light', 'deep']
+
+/** 밤새 수면 단계 흐름 (브링 수면 화면과 같은 하이프노그램): 단계별 층에 가로 띠를 시간순으로 놓고 얇은 세로선으로 잇는다.
+ *  SVG는 담긴 칸 폭에 맞춰 가로로만 늘어남(preserveAspectRatio none) — 선 굵기는 non-scaling-stroke 로 고정.
+ *  detail=true 면 층 사이 연한 가로 눈금·바닥선을 함께 그린다 (상세 카드용). 홈 카드는 36px 띠만 */
+export function SleepHypnogram({ segments, height = 36, detail = false, className }: { segments: readonly SleepSegment[]; height?: number; detail?: boolean; className?: string }) {
+  const width = 300
+  const total = segments.reduce((a, s) => a + s.min, 0) || 1
+  const lane = height / HYPNO_LANES.length
+  const band = Math.max(4, Math.round(lane * 0.62))
+  const cy = (st: SleepStage) => HYPNO_LANES.indexOf(st) * lane + lane / 2
+  let x = 0
+  const blocks = segments.map((sg) => {
+    const w = (sg.min / total) * width
+    const b = { x, w, stage: sg.stage }
+    x += w
+    return b
+  })
+  return (
+    <svg className={className} viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none" aria-hidden>
+      {detail && HYPNO_LANES.map((st, i) => (
+        <line key={st} x1={0} x2={width} y1={(i + 1) * lane} y2={(i + 1) * lane} stroke={i === HYPNO_LANES.length - 1 ? '#D6DAE0' : '#EEF0F3'} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      ))}
+      {/* 띠 사이 세로 연결선 (다음 띠 색) */}
+      {blocks.map((b, i) => (i === 0 ? null : (
+        <line key={`c${i}`} x1={b.x} x2={b.x} y1={cy(blocks[i - 1].stage)} y2={cy(b.stage)} stroke={SLEEP_TONES[b.stage]} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+      )))}
+      {blocks.map((b, i) => (
+        <rect key={i} x={b.x.toFixed(2)} y={(cy(b.stage) - band / 2).toFixed(2)} width={b.w.toFixed(2)} height={band} rx={1.5} fill={SLEEP_TONES[b.stage]} />
+      ))}
+    </svg>
+  )
+}
+
 export function SleepTimeline({ start, end, segments, legend = true }: { start: string; end: string; segments: readonly SleepSegment[]; legend?: boolean }) {
   const total = segments.reduce((a, s) => a + s.min, 0)
   return (
