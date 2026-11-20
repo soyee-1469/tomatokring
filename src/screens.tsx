@@ -501,10 +501,10 @@ const SLEEP_REWARD_P = 200_000
 const SURVEY_REWARD_P = 5_000_000
 
 /** 홈 카드 상태 태그: 미완료(pending)는 회색, 완료·정상(ok)은 녹색 체크 */
-function StatusTag({ tone, children }: { tone: 'ok' | 'mid' | 'low' | 'pending'; children: ReactNode }) {
+function StatusTag({ tone, children }: { tone: 'ok' | 'mid' | 'low' | 'pending' | 'done'; children: ReactNode }) {
   return (
     <span className={`elder-menu-tag ${tone}`}>
-      {tone === 'ok' && <Ri name="checkbox-circle" fill size={14} />}
+      {(tone === 'ok' || tone === 'done') && <Ri name="checkbox-circle" fill size={14} />}
       {children}
     </span>
   )
@@ -838,7 +838,7 @@ function DietUploadCard({
         <div className="elder-fit-head">
           <Ri name="restaurant" fill />
           <b>식단</b>
-          <StatusTag tone={measured ? 'ok' : 'pending'}>{measured ? '기록 완료' : '등록 전'}</StatusTag>
+          <StatusTag tone={measured ? 'done' : 'pending'}>{measured ? '기록 완료' : '등록 전'}</StatusTag>
         </div>
         <div className="elder-fit-body">
           {measured ? (

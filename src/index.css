@@ -11921,6 +11921,8 @@ a.btn {
 .elder-home .elder-menu-tag.mid { background: var(--tag-warn-bg); color: var(--tag-warn-fg); }
 .elder-home .elder-menu-tag.low { background: var(--tomato-soft); color: var(--tomato); }
 .elder-home .elder-menu-tag.pending { background: var(--chip-gray); color: var(--chip-gray-fg); }
+.elder-home .elder-menu-tag.done { background: var(--chip-gray); color: var(--text-2); } /* 끝난 일은 회색 (초록은 지금 받을 수 있는 것에만) */
+.elder-home .elder-menu-tag.done i { color: var(--text-3); }
 /* 버튼: 60px, 측정은 파랑(#2F80ED), 지급은 초록(#50B83D), 완료는 회색 — 빨강 버튼 없음 */
 .elder-home .elder-claim-btn {
   height: var(--btn-h);
