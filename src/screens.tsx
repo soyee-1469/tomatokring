@@ -27,7 +27,7 @@ import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
 import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, getSession, isClaimed, isMeasureDone, markClaimed, markMeasureDone, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -514,6 +514,17 @@ function formatClaimP(points: number) {
 }
 
 /** 스트레스 지수 등급 — 낮을수록 좋음 */
+/** 홈 카드용: 마지막 기록이 2시간 넘게 지났을 때만 "n시간 전 기록" (평소엔 시각을 보여 주지 않는다 — 오래됐다는 신호만) */
+const STALE_MIN = 120
+function staleLabel(time: string | undefined): string | null {
+  if (!time) return null
+  const [h, m] = time.split(':').map(Number)
+  const now = new Date()
+  const diff = now.getHours() * 60 + now.getMinutes() - (h * 60 + m)
+  if (diff < STALE_MIN) return null
+  return `${Math.floor(diff / 60)}시간 전 기록`
+}
+
 function stressLevel(score: number) {
   if (score <= 20) return { label: '매우 낮음', tone: 'ok' as const }
   if (score <= 40) return { label: '낮음', tone: 'ok' as const }
@@ -1023,11 +1034,8 @@ export function HomeScreen() {
     window.setTimeout(() => {
       const j = (base: number, spread: number, digits: number) => Number((base + (Math.sin(Date.now() / 997) * spread)).toFixed(digits))
       if (kind === 'stress') {
-        if (isMeasureDone(getSession(), 'stress')) {
-          addStressReading(25 + (Math.floor(Date.now() / 1000) % 21)) // 재측정: 25~45 사이 값 (시각 기반 흔들림)
-        } else {
-          markMeasureDone('stress')
-        }
+        // 직접 측정: 오늘 기록에 값 하나 추가 (자동 기록과 나란히 쌓임). 25~45 사이 샘플 (시각 기반 흔들림)
+        addStressReading(25 + (Math.floor(Date.now() / 1000) % 21))
         const v = dayLog('stress', new Date())[0]?.value ?? 0
         const st = stressLevel(v)
         setResult({ label: '스트레스', icon: 'brain', value: v, unit: '점', tone: st.tone === 'ok' ? 'ok' : st.tone === 'warn' ? 'mid' : 'low', status: st.label })
@@ -1085,8 +1093,8 @@ export function HomeScreen() {
   const tiles = profile.tiles
   // 홈은 항상 오늘 기준. 지난 날짜는 상세 화면에서 본다
   const day = homeDataFor(profile)
-  // 스트레스 7일: 상세 화면과 같은 기록(dayLog)에서 하루 평균 (오늘은 측정 전이면 0)
-  // 지난 날은 하루 평균, 오늘은 마지막 측정값 (상세 히어로와 같은 기준)
+  // 스트레스 7일: 상세 화면과 같은 기록(dayLog, 자동+직접)에서 하루 평균 (오늘은 기록이 아직 없으면 0)
+  // 지난 날은 하루 평균, 오늘은 마지막 기록값 (상세 히어로와 같은 기준)
   const stressSeries = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i))
     const rs = dayLog('stress', d)
@@ -1096,14 +1104,18 @@ export function HomeScreen() {
   const stressSel = stressSeries[stressSeries.length - 1]
   // 내 평균: 오늘을 뺀 최근 6일 중 기록 있는 날의 평균
   // 오늘 잰 값들을 시간순으로 (dayLog은 최신이 먼저라 뒤집음) — 홈 카드 오른쪽 위 작은 그래프용. 7일 흐름은 상세에서만
-  const stressToday = dayLog('stress', new Date()).map((r) => r.value).reverse()
+  const stressLog = dayLog('stress', new Date())
+  const stressToday = stressLog.map((r) => r.value).reverse()
   const stressInfo = stressLevel(stressSel)
-  const stressEligible = stressSel <= STRESS_REWARD_MAX
+  // 정책: 하루 중 30점 이하 기록이 한 번이라도 있으면 그날 1회 지급 (자동·직접 구분 없음)
+  const stressEligible = stressToday.some((v) => v <= STRESS_REWARD_MAX)
+  const stressStale = busyTile === 'stress' ? null : staleLabel(stressLog[0]?.time)
+
   const stepsSel = day.steps[day.steps.length - 1]
   const stepsLabel = stepsSel.toLocaleString('ko-KR')
   const walkEligible = stepsSel >= WALK_REWARD_STEPS
   // 측정 완료·수령 여부는 세션에 날짜와 함께 저장 (00:00 지나면 자동 초기화, 화면 재진입에도 유지)
-  // 오늘은 실제 측정 후에만 값·그래프 표시, 지난 날짜는 기록 그대로 표시
+  // 스트레스는 자동 기록이 있으면 바로 값·그래프 표시 (직접 측정은 선택), 지난 날짜는 기록 그대로 표시
   const dietMeasured = isMeasureDone(session, 'diet')
   const surveyMeasured = isMeasureDone(session, 'survey')
   const stressClaimed = isClaimed(session, 'stress')
@@ -1211,16 +1223,14 @@ export function HomeScreen() {
         const now = vitalNow[v.id]
         const value = now ?? v.value
         const week = now != null ? [...v.week.slice(0, -1), now] : v.week
-        // 보이는 값이 자동으로 쌓인 건지, 방금 직접 잰 건지 — 시각과 함께
-        const last = dayLog(v.id, new Date())[0]
-        const nowHm = `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`
-        const recorded = now != null ? `방금 측정 ${nowHm}` : last ? `${last.mode === 'auto' ? '자동 기록' : '직접 측정'} ${last.time.slice(0, 5)}` : '자동 기록'
+        // 기록 시각은 홈에 안 보인다 (몇 시에 쟀는지는 상세에서). 다만 마지막 기록이 오래됐으면 "n시간 전 기록"만 (방금 직접 쟀으면 없음)
+        const stale = now != null ? null : staleLabel(dayLog(v.id, new Date())[0]?.time)
         return tile(
           kind, v.label, v.icon,
           <strong>{value}<small>{v.unit}</small></strong>,
           <>
             <span>{busyTile === kind ? '재는 중…' : vitalStatus(v.id, value).label}</span>
-            <span className="sub">{recorded}</span>
+            {stale && <span className="sub">{stale}</span>}
           </>,
           <Spark values={week} color={v.color} width={170} height={36} fluid avg />,
           () => navigate(`/vitaling/measure/stress?m=${v.id}`),
@@ -1231,12 +1241,15 @@ export function HomeScreen() {
       case 'stress':
         return tile(
           kind, '스트레스', 'brain',
-          stressShow ? <strong>{stressSel}<small>점</small></strong> : <strong className="empty">측정 전</strong>,
+          stressShow ? <strong>{stressSel}<small>점</small></strong> : <strong className="empty">기록 전</strong>,
           <>
-            <span>{busyTile === 'stress' ? '재는 중…' : stressShow ? stressInfo.label : '반지로 잴 수 있어요'}</span>
-            {!stressClaimed && !(stressShow && stressEligible) && <span className="sub">{STRESS_REWARD_MAX}점 이하면 {formatClaimP(STRESS_REWARD_P)}</span>}
+            <span>{busyTile === 'stress' ? '재는 중…' : stressShow ? stressInfo.label : '반지가 자동으로 재요'}</span>
+            {/* 조건이 될 때까지만 지급 기준 한 줄. 그 뒤엔 마지막 기록이 오래됐을 때만 "n시간 전 기록" */}
+            {!stressClaimed && !(stressShow && stressEligible)
+              ? <span className="sub">{STRESS_REWARD_MAX}점 이하면 {formatClaimP(STRESS_REWARD_P)}</span>
+              : stressStale && <span className="sub">{stressStale}</span>}
           </>,
-          // 오늘 잰 값들의 흐름. 7일은 상세에서
+          // 오늘 기록(자동+직접)의 흐름. 7일은 상세에서
           stressShow ? <Spark values={stressToday} color={HOME_COLORS.beet} width={170} height={36} fluid avg /> : null,
           () => goMeasure('stress'),
           // 버튼 자리는 늘 유지(받기·획득·조건 전), 재기는 오른쪽 위 원형

@@ -11,10 +11,10 @@ export function formatP(points: number) {
 }
 
 /** 상세는 '하는 곳', 홈은 '받는 곳': 완료되면 완료 표시 + '홈에서 받기' 링크, 받은 뒤엔 '받았어요' + 적립 내역 링크. eligible=false 면 기준 미달 안내만. */
-export function ClaimBanner({ kind, doneText, eligible = true, ineligibleText }: { kind: Exclude<MeasureKind, 'health'>; doneText: string; eligible?: boolean; ineligibleText?: string }) {
+export function ClaimBanner({ kind, doneText, eligible = true, ineligibleText, done }: { kind: Exclude<MeasureKind, 'health'>; doneText: string; eligible?: boolean; ineligibleText?: string; /** '완료' 판정을 세션의 측정 완료 대신 바깥에서 줄 때 (스트레스: 자동 기록만 있어도 완료) */ done?: boolean }) {
   const navigate = useNavigate()
   const session = useSession()
-  if (!isMeasureDone(session, kind)) return null
+  if (!(done ?? isMeasureDone(session, kind))) return null
   const claimed = isClaimed(session, kind)
   const points = formatP(REWARD_P[kind])
   if (claimed) {

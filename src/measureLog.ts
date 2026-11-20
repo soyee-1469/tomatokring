@@ -1,4 +1,4 @@
-import { getSession, isMeasureDone, type AutoMeasureMode, type AutoMeasureKind } from './session'
+import {getSession, type AutoMeasureMode, type AutoMeasureKind} from './session'
 
 export type LiveMetricId = 'hr' | 'hrv' | 'spo2' | 'temp' | 'stress'
 export type LogMode = 'auto' | 'manual'
@@ -39,7 +39,7 @@ export const STRESS_DAY_POINTS = [
   { h: 16.3, v: 28 },
 ] as const
 
-/** 해당 지표의 자동 측정 주기(분). 스트레스는 자동 측정이 없어 1시간 간격 샘플 */
+/** 해당 지표의 자동 측정 주기(분). 스트레스는 STRESS_DAY_POINTS 샘플을 따로 씀 */
 export function autoIntervalFor(metric: LiveMetricId) {
   const auto = BASE[metric].auto
   if (!auto) return 60
@@ -61,14 +61,15 @@ export function dayLog(metric: LiveMetricId, date: Date): LogRow[] {
   const today = isSameDay(date, now)
   if (metric === 'stress') {
     if (today) {
+      // 반지가 자동으로 잰 값(지금 시각까지) + 사용자가 직접 잰 값(stressExtra). 정책: 스트레스는 자동 측정 + 원할 때 직접 측정
       const ses = getSession()
-      if (!isMeasureDone(ses, 'stress')) return []
       const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const nowMin = now.getHours() * 60 + now.getMinutes()
       const extra = (ses.stressExtra?.[key] ?? []).map((e, i) => ({ id: `x-${i}`, time: e.time, value: e.value, mode: 'manual' as const }))
-      const base = STRESS_DAY_POINTS.map((pt) => ({ id: `m-${pt.h}`, time: hhmmss(Math.round(pt.h * 60)), value: pt.v, mode: 'manual' as const }))
+      const base = STRESS_DAY_POINTS.filter((pt) => Math.round(pt.h * 60) <= nowMin).map((pt) => ({ id: `a-${pt.h}`, time: hhmmss(Math.round(pt.h * 60)), value: pt.v, mode: 'auto' as const }))
       return [...base, ...extra].sort((a, b) => (a.time < b.time ? 1 : -1))
     }
-    // 지난 날: 날짜 시드로 1~3회 직접 측정 (며칠에 한 번은 건너뜀) — 7일·한 달 추세용 샘플
+    // 지난 날: 날짜 시드로 1~3회 자동 측정 (며칠에 한 번은 건너뜀) — 7일·한 달 추세용 샘플
     const ds = date.getFullYear() * 400 + date.getMonth() * 31 + date.getDate()
     if (ds % 5 === 0) return []
     const count = 1 + (ds % 3)
@@ -76,7 +77,7 @@ export function dayLog(metric: LiveMetricId, date: Date): LogRow[] {
     return Array.from({ length: count }, (_, k) => {
       const h = [9, 13, 16, 19][(ds + k) % 4]
       const v = Math.max(10, Math.min(90, base + ((ds * (k + 3)) % 11) - 5))
-      return { id: `m-${h}`, time: hhmmss(h * 60 + ((ds * 13) % 50)), value: v, mode: 'manual' as const }
+      return { id: `a-${h}`, time: hhmmss(h * 60 + ((ds * 13) % 50)), value: v, mode: 'auto' as const }
     }).sort((x, y) => (x.time < y.time ? 1 : -1))
   }
   const endMin = today ? now.getHours() * 60 + now.getMinutes() : 23 * 60 + 50

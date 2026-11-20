@@ -6,7 +6,6 @@ import { DateLine } from '../components/DateLine'
 import { TrendBars } from '../components/TrendBars'
 import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measureLog'
 import { useSession } from '../useSession'
-import { isMeasureDone } from '../session'
 import { ClaimBanner } from '../components/ClaimBanner'
 
 /**
@@ -89,7 +88,8 @@ function interpret(metric: LiveMetricId, today: number, usual: number | null, is
   if (today > 80) return { head: isToday ? '스트레스가 매우 높아요.' : '스트레스가 매우 높았던 날이에요.', tip: '하던 일을 잠시 멈추고 천천히 숨을 고르세요.', tone: 'warn' as const }
   if (today > 60) return { head: isToday ? '스트레스가 높은 편이에요.' : '스트레스가 높았던 날이에요.', tip: '10분만 걷거나 창밖을 보며 쉬어 보세요.', tone: 'warn' as const }
   if (today > 40) return { head: isToday ? '스트레스가 보통이에요.' : '스트레스가 보통이었던 날이에요.', tip: '물 한 잔 마시고 어깨를 풀어 보세요.', tone: 'ok' as const }
-  return { head: isToday ? '오늘은 마음이 편안해요.' : '마음이 편안했던 날이에요.', tip: '좋은 상태예요. 이 흐름을 유지해 보세요.', tone: 'ok' as const }
+  if (today > 20) return { head: isToday ? '오늘은 마음이 편안해요.' : '마음이 편안했던 날이에요.', tip: '좋은 상태예요. 이 흐름을 유지해 보세요.', tone: 'ok' as const }
+  return { head: isToday ? '스트레스가 거의 없어요.' : '스트레스가 거의 없던 날이에요.', tip: '아주 편안한 상태예요. 이대로 지내 보세요.', tone: 'ok' as const }
 }
 
 /** 하루 그래프: 시간대별 평균을 막대로, 정상 범위는 연한 띠 */
@@ -225,10 +225,10 @@ export function VitalDayBodyV2({
         </div>
       )}
 
-      {/* 보상 칸은 측정이 끝난 뒤에만 (측정 전엔 빈 흰 칸이 남지 않게) */}
-      {metric === 'stress' && isToday && isMeasureDone(session, 'stress') && (
+      {/* 보상 칸은 오늘 기록(자동·직접)이 있을 때만 (기록 전엔 빈 흰 칸이 남지 않게). 정책: 하루 중 30점 이하 기록이 있으면 1일 1회 */}
+      {metric === 'stress' && isToday && has && (
         <section className="v2-claim">
-          <ClaimBanner kind="stress" doneText="측정 완료" eligible={manual !== undefined && manual.value <= 30} ineligibleText="30점 이하일 때 지급돼요. 편안히 앉아 다시 측정해 보세요." />
+          <ClaimBanner kind="stress" done doneText="오늘 30점 이하 기록" eligible={vals.some((v) => v <= 30)} ineligibleText="30점 이하일 때 지급돼요. 편안히 앉아 직접 재 보세요." />
         </section>
       )}
 
