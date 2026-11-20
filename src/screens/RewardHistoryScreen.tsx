@@ -1,14 +1,8 @@
 import {
-  ArrowsLeftRight,
-  CalendarCheck,
   CaretDown,
-  CaretLeft,
   CaretUp,
-  GameController,
-  Heart,
-  UserPlus,
 } from '@phosphor-icons/react'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Phone } from '../components/ui'
 import adBg from '../assets/reward/ad-bg.svg'
@@ -92,18 +86,6 @@ function fmtHistDate(raw: string) {
 
 function formatP(n: number) {
   return n.toLocaleString('ko-KR')
-}
-
-function formatSignedP(n: number) {
-  const sign = n > 0 ? '+ ' : n < 0 ? '' : ''
-  // negative already has -
-  if (n < 0) return `${formatP(n)} P`
-  return `${sign}${formatP(n)} P`
-}
-
-function formatSignedTott(n: number) {
-  if (n < 0) return `${n} TOTT`
-  return `+ ${n} TOTT`
 }
 
 /** 통합 내역 — 발생 경로 + 지급 형태 */
@@ -206,90 +188,6 @@ function parsePayType(raw: string | null): PayType {
   return 'all'
 }
 
-function filterActivities(items: Activity[], source: RewardFilter, pay: PayType) {
-  return items.filter((item) => {
-    // 교환은 발생 경로 ‘전체’에서만 (또는 포인트/TOTT 유형 필터로 각각 노출)
-    if (item.source === 'exchange') {
-      if (source !== 'all') return false
-      if (pay === 'all') return true
-      if (pay === 'point') return item.point != null && item.point !== 0
-      if (pay === 'tott') return item.tott != null && item.tott !== 0
-      return false
-    }
-    if (source !== 'all' && item.source !== source) return false
-    if (pay === 'all') return true
-    if (pay === 'point') return item.point != null && item.point !== 0
-    if (pay === 'tott') return item.tott != null && item.tott !== 0
-    return true
-  })
-}
-
-function activityIcon(item: Activity): ReactNode {
-  if (item.source === 'exchange') {
-    return (
-      <span className="rh-ico exchange">
-        <ArrowsLeftRight size={20} weight="bold" />
-      </span>
-    )
-  }
-  if (item.source === 'vitaling') {
-    return (
-      <span className="rh-ico vitaling">
-        <Heart size={22} weight="fill" />
-      </span>
-    )
-  }
-  if (item.source === 'game') {
-    return (
-      <span className="rh-ico game">
-        <GameController size={22} weight="fill" />
-      </span>
-    )
-  }
-  if (item.source === 'attend') {
-    return (
-      <span className="rh-ico attend">
-        <CalendarCheck size={22} weight="fill" />
-      </span>
-    )
-  }
-  return (
-    <span className="rh-ico invite">
-      <UserPlus size={22} weight="fill" />
-    </span>
-  )
-}
-
-function amountTone(n: number, currency: 'p' | 'tott') {
-  if (n < 0) return 'debit'
-  return currency === 'p' ? 'p' : 'tott'
-}
-
-function RewardFilters({
-  value,
-  onChange,
-}: {
-  value: RewardFilter
-  onChange: (v: RewardFilter) => void
-}) {
-  return (
-    <div className="rh-filters" role="tablist" aria-label="발생 경로">
-      {REWARD_FILTERS.map((f) => (
-        <button
-          key={f.id}
-          type="button"
-          role="tab"
-          aria-selected={value === f.id}
-          className={`rh-filter ${value === f.id ? 'on' : ''}`}
-          onClick={() => onChange(f.id)}
-        >
-          {f.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 function PayTypeDropdown({
   value,
   onChange,
@@ -358,185 +256,6 @@ function PayTypeDropdown({
   )
 }
 
-function ActivityRow({ item, payFocus = 'all' }: { item: Activity; payFocus?: PayType }) {
-  const showPoint =
-    item.point != null &&
-    item.point !== 0 &&
-    (payFocus === 'all' || payFocus === 'point')
-  const showTott =
-    item.tott != null &&
-    item.tott !== 0 &&
-    (payFocus === 'all' || payFocus === 'tott')
-
-  const title =
-    item.source === 'exchange' && payFocus === 'tott'
-      ? '포인트에서 생성된 토큰'
-      : item.source === 'exchange' && payFocus === 'point'
-        ? 'TOTT 교환으로 포인트 사용'
-        : item.title
-
-  const detail =
-    item.source === 'exchange' && payFocus === 'tott'
-      ? `${formatP(Math.abs(item.point ?? 0))}P 교환`
-      : item.source === 'exchange' && payFocus === 'point'
-        ? `${item.tott ?? 0} TOTT로 전환`
-        : item.sub ?? ''
-
-  return (
-    <div className={`rh-item ${item.source === 'exchange' ? 'is-exchange' : ''}`}>
-      {activityIcon(item)}
-      <div className="rh-item-body">
-        <div className="rh-item-left">
-          <b className="rh-item-title">{title}</b>
-          <em className="rh-item-date">{fmtHistDate(item.date)}</em>
-        </div>
-        <div className="rh-item-right">
-          <div className="rh-item-amt">
-            {showPoint && (
-              <strong className={`tone-${amountTone(item.point!, 'p')}`}>{formatSignedP(item.point!)}</strong>
-            )}
-            {showTott && (
-              <strong className={`tone-${amountTone(item.tott!, 'tott')}`}>{formatSignedTott(item.tott!)}</strong>
-            )}
-          </div>
-          {detail ? <span className="rh-item-detail">{detail}</span> : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ActivityToolbar({
-  source,
-  onSource,
-  pay,
-  onPay,
-}: {
-  source: RewardFilter
-  onSource: (v: RewardFilter) => void
-  pay: PayType
-  onPay: (v: PayType) => void
-}) {
-  return (
-    <div className="rh-toolbar">
-      <RewardFilters value={source} onChange={onSource} />
-      <PayTypeDropdown value={pay} onChange={onPay} />
-    </div>
-  )
-}
-
-/** 보상 관리 */
-export function RewardHistoryScreen() {
-  const navigate = useNavigate()
-  const [source, setSource] = useState<RewardFilter>('all')
-  const [pay, setPay] = useState<PayType>('all')
-  const preview = useMemo(() => filterActivities(ACTIVITIES, source, pay).slice(0, 5), [source, pay])
-
-  const maxTott =
-    BALANCES.pointAvailable >= MIN_P_TO_EXCHANGE
-      ? Math.floor(BALANCES.pointAvailable / P_PER_TOTT)
-      : 0
-
-  return (
-    <div className="stage">
-      <Phone>
-        <div className="screen rh-screen">
-          <header className="rh-header">
-            <button type="button" className="rh-back" aria-label="뒤로" onClick={() => navigate('/vitaling/home')}>
-              <CaretLeft size={22} weight="bold" />
-            </button>
-            <h1>보상 관리</h1>
-            <span className="rh-header-spacer" />
-          </header>
-
-          <div className="scroll rh-body">
-            <div className="rh-asset-card simple focus-point">
-              <div className="rh-point-hero">
-                <em>보유 포인트</em>
-                <strong>
-                  {formatP(BALANCES.pointAvailable)}
-                  <small>P</small>
-                </strong>
-              </div>
-              {maxTott > 0 ? (
-                <div className="rh-exchange-ready">
-                  <div className="rh-exchange-qty">
-                    <em>지금 교환 가능</em>
-                    <strong>{maxTott}</strong>
-                    <span>TOTT</span>
-                  </div>
-                  <button type="button" className="rh-exchange-btn compact">
-                    {maxTott} TOTT 교환하기
-                  </button>
-                </div>
-              ) : (
-                <div className="rh-exchange-progress">
-                  <p className="rh-exchange-progress-title">
-                    교환까지 <b>{formatP(MIN_P_TO_EXCHANGE - BALANCES.pointAvailable)}P</b> 남았어요
-                  </p>
-                  <progress
-                    className="rh-point-progress"
-                    value={BALANCES.pointAvailable}
-                    max={MIN_P_TO_EXCHANGE}
-                    aria-label="포인트 교환 진행률"
-                  />
-                </div>
-              )}
-              <div className="rh-life-row">
-                <div className="rh-life-item">
-                  <em>누적 포인트</em>
-                  <b>
-                    {formatP(BALANCES.pointLifetime)}
-                    <small>P</small>
-                  </b>
-                </div>
-                <div className="rh-life-item tott">
-                  <em>누적 토큰</em>
-                  <b>
-                    {BALANCES.tottLifetime}
-                    <small>TOTT</small>
-                  </b>
-                </div>
-              </div>
-            </div>
-
-            <div className="rh-section-head">
-              <h2>적립 및 교환 내역</h2>
-              <button
-                type="button"
-                className="rh-more"
-                onClick={() => {
-                  const q = new URLSearchParams()
-                  if (source !== 'all') q.set('source', source)
-                  if (pay !== 'all') q.set('type', pay)
-                  const qs = q.toString()
-                  navigate(`/reward/history${qs ? `?${qs}` : ''}`)
-                }}
-              >
-                전체 보기 +
-              </button>
-            </div>
-
-            <ActivityToolbar source={source} onSource={setSource} pay={pay} onPay={setPay} />
-
-            {preview.length === 0 ? (
-              <p className="rh-empty">해당 조건의 내역이 없어요</p>
-            ) : (
-              <div className="rh-list">
-                {preview.map((item) => (
-                  <ActivityRow key={item.id} item={item} payFocus={pay} />
-                ))}
-              </div>
-            )}
-          </div>
-
-        </div>
-      </Phone>
-    </div>
-  )
-}
-
-/** 적립 및 교환 내역 전체 — Figma 5883:52452 */
 type HistoryIcon = 'invite' | 'game' | 'exchange' | 'gift' | 'ad' | 'attend' | 'vitaling'
 
 type HistoryRow = {
@@ -553,25 +272,25 @@ type HistoryRow = {
 /** 피그마 「전체 보상 내역」 시안 데이터 */
 const HISTORY_ROWS: HistoryRow[] = [
   { id: 'h1', source: 'invite', icon: 'invite', title: '친구 초대 이벤트', date: '26-10-11', detail: '30명 달성 보상', amount: 2_000_000, unit: 'P' },
-  { id: 'hv1', source: 'vitaling', icon: 'vitaling', title: '스트레스 측정 보상', date: '26-10-11', detail: '스트레스 24점 (30점 이하)', amount: 200_000, unit: 'P' },
+  { id: 'hv1', source: 'vitaling', icon: 'vitaling', title: '스트레스 측정 보상', date: '26-10-11', detail: '24점', amount: 200_000, unit: 'P' },
   { id: 'h2', source: 'invite', icon: 'invite', title: '친구 초대 이벤트', date: '26-03-19', detail: '10명 달성 보상', amount: 500_000, unit: 'P' },
   { id: 'h3', source: 'game', icon: 'game', title: '게임 참여 보상', date: '26-03-19', detail: '토마콩즈', amount: 1_000, unit: 'P' },
-  { id: 'hv2', source: 'vitaling', icon: 'vitaling', title: '수면 포인트', date: '26-10-10', detail: '지난밤 수면 효율 84%', amount: 200_000, unit: 'P' },
-  { id: 'h4', source: 'exchange', icon: 'exchange', title: '포인트 교환', date: '26-10-11', detail: '포인트 > TOTT 교환', amount: 4, unit: 'TOTT' },
-  { id: 'h5', source: 'exchange', icon: 'exchange', title: 'TOTT 교환', date: '26-10-11', detail: '포인트 > TOTT 교환', amount: -4_000_000, unit: 'P' },
-  { id: 'hv3', source: 'vitaling', icon: 'vitaling', title: 'AI 식단 업로드 보상', date: '26-10-09', detail: '점심 식단 사진 업로드', amount: 200_000, unit: 'P' },
+  { id: 'hv2', source: 'vitaling', icon: 'vitaling', title: '수면 포인트', date: '26-10-10', detail: '효율 84%', amount: 200_000, unit: 'P' },
+  { id: 'h4', source: 'exchange', icon: 'exchange', title: '포인트 교환', date: '26-10-11', detail: '포인트 → TOTT', amount: 4, unit: 'TOTT' },
+  { id: 'h5', source: 'exchange', icon: 'exchange', title: 'TOTT 교환', date: '26-10-11', detail: '포인트 → TOTT', amount: -4_000_000, unit: 'P' },
+  { id: 'hv3', source: 'vitaling', icon: 'vitaling', title: '식단 사진 보상', date: '26-10-09', detail: '점심 사진', amount: 200_000, unit: 'P' },
   { id: 'h6', source: 'invite', icon: 'gift', title: '친구 추천 보상', date: '26-10-11', detail: 'James님 추천코드 입력', amount: 0.5, unit: 'TOTT' },
-  { id: 'hv4', source: 'vitaling', icon: 'vitaling', title: '설문조사 (월) 보상', date: '26-07-20', detail: '7월 설문 참여', amount: 5_000_000, unit: 'P' },
+  { id: 'hv4', source: 'vitaling', icon: 'vitaling', title: '월간 설문 보상', date: '26-07-20', detail: '7월', amount: 5_000_000, unit: 'P' },
   { id: 'h7', source: 'invite', icon: 'invite', title: '친구 초대 이벤트', date: '26-03-19', detail: '30명 달성 보상', amount: 500_000, unit: 'P' },
   { id: 'h8', source: 'invite', icon: 'gift', title: '친구 추천 보상', date: '26-10-11', detail: 'bbb님 추천코드 입력', amount: 0.5, unit: 'TOTT' },
-  { id: 'hv5', source: 'vitaling', icon: 'vitaling', title: '운동하기 (걷기) 보상', date: '26-10-08', detail: '8,412걸음 (8,000걸음 이상)', amount: 200_000, unit: 'P' },
+  { id: 'hv5', source: 'vitaling', icon: 'vitaling', title: '걷기 보상', date: '26-10-08', detail: '8,412걸음', amount: 200_000, unit: 'P' },
   { id: 'h9', source: 'game', icon: 'ad', title: '광고 시청 보상', date: '26-03-19', detail: '광고시청', amount: 1_000, unit: 'P' },
   { id: 'h10', source: 'game', icon: 'game', title: '게임 참여 보상', date: '26-03-19', detail: '사다리게임', amount: 1_000, unit: 'P' },
-  { id: 'hv6', source: 'vitaling', icon: 'vitaling', title: '심박수 측정 보상', date: '26-03-19', detail: '일일 측정 완료', amount: 1_000, unit: 'P' },
+  { id: 'hv6', source: 'vitaling', icon: 'vitaling', title: '심박수 측정 보상', date: '26-03-19', detail: '측정 완료', amount: 1_000, unit: 'P' },
   { id: 'h11', source: 'invite', icon: 'gift', title: '친구 추천 보상', date: '26-10-11', detail: '123님 추천코드 입력', amount: 0.5, unit: 'TOTT' },
   { id: 'h12', source: 'attend', icon: 'attend', title: '출석 체크 보상', date: '26-03-19', detail: '30명 달성 보상', amount: 1_000, unit: 'P' },
   { id: 'h13', source: 'game', icon: 'ad', title: '광고 시청 보상', date: '26-03-19', detail: '광고시청', amount: 1_000, unit: 'P' },
-  { id: 'hv7', source: 'vitaling', icon: 'vitaling', title: '스트레스 관리 보상', date: '26-03-18', detail: '안정 구간 유지', amount: 1_500, unit: 'P' },
+  { id: 'hv7', source: 'vitaling', icon: 'vitaling', title: '스트레스 관리 보상', date: '26-03-18', detail: '안정 유지', amount: 1_500, unit: 'P' },
   { id: 'h14', source: 'invite', icon: 'gift', title: '친구 추천 보상', date: '26-10-11', detail: 'aaa님 추천코드 입력', amount: 0.5, unit: 'TOTT' },
   { id: 'h15', source: 'game', icon: 'game', title: '게임 참여 보상', date: '26-03-19', detail: '30명 달성 보상', amount: 1_000, unit: 'P' },
   { id: 'h16', source: 'attend', icon: 'attend', title: '출석 체크 보상', date: '26-03-19', detail: '30명 달성 보상', amount: 1_000, unit: 'P' },
@@ -626,17 +345,18 @@ function HistoryTxRow({ item }: { item: HistoryRow }) {
   return (
     <div className="rh-tx">
       <HistoryTxIcon kind={item.icon} />
+      {/* 왼쪽(제목·날짜)과 오른쪽(금액·비고)을 두 칸으로 나눠 서로 침범하지 않게. 오른쪽은 폭 상한 + 말줄임 */}
       <div className="rh-tx-body">
-        <div className="rh-tx-main">
+        <div className="rh-tx-left">
           <p className="rh-tx-title">{item.title}</p>
+          <em className="rh-tx-date">{fmtHistDate(item.date)}</em>
+        </div>
+        <div className="rh-tx-right">
           <div className={`rh-tx-amt ${tott ? 'is-tott' : ''}`}>
             <strong>{amt.value}</strong>
             <span>{amt.unit}</span>
           </div>
-        </div>
-        <div className="rh-tx-meta">
-          <em>{fmtHistDate(item.date)}</em>
-          <span>{item.detail}</span>
+          <span className="rh-tx-detail">{item.detail}</span>
         </div>
       </div>
     </div>
@@ -674,7 +394,8 @@ export function RewardHistoryAllScreen() {
       <Phone>
         <div className="screen rh-screen rh-history">
           <header className="rh-header rh-history-header">
-            <button type="button" className="rh-back" aria-label="뒤로" onClick={() => navigate('/reward')}>
+            {/* 보상 관리(메신저 화면)는 링 앱에서 뺐다. 뒤로 가면 홈 */}
+            <button type="button" className="rh-back" aria-label="뒤로" onClick={() => navigate('/vitaling/home')}>
               <img src={backIcon} alt="" width={40} height={40} />
             </button>
             <h1>보상 내역</h1>

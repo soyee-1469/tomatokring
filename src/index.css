@@ -23,26 +23,32 @@
   --tomato: #CD313E;          /* 메신저 브랜드 빨강: 로고, 교환 버튼, 활성 탭 */
   --tomato-soft: #FFF0F1;
   --forest: #1a2332;
-  /* 아이콘 칩: 선 아이콘 + 연한 원형 배경 (메신저 보상 내역 칩 색) */
-  --c-orange: #FF6B4A;  --c-orange-soft: #FFEFEA;
-  --c-lemon: #E0A800;   --c-lemon-soft: #FFF7D9;
-  --c-leaf: #50B83D;    --c-leaf-soft: #F8FFE7;
-  --c-berry: #2F80ED;   --c-berry-soft: #E8EFFF;
-  --c-beet: #8B5CF6;    --c-beet-soft: #F6EEFF;
-  --c-pink: #E85BB0;    --c-pink-soft: #FFF2FC;
-  --cream: #F8F8F8;
+  /* 지표색: 2026-11-19 레퍼런스(프로젝트 일정 대시보드)에서 추출한 캔디 팔레트. 그래프·버튼·상태 태그에만 쓴다 (아이콘은 먹색) */
+  --c-orange: #FF8E50;  --c-orange-soft: #FFF1E8;
+  --c-lemon: #FCCA14;   --c-lemon-soft: #FFF8D9;
+  --c-leaf: #1CCE68;    --c-leaf-soft: #E4FAEC;
+  --c-berry: #568EE4;   --c-berry-soft: #EAF1FC;
+  --c-beet: #9F66F4;    --c-beet-soft: #F1EAFE;
+  --c-pink: #E07DE5;    --c-pink-soft: #FBEEFC;
+  --c-teal: #2BCFDD;    --c-teal-soft: #E3FAFC;
+  --c-coral: #F96B6D;   --c-coral-soft: #FFEDED;
+  --cream: #F3F6FC;     /* 레퍼런스의 푸른 기 도는 연한 바탕 (카드는 흰색) */
   --cream-line: #EEEEEE;
   --chip-gray: #F5F5F5;
   --chip-gray-fg: #8E8E8E;
-  --brand-blue: #2F80ED;
-  --brand-blue-soft: #EAF2FD;
-  --brand-green: #50B83D;
-  --brand-green-soft: #E9F6E5;
+  --brand-blue: #568EE4;
+  --brand-blue-soft: #EAF1FC;
+  --brand-green: #1CCE68;
+  --brand-green-soft: #E4FAEC;
   --tag-ok-bg: var(--brand-green-soft);
-  --tag-ok-fg: #3E9A2D;
-  --tag-warn-bg: #FEEDE3;
-  --tag-warn-fg: #D86A2E;
+  --tag-ok-fg: #15A355;
+  --tag-warn-bg: #FFF1E8;
+  --tag-warn-fg: #E8782F;
   --btn-h: 60px;
+  --leading-title: 1.35;
+  --leading-label: 1.4;
+  --leading-copy: 1.5;
+  line-height: var(--leading-label);
   font-family: 'Pretendard Variable', Pretendard, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--text);
   background:
@@ -51,6 +57,8 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+h1, h2, h3, h4 { line-height: var(--leading-title); }
+p { line-height: var(--leading-copy); }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
@@ -1089,7 +1097,7 @@ a.btn {
 
 /* ── Elder-friendly home ── */
 .elder-home {
-  background: #f2f4f7;
+  background: var(--cream);
 }
 .elder-top {
   display: grid;
@@ -1135,7 +1143,7 @@ a.btn {
   width: 40px;
   height: 40px;
   border: none;
-  background: #f2f4f7;
+  background: var(--cream);
   border-radius: 12px;
   display: grid;
   place-items: center;
@@ -3149,7 +3157,7 @@ a.btn {
   margin: 8px 0 4px;
   object-fit: cover;
   border-radius: 14px;
-  background: #f2f4f7;
+  background: var(--cream);
 }
 .elder-sleep-card.stress .elder-sleep-head em {
   color: #00897B;
@@ -3605,7 +3613,7 @@ a.btn {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 1.15;
+  line-height: var(--leading-label);
 }
 .vital-row-meta small {
   font-size: 11px;
@@ -4704,11 +4712,12 @@ a.btn {
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 2px;
+  line-height: var(--leading-title);
 }
 .guide-step span {
   font-size: 12px;
   color: var(--text-2);
-  line-height: 1.45;
+  line-height: var(--leading-copy);
 }
 .guide-demo-row {
   display: grid;
@@ -5004,7 +5013,7 @@ a.btn {
   font-weight: 700;
   letter-spacing: -0.03em;
   color: #1a2332;
-  line-height: 1.25;
+  line-height: var(--leading-title);
 }
 .arc-delta.muted {
   margin-top: 6px;
@@ -5877,8 +5886,10 @@ a.btn {
   padding-left: 18px;
   font-size: 13px;
   color: var(--text-2);
-  line-height: 1.7;
+  line-height: var(--leading-copy);
 }
+
+.help-block li + li { margin-top: 4px; }
 
 /* Tomatok bottom nav */
 .bottom-nav {
@@ -9649,7 +9660,7 @@ a.btn {
   font-style: normal;
   font-size: 12px;
   font-weight: 700;
-  line-height: 1;
+  line-height: var(--leading-label);
   color: var(--text-3);
 }
 .ms-metric .dot {
@@ -11184,6 +11195,7 @@ a.btn {
   font-weight: 700;
   letter-spacing: -0.03em;
   color: #1a2332;
+  line-height: var(--leading-title);
 }
 .elder-home .elder-fit-head .elder-menu-tag {
   margin: 0;
@@ -11226,6 +11238,7 @@ a.btn {
   font-weight: 600;
   letter-spacing: -0.02em;
   color: #6b7684;
+  line-height: var(--leading-copy);
 }
 .elder-home .elder-fit-chart {
   width: 140px;
@@ -11404,7 +11417,7 @@ a.btn {
   flex-shrink: 0;
   border-radius: 16px;
   overflow: hidden;
-  background: #f2f4f7;
+  background: var(--cream);
 }
 .elder-home .elder-fit-photo img {
   width: 100%;
@@ -11589,7 +11602,7 @@ a.btn {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: #f2f4f7;
+  background: var(--cream);
   color: #5c6670;
 }
 .ms-log-row strong {
@@ -11605,7 +11618,7 @@ a.btn {
   font-weight: 700;
   padding: 4px 8px;
   border-radius: 999px;
-  background: #f2f4f7;
+  background: var(--cream);
   color: #6b7684;
   white-space: nowrap;
 }
@@ -11688,7 +11701,7 @@ a.btn {
   margin-top: 8px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: #f2f4f7;
+  background: var(--cream);
   color: #5c6670;
   font-size: 14px;
   line-height: 1.5;
@@ -11737,6 +11750,7 @@ a.btn {
   font-size: 16px;
   font-weight: 700;
   color: #1a2332;
+  line-height: var(--leading-title);
 }
 .auto-mode-option b small {
   font-size: 12px;
@@ -11748,7 +11762,7 @@ a.btn {
   margin-top: 4px;
   font-style: normal;
   font-size: 14px;
-  line-height: 1.45;
+  line-height: var(--leading-copy);
   color: #6b7684;
 }
 .auto-mode-option i {
@@ -11802,7 +11816,7 @@ a.btn {
   font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1.65;
+  line-height: var(--leading-copy);
   word-break: keep-all;
 }
 .elder-home .elder-fit-card:has(.elder-fit-blank) .elder-score-reward {
@@ -11882,7 +11896,7 @@ a.btn {
   line-height: 1;
 }
 /* 홈 카드 아이콘은 전부 회색 한 가지 — 지표색은 그래프(선·막대·타임라인)에만 쓴다. 상세 히어로의 큰 아이콘은 지표색 유지 */
-.elder-home .elder-fit-card .elder-fit-head i { background: var(--chip-gray); color: var(--text-2); }
+.elder-home .elder-fit-card .elder-fit-head i { background: #F2F4F6; color: var(--text); }
 /* 상태 태그: 미완료는 회색, 완료·정상은 녹색 체크, 주의는 주황 파스텔, 위험은 토마토 */
 .elder-home .elder-menu-tag {
   display: inline-flex;
@@ -12026,21 +12040,38 @@ a.btn {
   margin: 0 0 14px;
   padding: 0;
 }
+.card-order-list { touch-action: none; user-select: none; -webkit-user-select: none; } /* 끌 때 화면이 같이 스크롤되지 않게 */
 .card-order-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 10px 10px 12px;
+  height: var(--btn-h); /* 50~70대가 잡기 쉽게 다른 버튼과 같은 60px */
+  padding: 0 8px 0 12px;
   border-radius: 14px;
   background: var(--chip-gray);
+  cursor: grab;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  will-change: transform;
 }
-.card-order-no {
-  width: 20px;
-  font-size: 14px;
-  font-weight: 700;
+.card-order-item.lifted {
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(20, 28, 40, 0.16);
+  transform-origin: center;
+  cursor: grabbing;
+}
+.card-order-list.dragging .card-order-item:not(.lifted) { opacity: 0.92; }
+.card-order-grip {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
   color: var(--text-3);
-  text-align: center;
+  cursor: grab;
+  touch-action: none;
 }
+.card-order-grip i { font-size: 22px; line-height: 1; }
 .card-order-ico {
   width: 40px;
   height: 40px;
@@ -12050,7 +12081,7 @@ a.btn {
   font-style: normal;
   flex-shrink: 0;
 }
-.card-order-item .card-order-ico { background: #fff; color: var(--text-2); } /* 홈과 같이 회색 아이콘 (줄 배경이 회색이라 칩은 흰색) */
+.card-order-item .card-order-ico { background: #fff; color: var(--text); } /* 홈과 같이 먹색 아이콘 (줄 배경이 회색이라 칩은 흰색) */
 .card-order-item b {
   flex: 1;
   min-width: 0;
@@ -12058,20 +12089,6 @@ a.btn {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
-.card-order-btns { display: flex; gap: 4px; }
-.card-order-btns button {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e3e6ea;
-  border-radius: 12px;
-  background: #fff;
-  color: var(--text);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-.card-order-btns button:disabled { color: #c5ccd4; cursor: default; }
-.card-order-btns button i { font-size: 22px; line-height: 1; }
 .card-order-actions {
   display: flex;
   flex-direction: column;
@@ -12743,10 +12760,10 @@ a.btn {
 .faq-group { margin-top: 18px; }
 .faq-title { display: flex; align-items: center; gap: 8px; margin: 0 4px 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.03em; }
 .faq-item { background: #fff; border-radius: 16px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); overflow: hidden; }
-.faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px; border: 0; background: none; text-align: left; font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; cursor: pointer; word-break: keep-all; }
+.faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px; border: 0; background: none; text-align: left; font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; cursor: pointer; word-break: keep-all; line-height: var(--leading-title); }
 .faq-q i { color: var(--text-3); flex-shrink: 0; }
-.faq-a { padding: 0 16px 16px; display: grid; gap: 8px; }
-.faq-a p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--text-2); word-break: keep-all; }
+.faq-a { padding: 0 16px 16px; display: grid; gap: 6px; }
+.faq-a p { margin: 0; font-size: 15px; line-height: var(--leading-copy); color: var(--text-2); word-break: keep-all; }
 .help-footer { margin: 20px 0 8px; padding: 16px; border-radius: 16px; background: #1a2332; color: #fff; display: grid; gap: 4px; }
 .help-footer b { font-size: 16px; margin-bottom: 4px; }
 .help-footer span { font-size: 13px; color: #c9d1dc; }
@@ -12755,7 +12772,7 @@ a.btn {
 .auto-toggle-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
 .auto-toggle-row > div { flex: 1; display: grid; gap: 3px; }
 .auto-toggle-row b { font-size: 16px; font-weight: 700; }
-.auto-toggle-row em { font-style: normal; font-size: 13px; color: var(--text-2); line-height: 1.45; word-break: keep-all; }
+.auto-toggle-row em { font-style: normal; font-size: 13px; color: var(--text-2); line-height: var(--leading-copy); word-break: keep-all; }
 
 /* ——— 내 정보 · 목표 설정 ——— */
 .pf-val { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 700; color: var(--text); white-space: nowrap; }
@@ -12845,8 +12862,12 @@ a.btn {
 .rh-tx-amt strong { font-size: 16px; font-weight: 700; line-height: 1.2; color: var(--text); letter-spacing: -0.02em; }
 .rh-tx-amt span { font-size: 13px; font-weight: 600; line-height: 1.2; color: var(--text-2); }
 .rh-tx-amt.is-tott strong, .rh-tx-amt.is-tott span { color: var(--tomato); }
-.rh-tx-meta { font-size: 12px; font-weight: 500; color: var(--text-3); gap: 10px; }
-.rh-tx-meta > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 보상 내역 행: 왼쪽 칸(제목·날짜)은 남는 폭, 오른쪽 칸(금액·비고)은 내용 폭이되 최대 44%. 칸끼리 겹치지 않는다 */
+.rh-tx-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; }
+.rh-tx-left { min-width: 0; display: grid; gap: 4px; }
+.rh-tx-right { max-width: 44%; min-width: 0; display: grid; gap: 4px; justify-items: end; text-align: right; }
+.rh-tx-date, .rh-tx-detail { font-size: 12px; font-weight: 500; line-height: 18px; color: var(--text-3); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.rh-tx-amt { white-space: nowrap; }
 .rh-item-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
 
 /* 지급 조건 문구: 버튼 아래, 가늘고 연하게 */
@@ -13058,10 +13079,10 @@ a.btn {
 .claim-banner button.go { background: var(--text); color: #fff; padding: 0 16px; }
 
 /* ——— 홈 '오늘 바이탈' 카드: 2×2, 값 + 상태 한 줄 ——— */
-.elder-home .elder-fit-card.vitals .elder-fit-head i { background: var(--chip-gray); color: var(--text-2); }
+.elder-home .elder-fit-card.vitals .elder-fit-head i { background: #F2F4F6; color: var(--text); }
 .home-vitals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 14px; }
 .home-vital { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border: 0; border-radius: 14px; background: transparent; text-align: left; color: inherit; cursor: pointer; }
-.home-vital-ico { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--chip-gray); color: var(--text-2); }
+.home-vital-ico { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: #F2F4F6; color: var(--text); }
 .home-vital-copy { display: grid; gap: 1px; min-width: 0; }
 .home-vital-copy em { font-style: normal; font-size: 12px; color: var(--text-2); }
 .home-vital-copy strong { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; }
@@ -13071,7 +13092,7 @@ a.btn {
 body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 수령 배너: 글자 한 줄, 동작은 아래 줄 오른쪽 — 한 줄에 욱여넣지 않음 */
 .claim-banner { flex-wrap: wrap; row-gap: 10px; padding: 14px 16px; }
-.claim-banner span { flex: 1 1 100%; font-size: 15px; line-height: 1.4; }
+.claim-banner span { flex: 1 1 100%; font-size: 15px; line-height: var(--leading-copy); }
 .claim-banner > i { flex: 0 0 auto; }
 .claim-banner span { flex-basis: calc(100% - 28px); }
 .claim-banner button { margin-left: auto; height: 40px; }
@@ -13539,7 +13560,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 눈금 줄을 반원 그림과 같은 폭으로 (게이지 안쪽 여백만큼 들여쓰기) */
 .elder-home .elder-score-scale { margin-left: 12px; margin-right: 12px; }
 
-.elder-home .elder-fit-hint { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
+.elder-home .elder-fit-hint { margin: 0; font-size: 15px; line-height: var(--leading-copy); color: var(--text-2); word-break: keep-all; }
 
 /* 7일 그래프를 포인트 버튼 아래로 */
 .elder-home .elder-fit-card .elder-fit-chart-wrap.tail { margin-top: 12px; padding-top: 0; width: 100%; }
@@ -13549,6 +13570,15 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-fit-num.with-chip { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: transparent; padding: 0; border: 0; box-shadow: none; }
 .elder-home .elder-fit-num.with-chip > div { display: grid; gap: 2px; }
 .elder-home .elder-walk-progress { display: block; width: 100%; margin-top: 8px; }
+/* 걷기 목표 막대: 브라우저 기본 파랑 대신 걷기 카드 색(연두) */
+.elder-home .elder-walk-progress {
+  appearance: none; -webkit-appearance: none;
+  height: 10px; border: 0; border-radius: 999px; overflow: hidden;
+  background: var(--c-leaf-soft); color: var(--c-leaf);
+}
+.elder-home .elder-walk-progress::-webkit-progress-bar { background: var(--c-leaf-soft); border-radius: 999px; }
+.elder-home .elder-walk-progress::-webkit-progress-value { background: var(--c-leaf); border-radius: 999px; }
+.elder-home .elder-walk-progress::-moz-progress-bar { background: var(--c-leaf); border-radius: 999px; }
 .elder-chip-btn { flex-shrink: 0; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--chip-gray); font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; }
 /* 보조 동작은 버튼처럼 보이지 않게: 배경 없는 글자 링크 (카드 안 버튼 모양은 상태 태그 + 포인트 버튼 둘만) */
 .elder-chip-btn { height: auto; padding: 4px 0; border-radius: 0; background: transparent; font-size: 14px; font-weight: 600; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #C9CED4; }
@@ -13662,6 +13692,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
   letter-spacing: -0.03em;
   color: var(--text-3);
   white-space: nowrap;
+  line-height: var(--leading-label);
 }
 .elder-home .elder-mission-list li.done b { color: var(--text); font-weight: 700; }
 /* 포인트 카드에서 항목을 누르면 해당 카드가 잠깐 강조됨 */
@@ -13711,7 +13742,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
   flex-shrink: 0;
 }
 .elder-home .elder-signal-card.detected .elder-signal-row > i:first-child { background: var(--tomato-soft); color: var(--tomato); }
-.elder-home .elder-signal-row b { font-size: 17px; font-weight: 700; line-height: 1.25; letter-spacing: -0.03em; }
+.elder-home .elder-signal-row b { font-size: 17px; font-weight: 700; line-height: var(--leading-title); letter-spacing: -0.03em; }
 .elder-home .elder-signal-row .elder-menu-tag { white-space: nowrap; line-height: 1; }
 .elder-home .elder-menu-tag.calm { background: var(--brand-blue-soft); color: var(--text); }
 .elder-home .elder-signal-arrow { display: grid; place-items: center; width: 20px; height: 20px; color: var(--text-3); }
@@ -13862,7 +13893,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .vital-result-head span { font-size: 13px; color: var(--text-2); }
 .vital-result-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
 .vital-result-list li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--cream); }
-.vital-result-list li b { flex: 1; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+.vital-result-list li b { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; } /* 값은 이름 바로 옆, 태그만 오른쪽 끝 */
+.vital-result-list li .elder-menu-tag { margin: 0 0 0 auto; } /* 기본 margin-top 12px 때문에 태그만 아래로 처지던 것 제거 → 아이콘·이름·값과 한 줄 */
+.vital-result-list li .elder-menu-tag i { display: inline-flex; width: auto; height: auto; background: none; color: inherit; font-size: 14px; line-height: 1; }
 .vital-result-list li strong { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .vital-result-list li strong small { font-size: 12px; font-weight: 600; margin-left: 3px; color: var(--text-2); }
 .vital-result-list .elder-menu-tag { display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 68px; padding: 6px 10px; font-size: 13px; font-weight: 700; border-radius: 999px; } /* 아이콘 유무와 상관없이 폭 고정 → 값 열이 한 줄로 맞는다 */
@@ -13878,7 +13911,6 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .elder-mission-done { margin: 0 0 14px; }
 .elder-home .elder-mission-list { margin-top: 0; }
 .elder-home .elder-mission-list button { gap: 6px; }
-.elder-home .elder-mission-list b { line-height: 1.2; }
 
 /* 받은 뒤 보조 동작(다시 측정·식단 더 올리기·적립 내역 보기): 글자 줄 대신 44px 알약 버튼 (어르신 기준 누를 수 있어 보이게) */
 .elder-home .elder-claim-actions { display: flex; gap: 8px; }
@@ -14056,3 +14088,33 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 포인트가 없는 측정 버튼(오늘 바이탈 '지금 측정하기'): 크기는 같고 색만 흰 바탕 — 파랑·초록은 포인트가 걸린 동작에만 */
 .elder-home .elder-claim-btn.plain { background: #fff; color: var(--text); border: 1.5px solid #D6DAE0; box-shadow: none; }
 .elder-home .elder-claim-btn.plain:disabled { opacity: 1; color: var(--text-2); }
+
+/* 오늘 기록: 기능별 작은 카드 2열 (바이탈 4종 + 스트레스·걷기·수면·설문). 속은 예전 오늘 바이탈 칸과 같고 카드마다 흰 배경. 버튼은 없음 (받기는 오늘의 미션 카드, 측정은 머리글 링크·상세) */
+/* 칸은 minmax(0,1fr): 줄바꿈 없는 숫자·그래프 때문에 칸이 폰 폭 밖으로 늘어나지 않게 */
+.elder-home .home-tiles { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 14px; }
+.elder-home .home-tiles .elder-fit-card.tile { display: grid; gap: 10px; align-content: start; align-items: start; min-width: 0; margin: 0; padding: 14px 12px 12px; border-radius: 18px; color: inherit; cursor: pointer; overflow: hidden; }
+.elder-home .home-tiles .home-vital-head { display: flex; width: 100%; min-width: 0; }
+.elder-home .home-tiles .home-vital-head em { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.elder-home .home-tiles .home-vital-head { gap: 5px; }
+.elder-home .home-tiles .home-vital-head .home-vital-ico { width: 24px; height: 24px; }
+.elder-home .home-tiles .home-vital-head .home-vital-spark { width: 36px; height: 22px; margin: 0 0 0 auto; }
+.elder-home .home-tiles .home-vital-head .home-vital-ring { flex-shrink: 0; margin: 0 0 0 auto; } /* 이름(심박변이도 5자)이 안 잘리게 아이콘·그래프는 작게 */
+.elder-home .home-tiles .home-vital-body { min-width: 0; }
+.elder-home .home-tiles .home-vital-copy { min-width: 0; }
+.elder-home .home-vital-copy strong.empty { color: #c5ced6; }
+.elder-home .home-vital-copy strong.text { font-size: 18px; }
+.elder-home .home-vital-copy > span.got { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; color: var(--tag-ok-fg); }
+/* 작은 카드 속: 위쪽(이름·값)은 누르면 상세, 아래는 재기/받기 버튼 (카드 폭에 맞춰 48px) */
+.elder-home .home-tile-hit { display: grid; gap: 8px; width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; color: inherit; cursor: pointer; }
+.elder-home .home-tile-action .elder-claim-btn { height: 48px; gap: 4px; border-radius: 12px; font-size: 14px; }
+.elder-home .home-tile-action .elder-claim-btn:disabled:not(.busy) { opacity: 0.5; }
+
+/* 작은 카드 상태 아래 한 줄 더 (자동 기록 시각 · 포인트 조건) */
+.elder-home .home-vital-copy > span.sub { color: var(--text-3); font-size: 11px; }
+.elder-home .home-tile-action .elder-claim-tip { margin: 0; min-height: 48px; justify-content: center; }
+/* 받은 도장: 오른쪽 위 흰 원형 체크 배지 */
+.elder-home .elder-mission-check { position: absolute; top: -2px; right: -2px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #fff; color: var(--brand-green); box-shadow: 0 0 0 1.5px var(--brand-green), 0 1px 3px rgba(0, 0, 0, 0.12); font-style: normal; } /* 흰 카드 위에서도 원이 보이게 초록 테두리 */
+.elder-home .elder-mission-check i { font-size: 12px; line-height: 1; font-weight: 700; }
+/* 순서 편집: 위로·아래로 버튼 (끌기 대신) */
+.card-order-move { display: grid; place-items: center; width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: #fff; color: var(--text); cursor: pointer; flex-shrink: 0; }
+.card-order-move:disabled { opacity: 0.3; cursor: default; }

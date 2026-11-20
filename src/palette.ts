@@ -1,14 +1,14 @@
 /** 메인 ↔ 상세 화면 공통 색상 */
 
 export const SLEEP_COLORS = {
-  line: '#5E35B1',
-  soft: '#EDE7F6',
+  line: '#8A4DF5',
+  soft: '#F1EAFE',
   stages: {
-    // 보라 한 색의 농담 4단계 (브링과 같은 방식) — 한 카드에 색 하나
-    deep: '#5E35B1',
-    rem: '#9575CD',
-    light: '#C4B0EA',
-    awake: '#EDE7F6',
+    // 보라 한 색의 농담 4단계 (브링과 같은 방식) — 한 카드에 색 하나. 2026-11-19 레퍼런스 보라(#9F66F4) 기준으로 밝게
+    deep: '#7E3FF2',
+    rem: '#A47BF7',
+    light: '#CDB6FB',
+    awake: '#EFE8FE',
   },
 } as const
 
@@ -47,10 +47,10 @@ export const ACTIVITY_LEGEND = [
 ] as const
 
 export const VITAL_COLORS = {
-  hr: { color: '#E53935', soft: '#FFE8E6' },
-  spo2: { color: '#1E88E5', soft: '#E3F2FD' },
-  temp: { color: '#7E57C2', soft: '#F3E5F5' },
-  resp: { color: '#43A047', soft: '#E8F5E9' },
+  hr: { color: '#F96B6D', soft: '#FFEDED' },
+  spo2: { color: '#2BCFDD', soft: '#E3FAFC' },
+  temp: { color: '#FF8E50', soft: '#FFF1E8' },
+  resp: { color: '#1CCE68', soft: '#E4FAEC' },
 } as const
 
 /** 메인·상세 공통 정상 범위 문구 */
@@ -61,24 +61,28 @@ export const VITAL_NORMAL: Record<'hr' | 'spo2' | 'temp' | 'resp', string> = {
   resp: '정상 12–20',
 }
 
-/** 홈 카드 색 — 기존 메신저 보상 내역 칩 색 기준, CSS :root 토큰과 동일 값 */
+/** 홈 그래프 색 — 2026-11-19 레퍼런스에서 추출한 캔디 팔레트, CSS :root --c-* 토큰과 동일 값. tomato는 브랜드색(로고·위험)에만 */
 export const HOME_COLORS = {
   tomato: '#CD313E',
-  orange: '#FF6B4A',
-  lemon: '#E0A800',
-  leaf: '#50B83D',
-  berry: '#2F80ED',
-  beet: '#8B5CF6',
-  pink: '#E85BB0',
+  coral: '#F96B6D',
+  orange: '#FF8E50',
+  lemon: '#FCCA14',
+  leaf: '#1CCE68',
+  berry: '#568EE4',
+  teal: '#2BCFDD',
+  beet: '#9F66F4',
+  pink: '#E07DE5',
 } as const
 
 /** 홈 카드 색의 연한 배경 (아이콘 칩용) — CSS --c-*-soft 와 동일 값 */
 export const HOME_SOFT = {
   tomato: '#FFF0F1',
-  orange: '#FFEFEA',
-  lemon: '#FFF7D9',
-  leaf: '#F8FFE7',
-  berry: '#E8EFFF',
-  beet: '#F6EEFF',
-  pink: '#FFF2FC',
+  coral: '#FFEDED',
+  orange: '#FFF1E8',
+  lemon: '#FFF8D9',
+  leaf: '#E4FAEC',
+  berry: '#EAF1FC',
+  teal: '#E3FAFC',
+  beet: '#F1EAFE',
+  pink: '#FBEEFC',
 } as const

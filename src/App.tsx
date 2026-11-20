@@ -17,7 +17,7 @@ import { SurveyReportScreen } from './screens/SurveyReportScreen'
 import { MyScreen } from './screens/MyScreen'
 import { SignalScreen } from './screens/SignalScreen'
 import { GoalsScreen, ProfileScreenMy } from './screens/ProfileGoalsScreen'
-import { RewardHistoryAllScreen, RewardHistoryScreen } from './screens/RewardHistoryScreen'
+import { RewardHistoryAllScreen } from './screens/RewardHistoryScreen'
 import {
   SleepAnalysisScreen,
 } from './screens/AnalysisScreens'
@@ -35,7 +35,7 @@ export default function App() {
         <Route path="/vitaling/home" element={<HomeScreen />} />
         <Route path="/vitaling/day" element={<DayScoreScreen />} />
         <Route path="/vitaling/reward" element={<Navigate to="/vitaling/day" replace />} />
-        <Route path="/reward" element={<RewardHistoryScreen />} />
+        <Route path="/reward" element={<Navigate to="/reward/history" replace />} />
         <Route path="/reward/history" element={<RewardHistoryAllScreen />} />
         <Route path="/reward/points" element={<Navigate to="/reward/history" replace />} />
         <Route path="/reward/tott" element={<Navigate to="/reward/history" replace />} />

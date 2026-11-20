@@ -22,9 +22,9 @@ export type BatteryDemo = number | 'none' | 'charging' | null
 
 /** 포인트가 걸린 미션 카드 (오늘의 미션 도장과 1:1) */
 export type MissionCardKind = Exclude<MeasureKind, 'health'>
-/** 홈에서 순서를 바꿀 수 있는 카드: 미션 카드 + 반지가 자동으로 재는 '오늘 바이탈' 묶음 카드 */
-export type HomeCardKind = MissionCardKind | 'vitals'
-export const DEFAULT_CARD_ORDER: readonly HomeCardKind[] = ['vitals', 'stress', 'diet', 'walk', 'sleep', 'survey']
+/** 홈에서 순서를 바꿀 수 있는 카드: 기능별로 한 장씩. 바이탈 4종과 스트레스·걷기·수면·설문은 2열 작은 카드, 식단만 사진 때문에 1열 큰 카드 */
+export type HomeCardKind = 'hr' | 'spo2' | 'temp' | 'hrv' | MissionCardKind
+export const DEFAULT_CARD_ORDER: readonly HomeCardKind[] = ['hr', 'spo2', 'temp', 'hrv', 'stress', 'walk', 'sleep', 'survey', 'diet']
 
 export type VitalingSession = {
   onboarded: boolean
