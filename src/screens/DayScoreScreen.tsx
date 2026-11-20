@@ -158,16 +158,15 @@ export function DayScoreScreen() {
 
             {ready && (
               <>
-                {/* 1) 반원 게이지가 주인공 — 홈과 같은 그림 */}
+                {/* 1) 링 게이지가 주인공 — 홈과 같은 그림 (단색 링, 눈금 없음) */}
                 <section className="rd-gauge">
-                  <div className="rd-gauge-wrap">
+                  <div className="rd-gauge-wrap ring">
                     <TodayScoreArc score={bundle.score} size="lg" />
                     <div className="rd-gauge-center">
                       <strong>{bundle.score}<small>점</small></strong>
                       <b>{status.label}</b>
                     </div>
                   </div>
-                  <div className="rd-gauge-scale" aria-hidden><span>나쁨</span><span>보통</span><span>최상</span></div>
                   <p className="rd-avg">
                     {Math.abs(bundle.score - myAvg) < 3 ? `내 평균 ${myAvg}점과 비슷해요` : bundle.score > myAvg ? `내 평균 ${myAvg}점보다 ${bundle.score - myAvg}점 높아요` : `내 평균 ${myAvg}점보다 ${myAvg - bundle.score}점 낮아요`}
                     {!isToday && ` · 전날보다 ${delta >= 0 ? '+' : ''}${delta}`}

@@ -663,23 +663,21 @@ function TodayScoreCard({
     : byScore
 
   return (
-    <div className={`elder-score-card arc tone-${status.tone}`}>
+    <div className={`elder-score-card arc ring tone-${status.tone}`}>
       {deviceStatus ? <div className="elder-device-status">{deviceStatus}</div> : null}
+      {/* 단색 링 안에 점수와 한 줄 상태 (무지개 반원·나쁨/보통/최상 눈금은 뺌) */}
       <button type="button" className="elder-score-gauge" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        <TodayScoreArc score={score} />
-        <div className="elder-score-center">
-          <strong>
-            {score}
-            <small>점</small>
-          </strong>
-          <b>오늘 {status.title}</b>
-        </div>
+        <span className="elder-score-ringwrap">
+          <TodayScoreArc score={score} />
+          <span className="elder-score-center">
+            <strong>
+              {score}
+              <small>점</small>
+            </strong>
+            <b>오늘 {status.title}</b>
+          </span>
+        </span>
       </button>
-      <div className="elder-score-scale" aria-hidden>
-        <span>나쁨</span>
-        <span>보통</span>
-        <span>최상</span>
-      </div>
       <button type="button" className="elder-score-open-btn" onClick={onOpen}>
         자세히 보기
         <Ri name="arrow-right-s" size={14} />
