@@ -12034,8 +12034,9 @@ a.btn {
 }
 .card-order-list {
   list-style: none;
-  display: flex;
-  flex-direction: column;
+  position: relative; /* 끌리는 복사본(ghost)의 기준 */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* 홈 2열 그대로 */
   gap: 8px;
   margin: 0 0 14px;
   padding: 0;
@@ -12044,51 +12045,42 @@ a.btn {
 .card-order-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  min-width: 0;
   height: var(--btn-h); /* 50~70대가 잡기 쉽게 다른 버튼과 같은 60px */
-  padding: 0 8px 0 12px;
+  padding: 0 2px 0 8px;
   border-radius: 14px;
   background: var(--chip-gray);
   cursor: grab;
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
-  will-change: transform;
+  transition: background 160ms ease;
 }
-.card-order-item.lifted {
-  position: relative;
+.card-order-item.wide { grid-column: 1 / -1; } /* 식단은 홈처럼 1열 전체 */
+.card-order-item.placeholder { background: transparent; outline: 2px dashed #C9CED5; outline-offset: -2px; }
+.card-order-item.placeholder > * { visibility: hidden; } /* 원래 자리는 점선 빈칸만 */
+.card-order-item.ghost {
+  position: absolute;
   z-index: 2;
+  margin: 0;
   background: #fff;
-  box-shadow: 0 10px 24px rgba(20, 28, 40, 0.16);
-  transform-origin: center;
+  box-shadow: 0 10px 24px rgba(20, 28, 40, 0.18);
+  pointer-events: none;
   cursor: grabbing;
+  transition: none;
 }
-.card-order-list.dragging .card-order-item:not(.lifted) { opacity: 0.92; }
-.card-order-grip {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  color: var(--text-3);
-  cursor: grab;
-  touch-action: none;
-}
-.card-order-grip i { font-size: 22px; line-height: 1; }
+.card-order-head { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+.card-order-head b { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-order-grip { width: 28px; height: 44px; display: grid; place-items: center; color: var(--text-3); flex-shrink: 0; }
+.card-order-grip i { font-size: 20px; line-height: 1; }
 .card-order-ico {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   font-style: normal;
   flex-shrink: 0;
 }
-.card-order-item .card-order-ico { background: #fff; color: var(--text); } /* 홈과 같이 먹색 아이콘 (줄 배경이 회색이라 칩은 흰색) */
-.card-order-item b {
-  flex: 1;
-  min-width: 0;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
+.card-order-item .card-order-ico { background: #fff; color: var(--text); } /* 홈과 같이 먹색 아이콘 (카드 배경이 회색이라 칩은 흰색) */
 .card-order-actions {
   display: flex;
   flex-direction: column;
@@ -14096,7 +14088,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .home-tiles .home-vital-head { display: flex; width: 100%; min-width: 0; }
 .elder-home .home-tiles .home-vital-head em { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .elder-home .home-tiles .home-vital-head { gap: 5px; }
-.elder-home .home-tiles .home-vital-head .home-vital-ico { width: 24px; height: 24px; }
+.elder-home .home-tiles .home-vital-head .home-vital-ico { width: auto; height: auto; background: transparent; border-radius: 0; } /* 이름 옆 아이콘은 원 없이 — 원형은 오른쪽 재기 버튼(누르는 것)에만 */
 .elder-home .home-tiles .home-vital-body { min-width: 0; }
 .elder-home .home-tiles .home-vital-copy { min-width: 0; }
 .elder-home .home-vital-copy strong.empty { color: #c5ced6; }
@@ -14106,32 +14098,32 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .home-tiles .elder-fit-card.tile { position: relative; }
 .elder-home .home-tile-hit { display: grid; gap: 8px; width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; color: inherit; cursor: pointer; }
 .elder-home .home-tiles .home-vital-head { padding-right: 44px; min-height: 36px; } /* 오른쪽 위 원형 버튼 자리 */
-.elder-home .home-tiles .home-vital-body { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.elder-home .home-tiles .home-vital-body { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; height: 40px; } /* 선(32px)·링(40px) 높이가 달라도 값 줄 높이는 같게 — 옆 카드와 상태·획득 줄이 나란히 */
 .elder-home .home-tiles .home-vital-body .home-vital-copy { flex: 1 1 auto; min-width: 0; }
-.elder-home .home-tiles .home-vital-state { margin-top: -4px; }
+.elder-home .home-tiles .home-vital-state { margin-top: -4px; min-height: 34px; align-content: start; } /* 상태 한 줄뿐이어도 두 줄 자리(상태+보조)를 잡아 옆 카드 버튼과 줄 맞춤 */
 .elder-home .home-tiles .home-vital-body .home-vital-spark { flex: 0 1 64px; width: 64px; height: 32px; min-width: 40px; margin: 0; }
 .elder-home .home-tiles .home-vital-body .home-vital-ring { flex: 0 0 auto; width: 40px; height: 40px; margin: 0; }
-.elder-home .home-tile-corner { position: absolute; top: 10px; right: 10px; }
-.elder-home .home-tile-measure { display: grid; place-items: center; width: 36px; height: 36px; margin: 0; padding: 0; border: 1.5px solid #D6DAE0; border-radius: 50%; background: #fff; color: var(--text); cursor: pointer; }
+.elder-home .home-tile-corner { position: absolute; top: 14px; right: 12px; display: flex; align-items: center; height: 36px; } /* 카드 안쪽 여백(14/12)에 맞추고, 높이는 머리글 줄(36px)과 같게 해 원형 버튼·자동 알약의 세로 중심이 아이콘·이름 중심과 일치 */
+.elder-home .home-tile-measure { display: grid; place-items: center; width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: #F2F4F6; color: var(--text); cursor: pointer; } /* 테두리 없이 아이콘 칩·자동 알약과 같은 연회색 바탕 */
 .elder-home .home-tile-measure:disabled:not(.busy) { opacity: 0.4; cursor: default; }
-.elder-home .home-tile-measure.busy { border-color: transparent; background: #E8EFFF; color: var(--brand-blue); cursor: default; position: relative; }
+.elder-home .home-tile-measure.busy { background: #E8EFFF; color: var(--brand-blue); cursor: default; position: relative; }
 /* 재는 동안 테두리가 시계 방향으로 차오름 (--busy-ms 만큼) */
 .elder-home .home-tile-measure.busy::before { content: ''; position: absolute; inset: -2px; border-radius: 50%; background: conic-gradient(var(--brand-blue) var(--p, 0%), transparent 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); animation: tile-busy-ring var(--busy-ms, 3s) linear forwards; }
 @property --p { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
 @keyframes tile-busy-ring { from { --p: 0% } to { --p: 100% } }
-.elder-home .home-tile-auto { display: inline-flex; align-items: center; gap: 3px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--chip-gray); color: var(--text-3); font-size: 11px; font-weight: 600; margin-top: 2px; }
+.elder-home .home-tile-auto { display: inline-flex; align-items: center; gap: 3px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--chip-gray); color: var(--text-3); font-size: 11px; font-weight: 600; }
 .elder-home .home-tile-auto i { color: var(--brand-green); font-size: 12px; line-height: 1; }
 .elder-home .home-tile-action .elder-claim-btn { height: 48px; gap: 4px; border-radius: 12px; font-size: 14px; }
 .elder-home .home-tile-action .elder-claim-btn:disabled:not(.busy) { opacity: 0.5; }
+/* 포인트 카드 버튼 자리: 조건 전엔 회색 비활성(받기 문구 그대로), 받은 뒤엔 회색 '획득' + 초록 체크 — 둘 다 48px로 받기 버튼과 같은 자리 */
+.elder-home .home-tile-action .elder-claim-btn.with-points.locked:disabled { background: var(--chip-gray); color: var(--text-3); opacity: 1; }
+.elder-home .home-tile-action .elder-claim-btn.done:disabled { opacity: 1; }
 
 /* 작은 카드 상태 아래 한 줄 더 (자동 기록 시각 · 포인트 조건) */
 .elder-home .home-vital-copy > span.sub { color: var(--text-3); font-size: 11px; }
 /* 받은 도장: 오른쪽 위 흰 원형 체크 배지 */
 .elder-home .elder-mission-check { position: absolute; top: -2px; right: -2px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #fff; color: var(--brand-green); box-shadow: 0 0 0 1.5px var(--brand-green), 0 1px 3px rgba(0, 0, 0, 0.12); font-style: normal; } /* 흰 카드 위에서도 원이 보이게 초록 테두리 */
 .elder-home .elder-mission-check i { font-size: 12px; line-height: 1; font-weight: 700; }
-/* 순서 편집: 위로·아래로 버튼 (끌기 대신) */
-.card-order-move { display: grid; place-items: center; width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: #fff; color: var(--text); cursor: pointer; flex-shrink: 0; }
-.card-order-move:disabled { opacity: 0.3; cursor: default; }
 
 /* 오늘의 미션: 받은 포인트 / 총 포인트 채움 막대 */
 .elder-home .elder-mission-say em { font-style: normal; font-size: 12px; color: var(--text-3); }

@@ -343,49 +343,65 @@ const HOME_CARD_META: Record<HomeCardKind, { label: string; icon: string; cls: s
   diet: { label: '식단', icon: 'restaurant', cls: 'diet' },
 }
 
-/** 홈 카드 순서 편집: 줄을 꾹 눌러 끌어서 옮긴다. 놓는 즉시 홈에 반영, 번호·위아래 버튼 없음 */
+/** 홈 카드 순서 편집: 홈과 같은 2열 격자(식단은 1열 전체) 그대로 보여 주고, 카드를 아무 방향으로나 끌어 옮긴다(화살표·버튼 없음). 놓는 즉시 홈에 반영 */
 function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; onClose: () => void }) {
   const [draft, setDraft] = useState<HomeCardKind[]>([...order])
   const listRef = useRef<HTMLUListElement>(null)
-  // 드래그 상태: 잡은 줄의 index, 시작 y, 지금까지 움직인 거리
-  const [drag, setDrag] = useState<{ from: number; dy: number } | null>(null)
-  const dragRef = useRef<{ from: number; startY: number; pitch: number; pointerId: number; armed: boolean; timer: number | null } | null>(null)
+  // 끄는 중: 어떤 카드를, 잡았을 때 카드 자리(목록 기준)와 크기, 지금 포인터 이동량
+  const [drag, setDrag] = useState<{ kind: HomeCardKind; left: number; top: number; w: number; h: number; dx: number; dy: number } | null>(null)
+  const dragRef = useRef<{ kind: HomeCardKind; startX: number; startY: number; armed: boolean; timer: number | null } | null>(null)
 
-  const pitchOf = () => {
-    const items = listRef.current?.querySelectorAll<HTMLElement>('.card-order-item')
-    if (!items || items.length < 2) return 68
-    return items[1].offsetTop - items[0].offsetTop
+  const commit = (next: HomeCardKind[]) => {
+    setDraft(next)
+    setCardOrder(next) // 놓는 즉시 홈에 반영
   }
-  /** 끌고 있는 줄이 지금 어디에 놓일지 (반 칸 넘으면 한 칸 이동) */
-  const targetIndex = (from: number, dy: number, pitch: number) =>
-    Math.max(0, Math.min(draft.length - 1, from + Math.round(dy / pitch)))
-
-  const lift = (i: number, pointerId: number) => {
+  const lift = (kind: HomeCardKind, el: HTMLElement, pointerId: number) => {
     const d = dragRef.current
-    if (!d) return
+    const list = listRef.current
+    if (!d || !list) return
     d.armed = true
     try { navigator.vibrate?.(12) } catch { /* 지원 안 하는 기기 */ }
-    setDrag({ from: i, dy: 0 })
-    listRef.current?.setPointerCapture?.(pointerId)
+    const r = el.getBoundingClientRect()
+    const lr = list.getBoundingClientRect()
+    setDrag({ kind, left: r.left - lr.left, top: r.top - lr.top, w: r.width, h: r.height, dx: 0, dy: 0 })
+    list.setPointerCapture?.(pointerId)
   }
-  const onPointerDown = (i: number, e: React.PointerEvent, immediate: boolean) => {
+  const onPointerDown = (kind: HomeCardKind, e: React.PointerEvent<HTMLElement>) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return
-    const d = { from: i, startY: e.clientY, pitch: pitchOf(), pointerId: e.pointerId, armed: false, timer: null as number | null }
+    const el = e.currentTarget
+    const d = { kind, startX: e.clientX, startY: e.clientY, armed: false, timer: null as number | null }
     dragRef.current = d
-    if (immediate) lift(i, e.pointerId)
-    else d.timer = window.setTimeout(() => lift(i, e.pointerId), 220) // 줄 본문은 꾹 눌러야 들린다 (시트 스크롤과 구분)
+    lift(kind, el, e.pointerId) // 누르는 즉시 들린다 (격자 안에서는 스크롤이 없어 꾹 누를 필요 없음)
   }
   const onPointerMove = (e: React.PointerEvent) => {
     const d = dragRef.current
     if (!d) return
+    const dx = e.clientX - d.startX
     const dy = e.clientY - d.startY
     if (!d.armed) {
       // 들리기 전에 많이 움직이면 드래그가 아니라 스크롤
-      if (Math.abs(dy) > 8 && d.timer !== null) { window.clearTimeout(d.timer); dragRef.current = null }
+      if (Math.hypot(dx, dy) > 8 && d.timer !== null) { window.clearTimeout(d.timer); dragRef.current = null }
       return
     }
     e.preventDefault()
-    setDrag({ from: d.from, dy })
+    setDrag((cur) => (cur ? { ...cur, dx, dy } : cur))
+    // 포인터가 다른 카드 위에 오면 그 자리로 바로 끼워 넣는다 (상하좌우 모두)
+    const items = listRef.current?.querySelectorAll<HTMLElement>('.card-order-item:not(.ghost)') // 떠다니는 복사본은 자리 판정에서 뺀다
+    if (!items) return
+    const from = draft.indexOf(d.kind)
+    for (let i = 0; i < items.length; i++) {
+      if (i === from) continue
+      const r = items[i].getBoundingClientRect()
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+        if (i !== from) {
+          const next = [...draft]
+          next.splice(from, 1)
+          next.splice(i, 0, d.kind)
+          setDraft(next)
+        }
+        break
+      }
+    }
   }
   const onPointerEnd = () => {
     const d = dragRef.current
@@ -393,38 +409,10 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
     if (!d) return
     if (d.timer !== null) window.clearTimeout(d.timer)
     if (!d.armed) return
-    setDrag((cur) => {
-      if (cur) {
-        const to = targetIndex(cur.from, cur.dy, d.pitch)
-        if (to !== cur.from) {
-          const next = [...draft]
-          const [moved] = next.splice(cur.from, 1)
-          next.splice(to, 0, moved)
-          setDraft(next)
-          setCardOrder(next) // 놓는 즉시 홈에 반영
-        }
-      }
-      return null
-    })
+    setDrag(null)
+    setCardOrder(draft) // 끄는 동안 바뀐 순서를 홈에 반영
   }
-  const reset = () => {
-    const next = [...DEFAULT_CARD_ORDER]
-    setDraft(next)
-    setCardOrder(next)
-  }
-  /** 위로·아래로 버튼 — 끌기가 어려운 분을 위한 한 칸 이동 */
-  const move = (from: number, dir: -1 | 1) => {
-    const to = from + dir
-    if (to < 0 || to >= draft.length) return
-    const next = [...draft]
-    const [moved] = next.splice(from, 1)
-    next.splice(to, 0, moved)
-    setDraft(next)
-    setCardOrder(next)
-  }
-
-  const pitch = dragRef.current?.pitch ?? 68
-  const to = drag ? targetIndex(drag.from, drag.dy, pitch) : -1
+  const reset = () => commit([...DEFAULT_CARD_ORDER])
   return (
     <div className="sheet-overlay" role="dialog" aria-modal="true" aria-labelledby="card-order-title">
       <button type="button" className="sheet-backdrop" aria-label="닫기" onClick={onClose} />
@@ -436,7 +424,7 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
             <X size={20} weight="bold" />
           </button>
         </div>
-        <p className="card-order-hint">화살표를 누르거나, 카드를 꾹 누른 채 끌어서 순서를 바꿔 보세요.</p>
+        <p className="card-order-hint">홈과 같은 자리예요. 카드를 끌어서 원하는 자리에 놓아 보세요.</p>
         <ul
           ref={listRef}
           className={`card-order-list${drag ? ' dragging' : ''}`}
@@ -446,42 +434,36 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
         >
           {draft.map((kind, i) => {
             const meta = HOME_CARD_META[kind]
-            const isDrag = drag?.from === i
-            // 끌리는 줄이 지나간 자리의 줄들은 한 칸씩 비켜 준다
-            let shift = 0
-            if (drag && !isDrag) {
-              if (drag.from < i && i <= to) shift = -pitch
-              else if (to <= i && i < drag.from) shift = pitch
-            }
-            const style = isDrag
-              ? { transform: `translateY(${drag!.dy}px)`, transition: 'none' }
-              : { transform: `translateY(${shift}px)` }
+            const isDrag = drag?.kind === kind
+            const wide = kind === 'diet'
             return (
               <li
                 key={kind}
-                className={`card-order-item ${meta.cls}${isDrag ? ' lifted' : ''}`}
-                style={style}
-                onPointerDown={(e) => onPointerDown(i, e, false)}
+                className={`card-order-item ${meta.cls}${wide ? ' wide' : ''}${isDrag ? ' placeholder' : ''}`}
+                onPointerDown={(e) => onPointerDown(kind, e)}
                 aria-label={`${meta.label}, ${i + 1}번째`}
               >
-                <i className="card-order-ico"><Ri name={meta.icon} size={22} /></i>
-                <b>{meta.label}</b>
-                <button type="button" className="card-order-move" aria-label={`${meta.label} 위로`} disabled={i === 0} onPointerDown={(e) => e.stopPropagation()} onClick={() => move(i, -1)}>
-                  <Ri name="arrow-up-s" size={18} />
-                </button>
-                <button type="button" className="card-order-move" aria-label={`${meta.label} 아래로`} disabled={i === draft.length - 1} onPointerDown={(e) => e.stopPropagation()} onClick={() => move(i, 1)}>
-                  <Ri name="arrow-down-s" size={18} />
-                </button>
-                <span
-                  className="card-order-grip"
-                  aria-hidden="true"
-                  onPointerDown={(e) => { e.stopPropagation(); onPointerDown(i, e, true) }}
-                >
-                  <i className="ri-draggable" /> {/* 이 아이콘만 -line 접미사가 없어 Ri 대신 직접 */}
+                <span className="card-order-head">
+                  <i className="card-order-ico"><Ri name={meta.icon} size={18} /></i>
+                  <b>{meta.label}</b>
                 </span>
+                <span className="card-order-grip" aria-hidden="true"><i className="ri-draggable" /></span> {/* 끌 수 있다는 표시 (이 아이콘만 -line 접미사가 없어 Ri 대신 직접) */}
               </li>
             )
           })}
+          {/* 끌리는 카드: 잡은 자리에서 포인터를 따라 떠다니는 복사본 (원래 자리는 점선 빈칸) */}
+          {drag && (
+            <li
+              className={`card-order-item ghost ${HOME_CARD_META[drag.kind].cls}`}
+              aria-hidden="true"
+              style={{ left: drag.left + drag.dx, top: drag.top + drag.dy, width: drag.w, height: drag.h }}
+            >
+              <span className="card-order-head">
+                <i className="card-order-ico"><Ri name={HOME_CARD_META[drag.kind].icon} size={18} /></i>
+                <b>{HOME_CARD_META[drag.kind].label}</b>
+              </span>
+            </li>
+          )}
         </ul>
         <div className="card-order-actions">
           <button type="button" className="card-order-reset" onClick={reset}>
@@ -1148,7 +1130,7 @@ export function HomeScreen() {
       {/* 위쪽(이름·값·그래프)을 누르면 상세. 그래프는 값 오른쪽에 크게, 값·상태는 왼쪽 한 덩어리 */}
       <button type="button" className="home-tile-hit" onClick={onOpen} aria-label={label}>
         <span className="home-vital-head">
-          <span className="home-vital-ico"><Ri name={icon} fill size={16} /></span>
+          <span className="home-vital-ico"><Ri name={icon} fill size={18} /></span>
           <em>{label}</em>
         </span>
         <span className="home-vital-body">
@@ -1181,10 +1163,21 @@ export function HomeScreen() {
       <span>{formatClaimP(points)} 받기</span>
     </button>
   )
-  /** 받은 뒤: 상태 글자는 그대로 두고 그 아래 '20만 P 획득' 한 줄 */
-  const got = (points: number) => (
-    <span className="got"><Ri name="checkbox-circle" fill size={12} />{formatClaimP(points)} 획득</span>
+  /** 포인트가 걸린 카드는 버튼 자리를 늘 유지: 조건 전엔 회색 비활성, 받은 뒤엔 회색 '획득 완료' (카드 높이·줄이 흔들리지 않게) */
+  const lockedBtn = (points: number) => (
+    <button type="button" className="elder-claim-btn with-points locked" disabled>
+      <span>{formatClaimP(points)} 받기</span>
+    </button>
   )
+  const doneBtn = (points: number) => (
+    <button type="button" className="elder-claim-btn done" disabled>
+      <Ri name="checkbox-circle" fill size={16} />
+      <span>{formatClaimP(points)} 획득</span>
+    </button>
+  )
+  /** 포인트 카드 버튼 한 자리: 받음 → 받을 수 있음 → 조건 전 */
+  const pointBtn = (kind: MissionCardKind, points: number, claimed: boolean, eligible: boolean) =>
+    claimed ? doneBtn(points) : eligible ? claimBtn(kind, points) : lockedBtn(points)
   /** 걷기·수면은 반지가 자동으로 재니 재기 버튼 자리에 '자동' 표시 (불러오기는 날짜 줄의 동기화 하나로) */
   const autoTip = (
     <span className="home-tile-auto" title="자동 기록 중">
@@ -1228,13 +1221,13 @@ export function HomeScreen() {
           stressShow ? <strong>{stressSel}<small>점</small></strong> : <strong className="empty">측정 전</strong>,
           <>
             <span>{busyTile === 'stress' ? '재는 중…' : stressShow ? stressInfo.label : '반지로 잴 수 있어요'}</span>
-            {stressClaimed ? got(STRESS_REWARD_P) : !(stressShow && stressEligible) && <span className="sub">{STRESS_REWARD_MAX}점 이하면 {formatClaimP(STRESS_REWARD_P)}</span>}
+            {!stressClaimed && !(stressShow && stressEligible) && <span className="sub">{STRESS_REWARD_MAX}점 이하면 {formatClaimP(STRESS_REWARD_P)}</span>}
           </>,
           // 오늘 잰 값들의 흐름. 7일은 상세에서
           stressShow ? <Spark values={stressToday} color={HOME_COLORS.beet} width={64} height={32} /> : null,
           () => goMeasure('stress'),
-          // 받을 수 있으면 큰 받기 버튼, 재기는 늘 오른쪽 위 원형
-          stressShow && stressEligible && !stressClaimed ? claimBtn('stress', STRESS_REWARD_P) : null,
+          // 버튼 자리는 늘 유지(받기·획득·조건 전), 재기는 오른쪽 위 원형
+          pointBtn('stress', STRESS_REWARD_P, stressClaimed, stressShow && stressEligible),
           measureBtn('stress'),
         )
       case 'walk':
@@ -1243,12 +1236,12 @@ export function HomeScreen() {
           <strong>{stepsLabel}<small>걸음</small></strong>,
           <>
             <span>{walkEligible ? '목표 달성' : `목표까지 ${(WALK_REWARD_STEPS - stepsSel).toLocaleString('ko-KR')}걸음`}</span>
-            {walkClaimed ? got(WALK_REWARD_P) : !walkEligible && <span className="sub">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음이면 {formatClaimP(WALK_REWARD_P)}</span>}
+            {!walkClaimed && !walkEligible && <span className="sub">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음이면 {formatClaimP(WALK_REWARD_P)}</span>}
           </>,
           <FillRing pct={stepsSel / WALK_REWARD_STEPS} color={HOME_COLORS.leaf} size={40} />,
           () => goMeasure('walk'),
-          // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고(오른쪽 위 '자동'), 목표를 채웠을 때만 받기
-          walkEligible && !walkClaimed ? claimBtn('walk', WALK_REWARD_P) : null,
+          // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고(오른쪽 위 '자동'), 버튼 자리는 받기·획득·조건 전으로 늘 유지
+          pointBtn('walk', WALK_REWARD_P, walkClaimed, walkEligible),
           autoTip,
         )
       case 'sleep':
@@ -1257,11 +1250,10 @@ export function HomeScreen() {
           sleepShow ? <strong>{Math.floor(sleepH)}<small>시간</small> {Math.round((sleepH - Math.floor(sleepH)) * 60)}<small>분</small></strong> : <strong className="empty">기록 전</strong>,
           <>
             <span>{sleepShow ? `효율 ${day.efficiency}%` : '자면 자동 기록'}</span>
-            {sleepClaimed && got(SLEEP_REWARD_P)}
           </>,
           sleepShow ? <FillRing pct={(sleepH * 60) / session.healthGoals.sleepMinutes} color={SLEEP_COLORS.line} size={40} /> : null,
           () => goMeasure('sleep'),
-          sleepShow && !sleepClaimed ? claimBtn('sleep', SLEEP_REWARD_P) : null,
+          pointBtn('sleep', SLEEP_REWARD_P, sleepClaimed, sleepShow),
           autoTip,
         )
       case 'survey':
@@ -1270,14 +1262,13 @@ export function HomeScreen() {
           surveyMeasured ? <strong className="text">참여 완료</strong> : <strong className="empty">참여 전</strong>,
           <>
             <span>{surveyMeasured ? '이번 달 참여' : `월 1회 · ${formatClaimP(SURVEY_REWARD_P)}`}</span>
-            {surveyClaimed && got(SURVEY_REWARD_P)}
           </>,
           null,
           () => goMeasure('survey'),
-          surveyMeasured && !surveyClaimed ? claimBtn('survey', SURVEY_REWARD_P) : (
-            // 참여 전엔 참여하기, 받은 뒤엔 답변 보기 (버튼은 항상 하나 남긴다)
-            <button type="button" className={`elder-claim-btn ${surveyMeasured ? 'plain' : 'secondary'}`} onClick={() => goMeasure('survey')}>
-              <span>{surveyMeasured ? '답변 보기' : '참여하기'}</span>
+          // 참여 전엔 참여하기, 참여하면 받기, 받은 뒤엔 회색 획득 (답변은 카드를 눌러 본다)
+          surveyClaimed ? doneBtn(SURVEY_REWARD_P) : surveyMeasured ? claimBtn('survey', SURVEY_REWARD_P) : (
+            <button type="button" className="elder-claim-btn secondary" onClick={() => goMeasure('survey')}>
+              <span>참여하기</span>
             </button>
           ),
         )
