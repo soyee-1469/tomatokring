@@ -24,7 +24,6 @@ import { MetricInfoButton } from './components/AccuracyInfo'
 import { Ri } from './components/Ri'
 import { SLEEP_LAST_NIGHT, SleepHypnogram } from './components/Sleep'
 import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
-import { MEALS } from './meals'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
@@ -843,27 +842,16 @@ function DietUploadCard({
         <div className="elder-fit-body">
           {measured ? (
             <>
-              <div className="elder-fit-num">
-                <div>
-                  <strong>{shown.toLocaleString('ko-KR')}<small>kcal</small></strong>
-                  <em>목표 {goal.toLocaleString('ko-KR')}kcal</em>
+              {/* 홈은 kcal·목표 + 마지막 사진 한 장만 (오늘 올린 사진 전부와 식사 목록은 상세에서) */}
+              <div className="home-diet-row">
+                <div className="elder-fit-num">
+                  <div>
+                    <strong>{shown.toLocaleString('ko-KR')}<small>kcal</small></strong>
+                    <em>목표 {goal.toLocaleString('ko-KR')}kcal</em>
+                  </div>
                 </div>
+                {photo && <span className="home-diet-photo"><img src={photo} alt="오늘 마지막 식단 사진" /></span>}
               </div>
-              <ul className="home-meals">
-                {photo && (
-                  <li>
-                    <span className="thumb photo"><img src={photo} alt="" /></span>
-                    <span className="copy"><b>오늘 올린 식단 사진</b><em>분석 중</em></span>
-                  </li>
-                )}
-                {MEALS.map((m) => (
-                  <li key={m.name}>
-                    <span className="thumb"><Ri name="restaurant" size={20} /></span>
-                    <span className="copy"><b>{m.name}</b><em>{m.time}</em></span>
-                    <strong>{m.kcal}<small>kcal</small></strong>
-                  </li>
-                ))}
-              </ul>
             </>
           ) : (
             <button type="button" className="diet-drop" onClick={onMeasure} aria-label="식단 사진 올리기">
