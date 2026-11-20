@@ -1167,7 +1167,7 @@ export function HomeScreen() {
       </button>
     ) : (
       <button type="button" className="home-tile-measure" onClick={() => measureTile(kind)} disabled={busyTile !== null} aria-label="측정하기" title="측정하기">
-        <Ri name="refresh" size={18} />
+        <Ri name="play" fill size={18} />
       </button>
     )
   const claimBtn = (kind: MissionCardKind, points: number) => (
@@ -1272,7 +1272,7 @@ export function HomeScreen() {
       case 'survey':
         return tile(
           kind, '설문', 'survey',
-          surveyMeasured ? <strong className="text">참여 완료</strong> : <strong className="empty">참여 전</strong>,
+          surveyMeasured ? <strong className="text">설문 완료</strong> : <strong className="empty">참여 전</strong>,
           <>
             <span>{surveyMeasured ? '이번 달 참여' : `월 1회 · ${formatClaimP(SURVEY_REWARD_P)}`}</span>
           </>,

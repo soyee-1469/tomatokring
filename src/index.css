@@ -13390,6 +13390,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .v2-page .v2-hero.v2-m-hrv, .v2-page .v2-hero.v2-m-stress { background: linear-gradient(180deg, #F6EEFF 0%, #fff 100%); }
 .v2-page .v2-card, .v2-page .v2-claim, .v2-page .v2-details.open-always { background: #fff; border-radius: 16px; padding: 18px 16px; margin: 0 0 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
 .v2-page .v2-claim { margin: 0 0 12px; }
+.v2-page .v2-now-first { margin: 0 0 12px; } /* 기록 없는 오늘: 히어로 바로 아래 측정 버튼 */
 .v2-page .v2-claim .claim-banner { margin-top: 0; }
 .v2-page .v2-card .v2-log { margin-bottom: 14px; }
 .v2-page .v2-stat3 { padding: 0 0 20px; }
@@ -14117,7 +14118,8 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 @keyframes tile-busy-ring { from { --p: 0% } to { --p: 100% } }
 .elder-home .home-tile-auto { display: inline-flex; align-items: center; gap: 3px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--chip-gray); color: var(--text-3); font-size: 11px; font-weight: 600; }
 .elder-home .home-tile-auto i { color: var(--brand-green); font-size: 12px; line-height: 1; }
-.elder-home .home-tile-action .elder-claim-btn { height: 48px; gap: 4px; border-radius: 12px; font-size: 14px; }
+.elder-home .home-tile-action .elder-claim-btn { height: 48px; gap: 4px; padding: 0 10px; border-radius: 12px; font-size: 14px; }
+.elder-home .home-tile-action .elder-claim-btn span { white-space: nowrap; } /* '500만 P 받기'가 좁은 카드에서 두 줄로 꺾이지 않게 */
 .elder-home .home-tile-action .elder-claim-btn:disabled:not(.busy) { opacity: 0.5; }
 /* 포인트 카드 버튼 자리: 조건 전엔 회색 비활성(받기 문구 그대로), 받은 뒤엔 회색 '획득' + 초록 체크 — 둘 다 48px로 받기 버튼과 같은 자리 */
 .elder-home .home-tile-action .elder-claim-btn.with-points.locked:disabled { background: var(--chip-gray); color: var(--text-3); opacity: 1; }

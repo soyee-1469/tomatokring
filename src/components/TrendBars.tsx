@@ -37,9 +37,9 @@ export function TrendBars({
       {values.map((v, i) => {
         const last = i === n - 1
         if (v <= 0) {
+          // 기록 없는 날은 막대를 그리지 않는다 (회색 토막은 '빠진 것'처럼 보임) — 요일만
           return (
             <g key={i}>
-              <rect x={x(i)} y={bottom - 6} width={bw} height={6} rx={3} fill="#E8EBEE" />
               <text x={x(i) + bw / 2} y={h - 8} textAnchor="middle" fontSize="12" fontWeight={last ? '700' : '500'} fill={last ? '#1a2332' : '#9aa3ad'}>{labels[i]}</text>
             </g>
           )

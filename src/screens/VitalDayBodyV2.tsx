@@ -6,6 +6,7 @@ import { DateLine } from '../components/DateLine'
 import { TrendBars } from '../components/TrendBars'
 import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measureLog'
 import { useSession } from '../useSession'
+import { isMeasureDone } from '../session'
 import { ClaimBanner } from '../components/ClaimBanner'
 
 /**
@@ -210,45 +211,59 @@ export function VitalDayBodyV2({
         <div className="v2-say">
           <div>
             <b>{say ? say.head : isToday ? '아직 오늘 기록이 없어요.' : '이 날은 기록이 없어요.'}</b>
-            <p>{say ? say.tip : metric === 'stress' ? '편안히 앉아 1분이면 돼요. 아래에서 바로 측정해 보세요.' : '반지를 끼고 있으면 자동으로 재요. 지금 바로 잴 수도 있어요.'}</p>
+            <p>{say ? say.tip : metric === 'stress' ? '편안히 앉아 1분이면 돼요. 바로 아래 버튼으로 재 보세요.' : '반지를 끼고 있으면 자동으로 재요. 지금 바로 잴 수도 있어요.'}</p>
           </div>
         </div>
       </section>
 
-      {metric === 'stress' && isToday && (
+      {/* 기록이 없는 오늘: 숫자 바로 아래에 측정 버튼 하나만 (빈 그래프·빈 기록 목록보다 먼저) */}
+      {isToday && !has && (
+        <div className="v2-now-first">
+          <button type="button" className="v2-now" disabled={busy} onClick={onMeasure}>
+            {busy ? '측정 중…' : metric === 'stress' ? '스트레스 측정하기' : '지금 측정하기'}
+          </button>
+        </div>
+      )}
+
+      {/* 보상 칸은 측정이 끝난 뒤에만 (측정 전엔 빈 흰 칸이 남지 않게) */}
+      {metric === 'stress' && isToday && isMeasureDone(session, 'stress') && (
         <section className="v2-claim">
           <ClaimBanner kind="stress" doneText="측정 완료" eligible={manual !== undefined && manual.value <= 30} ineligibleText="30점 이하일 때 지급돼요. 편안히 앉아 다시 측정해 보세요." />
         </section>
       )}
 
-      {/* 3) 하루 그래프 */}
-      <section className="v2-card">
-        <div className="v2-head"><b className="v2-label">하루 흐름</b><span className="v2-key">{metric === 'stress' ? '편안한 구간 0–40' : `정상 ${s.normal[0]}–${s.normal[1]}${s.unit}`}</span></div>
-        <DayBars metric={metric} rows={rows} />
-      </section>
+      {/* 3) 하루 그래프 — 기록이 있을 때만 (빈 축만 있는 그래프는 고장난 차트처럼 보임) */}
+      {has && (
+        <section className="v2-card">
+          <div className="v2-head"><b className="v2-label">하루 흐름</b><span className="v2-key">{metric === 'stress' ? '편안한 구간 0–40' : `정상 ${s.normal[0]}–${s.normal[1]}${s.unit}`}</span></div>
+          <DayBars metric={metric} rows={rows} />
+        </section>
+      )}
 
       {/* 4) 오늘 기록 + 지금 측정하기 */}
       {/* 스트레스만 기간 비교: 최근 7일(하루 평균) + 최근 한 달(주 평균). 순간값 항목(심박수 등)은 하루 흐름까지만 */}
-      {metric === 'stress' && (
-        <>
-          <section className="v2-card">
-            <div className="v2-head"><b className="v2-label">최근 7일</b><span className="v2-key">하루 평균</span></div>
-            <TrendBars values={week.values} labels={week.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
-          </section>
-          <section className="v2-card">
-            <div className="v2-head"><b className="v2-label">최근 한 달</b><span className="v2-key">주 평균</span></div>
-            <TrendBars values={month.values} labels={month.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
-          </section>
-        </>
+      {/* 기간 안에 기록이 하나도 없으면 카드 자체를 숨김 */}
+      {metric === 'stress' && week.values.some((v) => v > 0) && (
+        <section className="v2-card">
+          <div className="v2-head"><b className="v2-label">최근 7일</b><span className="v2-key">하루 평균</span></div>
+          <TrendBars values={week.values} labels={week.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
+        </section>
+      )}
+      {metric === 'stress' && month.values.some((v) => v > 0) && (
+        <section className="v2-card">
+          <div className="v2-head"><b className="v2-label">최근 한 달</b><span className="v2-key">주 평균</span></div>
+          <TrendBars values={month.values} labels={month.labels} color={s.color} yMax={s.trendMax} yMin={s.trendMin} digits={s.digits} />
+        </section>
       )}
 
+      {/* 기록 목록·전체 보기는 기록이 있을 때만 (없는 기록의 전체 보기가 측정 버튼보다 먼저 오지 않게) */}
+      {has && (
       <section className="v2-card">
         <div className="v2-head"><b className="v2-label">{isToday ? '오늘 기록' : '이 날 기록'}</b><button type="button" className="v2-more" onClick={onHistory}>전체 보기 <Ri name="arrow-right-s" size={16} /></button></div>
         <ul className="v2-log">
           {rows.slice(0, 3).map((r) => (
             <li key={r.id}><strong>{formatLogValue(metric, r.value).replace(' ', '')}</strong>{r.mode === 'manual' && <i>직접 측정</i>}<em>{r.time.slice(0, 5)}</em></li>
           ))}
-          {rows.length === 0 && <li className="v2-log-empty">기록이 없어요</li>}
         </ul>
         {isToday && (
           <button type="button" className="v2-now" disabled={busy} onClick={onMeasure}>
@@ -256,6 +271,7 @@ export function VitalDayBodyV2({
           </button>
         )}
       </section>
+      )}
 
       {/* 5) 최저·평균·최고 + 구간 — 항상 표시 */}
       {has && (
