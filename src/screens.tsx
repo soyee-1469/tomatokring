@@ -561,13 +561,16 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
         <div className="elder-mission-done">
           <Ri name="checkbox-circle" fill size={22} />
           <b>미션을 모두 완료했어요</b>
-          <span>{got.toLocaleString('ko-KR')} 포인트 받았어요</span>
+          <span>{formatClaimP(got)} 획득</span>
         </div>
       ) : (
-        <p className="elder-mission-say">
-          <strong>{left.toLocaleString('ko-KR')} <small>포인트</small></strong>
-          <span>남은 미션 {leftCount}개를 완료하면 받을 수 있어요</span>
-        </p>
+        // 받은 포인트(큰 숫자) / 총 받을 수 있는 포인트 — 채움 막대로 비율까지
+        <div className="elder-mission-say">
+          <span>오늘 받은 포인트</span>
+          {/* 숫자는 버튼과 같은 '40만 P' 표기 (자릿수가 길면 복잡해 보여서) */}
+          <strong>{formatClaimP(got)} <small>/ {formatClaimP(got + left)}</small></strong>
+          <progress className="elder-mission-progress" value={got} max={got + left} aria-label={`총 ${(got + left).toLocaleString('ko-KR')} 포인트 중 ${got.toLocaleString('ko-KR')} 포인트 받음`} />
+        </div>
       )}
       <div className="elder-mission-row">
         <ul className="elder-mission-list">
@@ -887,7 +890,7 @@ function DietUploadCard({
         measureLabel="사진 올리고"
         repeatLabel="사진 더 올리기"
         readyText=""
-        doneLabel={`오늘 ${formatClaimP(DIET_REWARD_P)} 받았어요`}
+        doneLabel={`오늘 ${formatClaimP(DIET_REWARD_P)} 획득`}
         onMeasure={onMeasure}
         onClaim={onClaim}
       />
@@ -1139,35 +1142,37 @@ export function HomeScreen() {
     navigate(`/vitaling/measure/${kind}${run}`)
   }
 
-  /** 2열 작은 카드 한 장 — 오늘 바이탈 칸과 같은 속: 아이콘·이름 / 값 / 상태 한 마디 / 오른쪽 작은 그래프. 누르면 상세 */
-  const tile = (kind: HomeCardKind, label: string, icon: string, value: ReactNode, state: ReactNode, spark: ReactNode, onOpen: () => void, action: ReactNode = null) => (
+  /** 2열 작은 카드 한 장 — 아이콘·이름 / 값·상태(왼쪽)+그래프(오른쪽, 크게) / 아래 받기 버튼. 오른쪽 위 모서리엔 작은 원형 측정 버튼이나 자동 기록 표시. 누르면 상세 */
+  const tile = (kind: HomeCardKind, label: string, icon: string, value: ReactNode, state: ReactNode, spark: ReactNode, onOpen: () => void, action: ReactNode = null, corner: ReactNode = null) => (
     <div key={kind} className={`elder-fit-card tile ${kind}`}>
-      {/* 위쪽(이름·값)을 누르면 상세. 그래프는 오른쪽 위, 값·상태는 아래 한 덩어리 */}
+      {/* 위쪽(이름·값·그래프)을 누르면 상세. 그래프는 값 오른쪽에 크게, 값·상태는 왼쪽 한 덩어리 */}
       <button type="button" className="home-tile-hit" onClick={onOpen} aria-label={label}>
         <span className="home-vital-head">
           <span className="home-vital-ico"><Ri name={icon} fill size={16} /></span>
           <em>{label}</em>
-          {spark}
         </span>
         <span className="home-vital-body">
-          <span className="home-vital-copy">{value}{state}</span>
+          <span className="home-vital-copy">{value}</span>
+          {spark}
         </span>
+        {/* 상태·보조 줄은 그래프 아래 전체 폭으로 (그래프에 밀려 꺾이지 않게) */}
+        <span className="home-vital-copy home-vital-state">{state}</span>
       </button>
-      {/* 카드마다 재기 버튼, 포인트가 걸린 카드는 조건이 되면 받기 버튼으로 바뀐다 */}
+      {/* 오른쪽 위: 재기(원형 아이콘)·자동 기록 표시 — 버튼 안에 버튼이 못 들어가서 카드에 따로 얹는다 */}
+      {corner && <div className="home-tile-corner">{corner}</div>}
+      {/* 포인트가 걸린 카드는 조건이 되면 큰 받기 버튼 (받기는 눈에 띄어야 해서 크게 유지) */}
       {action && <div className="home-tile-action">{action}</div>}
     </div>
   )
-  // 버튼 이름은 '측정하기' 하나 (첫 측정이든 다시 재든 같은 동작). 재는 동안은 '재는 중'
+  // 재기는 작은 원형 아이콘 버튼 (첫 측정이든 다시 재든 같은 동작). 재는 동안은 돌아가는 아이콘 + 테두리가 차오름
   const measureBtn = (kind: MeasureTileKind) =>
     busyTile === kind ? (
-      <button type="button" className="elder-claim-btn busy" disabled style={{ ['--busy-ms' as string]: `${MEASURE_MS[kind]}ms` }}>
-        <Ri name="loader-4" size={16} className="spin" />
-        <span>재는 중</span>
+      <button type="button" className="home-tile-measure busy" disabled aria-label="재는 중" style={{ ['--busy-ms' as string]: `${MEASURE_MS[kind]}ms` }}>
+        <Ri name="loader-4" size={18} className="spin" />
       </button>
     ) : (
-      <button type="button" className="elder-claim-btn plain" onClick={() => measureTile(kind)} disabled={busyTile !== null}>
-        <Ri name="refresh" size={16} />
-        <span>측정하기</span>
+      <button type="button" className="home-tile-measure" onClick={() => measureTile(kind)} disabled={busyTile !== null} aria-label="측정하기" title="측정하기">
+        <Ri name="refresh" size={18} />
       </button>
     )
   const claimBtn = (kind: MissionCardKind, points: number) => (
@@ -1176,16 +1181,16 @@ export function HomeScreen() {
       <span>{formatClaimP(points)} 받기</span>
     </button>
   )
-  /** 받은 뒤: 상태 글자는 그대로 두고 그 아래 '20만 P 받았어요' 한 줄 */
+  /** 받은 뒤: 상태 글자는 그대로 두고 그 아래 '20만 P 획득' 한 줄 */
   const got = (points: number) => (
-    <span className="got"><Ri name="checkbox-circle" fill size={12} />{formatClaimP(points)} 받았어요</span>
+    <span className="got"><Ri name="checkbox-circle" fill size={12} />{formatClaimP(points)} 획득</span>
   )
-  /** 걷기·수면은 반지가 자동으로 재니 버튼 대신 안내 한 줄 (불러오기는 날짜 줄의 동기화 하나로) */
+  /** 걷기·수면은 반지가 자동으로 재니 재기 버튼 자리에 '자동' 표시 (불러오기는 날짜 줄의 동기화 하나로) */
   const autoTip = (
-    <p className="elder-claim-tip">
+    <span className="home-tile-auto" title="자동 기록 중">
       <Ri name="heart-3" fill size={12} />
-      자동으로 기록돼요
-    </p>
+      자동
+    </span>
   )
   const sleepH = day.sleepHours[day.sleepHours.length - 1]
 
@@ -1211,8 +1216,9 @@ export function HomeScreen() {
             <span>{busyTile === kind ? '재는 중…' : vitalStatus(v.id, value).label}</span>
             <span className="sub">{recorded}</span>
           </>,
-          <Spark values={week} color={v.color} />,
+          <Spark values={week} color={v.color} width={64} height={32} />,
           () => navigate(`/vitaling/measure/stress?m=${v.id}`),
+          null,
           measureBtn(kind),
         )
       }
@@ -1225,10 +1231,11 @@ export function HomeScreen() {
             {stressClaimed ? got(STRESS_REWARD_P) : !(stressShow && stressEligible) && <span className="sub">{STRESS_REWARD_MAX}점 이하면 {formatClaimP(STRESS_REWARD_P)}</span>}
           </>,
           // 오늘 잰 값들의 흐름. 7일은 상세에서
-          stressShow ? <Spark values={stressToday} color={HOME_COLORS.beet} /> : null,
+          stressShow ? <Spark values={stressToday} color={HOME_COLORS.beet} width={64} height={32} /> : null,
           () => goMeasure('stress'),
-          // 받을 수 있으면 받기, 아니면 재기(이미 쟀으면 다시 재기)
-          stressShow && stressEligible && !stressClaimed ? claimBtn('stress', STRESS_REWARD_P) : measureBtn('stress'),
+          // 받을 수 있으면 큰 받기 버튼, 재기는 늘 오른쪽 위 원형
+          stressShow && stressEligible && !stressClaimed ? claimBtn('stress', STRESS_REWARD_P) : null,
+          measureBtn('stress'),
         )
       case 'walk':
         return tile(
@@ -1238,10 +1245,11 @@ export function HomeScreen() {
             <span>{walkEligible ? '목표 달성' : `목표까지 ${(WALK_REWARD_STEPS - stepsSel).toLocaleString('ko-KR')}걸음`}</span>
             {walkClaimed ? got(WALK_REWARD_P) : !walkEligible && <span className="sub">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음이면 {formatClaimP(WALK_REWARD_P)}</span>}
           </>,
-          <FillRing pct={stepsSel / WALK_REWARD_STEPS} color={HOME_COLORS.leaf} />,
+          <FillRing pct={stepsSel / WALK_REWARD_STEPS} color={HOME_COLORS.leaf} size={40} />,
           () => goMeasure('walk'),
-          // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고, 목표를 채웠을 때만 받기
-          walkEligible && !walkClaimed ? claimBtn('walk', WALK_REWARD_P) : autoTip,
+          // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고(오른쪽 위 '자동'), 목표를 채웠을 때만 받기
+          walkEligible && !walkClaimed ? claimBtn('walk', WALK_REWARD_P) : null,
+          autoTip,
         )
       case 'sleep':
         return tile(
@@ -1251,9 +1259,10 @@ export function HomeScreen() {
             <span>{sleepShow ? `효율 ${day.efficiency}%` : '자면 자동 기록'}</span>
             {sleepClaimed && got(SLEEP_REWARD_P)}
           </>,
-          sleepShow ? <FillRing pct={(sleepH * 60) / session.healthGoals.sleepMinutes} color={SLEEP_COLORS.line} /> : null,
+          sleepShow ? <FillRing pct={(sleepH * 60) / session.healthGoals.sleepMinutes} color={SLEEP_COLORS.line} size={40} /> : null,
           () => goMeasure('sleep'),
-          sleepShow && !sleepClaimed ? claimBtn('sleep', SLEEP_REWARD_P) : autoTip,
+          sleepShow && !sleepClaimed ? claimBtn('sleep', SLEEP_REWARD_P) : null,
+          autoTip,
         )
       case 'survey':
         return tile(
