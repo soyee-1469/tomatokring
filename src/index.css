@@ -14155,3 +14155,24 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rd-gauge-wrap.ring .rd-gauge-center strong { font-size: 48px; }
 .rd-gauge-wrap.ring .rd-gauge-center b { font-size: 16px; }
 
+
+/* 그래프 꾹 누르기: 누른 시간대의 값을 그래프 위 말풍선으로 (하루 흐름·수면 단계 공통) */
+.chart-scrub { position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; touch-action: pan-y; cursor: pointer; }
+.chart-tip { position: absolute; bottom: calc(100% + 4px); z-index: 2; display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 10px; background: #1a2332; color: #fff; font-size: 13px; line-height: 1.2; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; box-shadow: 0 4px 12px rgba(0,0,0,0.16); }
+.chart-tip em { font-style: normal; font-weight: 600; color: rgba(255,255,255,0.7); }
+.chart-tip b { font-size: 14px; font-weight: 700; }
+.chart-tip span { font-weight: 600; color: rgba(255,255,255,0.7); }
+.chart-tip i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.v2-page .v2-chart .scrubline { stroke: #1a2332; stroke-opacity: 0.45; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.v2-page .v2-chart .mdot.scrubdot { opacity: 1; stroke: #fff; stroke-width: 2; }
+/* 걷기 상세 그래프: 눈금·시간축이 있는 연두 막대(시간별) / 목표 점선까지 차오르는 면 그래프(누적). 왼쪽 위 한 줄에 걸음 수·날짜 */
+.ms-walk-chart svg { display: block; width: 100%; height: auto; }
+.ms-walk-chart rect { transition: opacity 0.12s; }
+.ms-walk-chart .tick { font-size: 11px; font-weight: 600; fill: #9aa3ad; }
+.ms-walk-chart .goal { font-size: 11px; font-weight: 700; fill: #5a6570; }
+.ms-bar-pick { display: flex; align-items: baseline; gap: 8px; min-height: 26px; margin: 0 0 8px; padding: 0 10px; }
+.ms-bar-pick b { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+.ms-bar-pick b small { font-size: 13px; font-weight: 600; margin-left: 1px; }
+.ms-bar-pick span { font-size: 13px; font-weight: 600; color: var(--text-3); font-variant-numeric: tabular-nums; }
+/* 연두 그래프 카드 안에서는 전환 버튼에 파랑을 쓰지 않는다 (한 카드에 색 하나) */
+.ms-walk-card .ms-seg button.on { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }

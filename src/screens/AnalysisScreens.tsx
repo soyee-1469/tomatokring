@@ -241,7 +241,7 @@ export function SleepAnalysisScreen() {
             <section className="elder-sleep-card sleep-stage-card" aria-label="수면 단계">
               <b className="sleep-card-title">수면 단계</b>
               <div className="sleep-hypno">
-                <SleepHypnogram segments={night.segments} height={120} detail />
+                <SleepHypnogram segments={night.segments} height={120} detail start={night.start} end={night.end} />
                 <div className="sleep-timeline-axis"><span>{night.start} 취침</span><span>{night.end} 기상</span></div>
               </div>
               <ul className="sleep-stage-list">

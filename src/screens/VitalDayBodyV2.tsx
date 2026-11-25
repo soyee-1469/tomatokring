@@ -7,6 +7,7 @@ import { TrendBars } from '../components/TrendBars'
 import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measureLog'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
+import { useScrub } from '../components/useScrub'
 
 /**
  * 토마톡 링 식 바이탈 상세 (심박수부터 적용):
@@ -113,7 +114,20 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
   const fmtY = (t: number) => (s.digits ? t.toFixed(1) : String(t))
   const bandW = 6
   const cx = (h: number) => x(h + 0.5)
+  // 누른 위치에서 가장 가까운 시간대 (기록 있는 시간대만) — 세로 점선 + 말풍선
+  const scrub = useScrub<HTMLDivElement>()
+  const at = scrub.pos === null ? null : scrub.pos * W
+  const pick = at === null || !hourly.length ? null : hourly.reduce((best, p) => (Math.abs(cx(p.h) - at) < Math.abs(cx(best.h) - at) ? p : best))
+  const tipAt = pick ? (cx(pick.h) / W) * 100 : 0
   return (
+    <div className="chart-scrub" ref={scrub.ref}>
+    {pick && (
+      <div className="chart-tip" style={{ left: `${tipAt}%`, transform: `translateX(-${tipAt}%)` }}>
+        <em>{pick.h}시</em>
+        <b>{pick.max > pick.min && '평균 '}{fmt(pick.mean, s.digits)}{s.unit}</b>
+        {pick.max > pick.min && <span>{fmt(pick.min, s.digits)}–{fmt(pick.max, s.digits)}</span>}
+      </div>
+    )}
     <svg className={`v2-chart v2-m-${metric}`} viewBox={`0 0 ${W} ${H}`} aria-hidden>
       <line x1={padL} x2={W - padR} y1={y(hi)} y2={y(hi)} className="grid" />
       <line x1={padL} x2={W - padR} y1={y(lo)} y2={y(lo)} className="grid" />
@@ -125,6 +139,7 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
           <text x={padL - 8} y={y(mean) + 4} className="avglab" textAnchor="end">평균</text>
         </>
       )}
+      {pick && <line x1={cx(pick.h)} x2={cx(pick.h)} y1={padT} y2={H - padB} className="scrubline" />}
       {/* 시간대별 최저~최고 띠 */}
       {hourly.map((p) => {
         const top = y(p.max), bot = y(p.min)
@@ -143,7 +158,9 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
       {['0', '6', '12', '18', '24'].map((h) => (
         <text key={h} x={x(Number(h))} y={H - 7} className="xlab" textAnchor={h === '0' ? 'start' : h === '24' ? 'end' : 'middle'}>{h}시</text>
       ))}
+      {pick && <circle cx={cx(pick.h)} cy={y(pick.mean)} r={5} className="mdot scrubdot" />}
     </svg>
+    </div>
   )
 }
 

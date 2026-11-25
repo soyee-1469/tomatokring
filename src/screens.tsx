@@ -23,6 +23,7 @@ import { Header, InputComponent, Phone, PrimaryButton, Row, Steps } from './comp
 import { MetricInfoButton } from './components/AccuracyInfo'
 import { Ri } from './components/Ri'
 import { SLEEP_LAST_NIGHT, SleepHypnogram } from './components/Sleep'
+import { STEPS_BY_HOUR } from './steps'
 import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
@@ -915,9 +916,6 @@ function Spark({ values, color, width = 60, height = 26, skipZero = false, fluid
     </svg>
   )
 }
-
-/** 오늘 시간대별 걸음 (0시~23시, 고정 샘플 — 합계 8,412걸음, 16시 이후는 아직 없음). 홈 걷기 카드 막대용 */
-const STEPS_BY_HOUR: readonly number[] = [0, 0, 0, 0, 0, 0, 180, 640, 1_120, 520, 380, 760, 1_340, 410, 560, 1_210, 1_292, 0, 0, 0, 0, 0, 0, 0]
 
 /** 시간대별 세로 막대 (홈 걷기 카드, 그래프 자리 전체 폭). 24칸, 값 없는 시간은 바닥에 연한 눈금만 */
 function HourBars({ values, color, height = 36 }: { values: readonly number[]; color: string; height?: number }) {

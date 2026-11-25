@@ -1,4 +1,5 @@
 import { SLEEP_COLORS } from '../palette'
+import { useScrub } from './useScrub'
 
 /** 수면 단계 색 — 보라 한 색의 농담 4단계 (홈·상세 공통) */
 export const SLEEP_TONES = SLEEP_COLORS.stages
@@ -51,7 +52,16 @@ const HYPNO_LANES: readonly SleepStage[] = ['awake', 'rem', 'light', 'deep']
 /** 밤새 수면 단계 흐름 (브링 수면 화면과 같은 하이프노그램): 단계별 층에 가로 띠를 시간순으로 놓고 얇은 세로선으로 잇는다.
  *  SVG는 담긴 칸 폭에 맞춰 가로로만 늘어남(preserveAspectRatio none) — 선 굵기는 non-scaling-stroke 로 고정.
  *  detail=true 면 층 사이 연한 가로 눈금·바닥선을 함께 그린다 (상세 카드용). 홈 카드는 36px 띠만 */
-export function SleepHypnogram({ segments, height = 36, detail = false, className }: { segments: readonly SleepSegment[]; height?: number; detail?: boolean; className?: string }) {
+/** 'HH:MM' → 분 */
+function clockMinutes(t: string) { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+function clockLabel(min: number) {
+  const m = ((Math.round(min) % 1440) + 1440) % 1440
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+}
+
+/** start·end(취침·기상 시각)를 주면 꾹 눌러 단계와 시간대를 읽을 수 있다 (상세용) */
+export function SleepHypnogram({ segments, height = 36, detail = false, className, start, end }: { segments: readonly SleepSegment[]; height?: number; detail?: boolean; className?: string; start?: string; end?: string }) {
+  const scrub = useScrub<HTMLDivElement>()
   const width = 300
   const total = segments.reduce((a, s) => a + s.min, 0) || 1
   const lane = height / HYPNO_LANES.length
@@ -64,7 +74,15 @@ export function SleepHypnogram({ segments, height = 36, detail = false, classNam
     x += w
     return b
   })
-  return (
+  const interactive = start !== undefined && end !== undefined
+  const at = interactive && scrub.pos !== null ? scrub.pos * width : null
+  const pickIdx = at === null ? -1 : Math.max(0, blocks.findIndex((b, i) => at < b.x + b.w || i === blocks.length - 1))
+  const pick = pickIdx >= 0 ? blocks[pickIdx] : null
+  // 가로축은 취침~기상 시각이므로 띠의 위치를 그 구간에 그대로 대응시킨다
+  const from = interactive ? clockMinutes(start) : 0
+  const span = interactive ? ((clockMinutes(end) - from + 1440) % 1440 || 1440) : 0
+  const tipAt = pick ? ((pick.x + pick.w / 2) / width) * 100 : 0
+  const chart = (
     <svg className={className} viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none" aria-hidden>
       {detail && HYPNO_LANES.map((st, i) => (
         <line key={st} x1={0} x2={width} y1={(i + 1) * lane} y2={(i + 1) * lane} stroke={i === HYPNO_LANES.length - 1 ? '#D6DAE0' : '#EEF0F3'} strokeWidth={1} vectorEffect="non-scaling-stroke" />
@@ -74,9 +92,22 @@ export function SleepHypnogram({ segments, height = 36, detail = false, classNam
         <line key={`c${i}`} x1={b.x} x2={b.x} y1={cy(blocks[i - 1].stage)} y2={cy(b.stage)} stroke={SLEEP_TONES[b.stage]} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
       )))}
       {blocks.map((b, i) => (
-        <rect key={i} x={b.x.toFixed(2)} y={(cy(b.stage) - band / 2).toFixed(2)} width={b.w.toFixed(2)} height={band} rx={1.5} fill={SLEEP_TONES[b.stage]} />
+        <rect key={i} x={b.x.toFixed(2)} y={(cy(b.stage) - band / 2).toFixed(2)} width={b.w.toFixed(2)} height={band} rx={1.5} fill={SLEEP_TONES[b.stage]} opacity={pick && i !== pickIdx ? 0.3 : 1} />
       ))}
     </svg>
+  )
+  if (!interactive) return chart
+  return (
+    <div className="chart-scrub" ref={scrub.ref}>
+      {pick && (
+        <div className="chart-tip" style={{ left: `${tipAt}%`, transform: `translateX(-${tipAt}%)` }}>
+          <i style={{ background: SLEEP_TONES[pick.stage] }} />
+          <b>{SLEEP_STAGE_ORDER.find((st) => st.stage === pick.stage)?.full}</b>
+          <span>{clockLabel(from + (pick.x / width) * span)}–{clockLabel(from + ((pick.x + pick.w) / width) * span)}</span>
+        </div>
+      )}
+      {chart}
+    </div>
   )
 }
 

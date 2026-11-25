@@ -13,9 +13,12 @@ import { Header, Phone } from '../components/ui'
 import { getSession, isMeasureDone, markMeasureDone, saveDietPhoto, todayDietPhoto, type MeasureKind, addStressReading } from '../session'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
+import { useScrub } from '../components/useScrub'
 import { VitalDayBodyV2 } from './VitalDayBodyV2'
 import { Ri } from '../components/Ri'
 import { MEALS } from '../meals'
+import { STEPS_BY_HOUR } from '../steps'
+import { HOME_COLORS } from '../palette'
 
 type Period = 'day' | 'week' | 'month'
 
@@ -497,7 +500,64 @@ function DietBody({ period, autoStart = false }: { period: Period; autoStart?: b
   )
 }
 
-function WalkBody({ period, autoStart = false }: { period: Period; autoStart?: boolean }) {
+/** 걷기 상세 그래프: 시간별은 알약 막대(최근·누른 막대만 진하게), 누적은 목표 점선까지 차오르는 면 그래프 */
+function WalkChart({ mode, hourSteps, cumSteps, latest, goal, picked, onPick }: {
+  mode: 'hour' | 'sum'; hourSteps: readonly number[]; cumSteps: readonly number[]; latest: number; goal: number
+  picked: number | null; onPick: (h: number | null) => void
+}) {
+  const color = HOME_COLORS.leaf
+  const W = 320, H = 172, padL = 44, padR = 8, top = 14, bottom = 138
+  const slot = (W - padL - padR) / 24
+  const bw = 7
+  const cx = (h: number) => padL + slot * (h + 0.5)
+  const max = mode === 'hour' ? Math.max(500, Math.ceil(Math.max(...hourSteps) / 500) * 500) : Math.ceil(Math.max(goal, cumSteps[latest]) / 2000) * 2000
+  const y = (v: number) => bottom - (Math.min(max, v) / max) * (bottom - top)
+  const ticks = mode === 'hour' ? [0, max / 2, max] : [0, max]
+  // 누른 위치 → 시간 (아직 오지 않은 시간은 가장 최근 시간으로)
+  const scrub = useScrub<HTMLDivElement>()
+  const hit = scrub.pos === null ? null : Math.min(latest, Math.max(0, Math.floor((scrub.pos * W - padL) / slot)))
+  useEffect(() => { onPick(hit) }, [hit, onPick])
+  const strong = picked ?? latest
+  const pts = cumSteps.slice(0, latest + 1).map((v, h) => ({ x: cx(h), y: y(v) }))
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
+  return (
+    <div className="chart-scrub ms-walk-chart" ref={scrub.ref} aria-hidden>
+      <svg viewBox={`0 0 ${W} ${H}`}>
+        <defs>
+          <linearGradient id="walkArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.32" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="#EEF0F2" strokeWidth="1.5" />
+            <text x={padL - 8} y={y(t) + 4} textAnchor="end" className="tick">{t.toLocaleString('ko-KR')}</text>
+          </g>
+        ))}
+        {mode === 'hour' ? (
+          hourSteps.map((v, h) => v > 0 && (
+            <rect key={h} x={cx(h) - bw / 2} y={Math.min(y(v), bottom - bw)} width={bw} height={Math.max(bw, bottom - y(v))} rx={bw / 2} fill={color} opacity={h === strong ? 1 : 0.35} />
+          ))
+        ) : (
+          <>
+            <line x1={padL} x2={W - padR} y1={y(goal)} y2={y(goal)} stroke="#1a2332" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="4 4" />
+            <text x={padL - 8} y={y(goal) + 4} textAnchor="end" className="goal">목표</text>
+            <path d={`${line} L ${pts[pts.length - 1].x.toFixed(1)} ${bottom} L ${pts[0].x.toFixed(1)} ${bottom} Z`} fill="url(#walkArea)" />
+            <path d={line} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            {picked !== null && <line x1={cx(picked)} x2={cx(picked)} y1={top} y2={bottom} stroke="#1a2332" strokeOpacity="0.45" strokeWidth="1.5" strokeDasharray="3 3" />}
+            <circle cx={cx(strong)} cy={y(cumSteps[strong])} r={5.5} fill={color} stroke="#fff" strokeWidth="2" />
+          </>
+        )}
+        {[0, 6, 12, 18].map((h) => (
+          <text key={h} x={cx(h)} y={H - 8} textAnchor="middle" className="tick">{h}시</text>
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+function WalkBody({ period, date, autoStart = false }: { period: Period; date: Date; autoStart?: boolean }) {
   const [mode, setMode] = useState<'hour' | 'sum'>('hour')
   const [busy, setBusy] = useState(false)
   const started = useRef(false)
@@ -516,7 +576,15 @@ function WalkBody({ period, autoStart = false }: { period: Period; autoStart?: b
     started.current = true
     onSync()
   }, [autoStart])
-  const bars = [12, 8, 4, 0, 0, 0, 6, 18, 32, 28, 40, 55, 48, 36, 44, 52, 38, 30, 22, 16, 10, 8, 4, 2]
+  const session = useSession()
+  const goal = session.healthGoals.steps
+  const hourSteps = STEPS_BY_HOUR
+  const cumSteps = hourSteps.map((_, i) => hourSteps.slice(0, i + 1).reduce((a, b) => a + b, 0))
+  // 가장 최근에 걸음이 잡힌 시간 · 가장 많이 걸은 시간
+  const latest = hourSteps.reduce((last, v, i) => (v > 0 ? i : last), 0)
+  const peak = hourSteps.indexOf(Math.max(...hourSteps))
+  const [picked, setPicked] = useState<number | null>(null)
+  const values = mode === 'hour' ? hourSteps : cumSteps
 
   return (
     <>
@@ -526,7 +594,7 @@ function WalkBody({ period, autoStart = false }: { period: Period; autoStart?: b
         <span>{period === 'day' ? '1시간에 평균 350걸음 걸었어요' : '하루 평균 6,650걸음 걸었어요'}</span>
       </div>
 
-      <div className="elder-sleep-card">
+      <div className="elder-sleep-card ms-walk-card">
         <div className="ms-recent-head">
           <b>{mode === 'hour' ? '시간별 걸음' : '누적 걸음'}</b>
           <div className="ms-seg">
@@ -538,11 +606,18 @@ function WalkBody({ period, autoStart = false }: { period: Period; autoStart?: b
             </button>
           </div>
         </div>
-        <div className="ms-hour-bars" aria-hidden>
-          {(mode === 'hour' ? bars : bars.map((_, i) => bars.slice(0, i + 1).reduce((a, b) => a + b, 0) / 8)).map((v, i) => (
-            <i key={i} style={{ height: `${Math.max(6, Math.min(100, v))}%` }} />
-          ))}
-        </div>
+        {/* 왼쪽 위 한 줄: 평소엔 가장 많이 걸은 시간, 막대를 누르면 그 시간의 걸음 수·날짜 */}
+        <p className="ms-bar-pick" aria-live="polite">
+          {picked !== null ? (
+            <>
+              <b>{values[picked].toLocaleString('ko-KR')}<small>걸음</small></b>
+              <span>{date.getMonth() + 1}월 {date.getDate()}일 {picked}시{mode === 'sum' ? '까지' : ''}</span>
+            </>
+          ) : (
+            <span>{mode === 'hour' ? `${peak}시에 가장 많이 걸었어요` : cumSteps[latest] >= goal ? `목표 ${goal.toLocaleString('ko-KR')}걸음을 채웠어요` : `목표까지 ${(goal - cumSteps[latest]).toLocaleString('ko-KR')}걸음 남았어요`}</span>
+          )}
+        </p>
+        <WalkChart mode={mode} hourSteps={hourSteps} cumSteps={cumSteps} latest={latest} goal={goal} picked={picked} onPick={setPicked} />
       </div>
 
       <div className="elder-sleep-card">
@@ -635,7 +710,7 @@ export function MeasureScreen() {
               />
             ) : null}
             {kind === 'diet' ? <DietBody period={period} autoStart={params.get('run') === '1'} /> : null}
-            {kind === 'walk' ? <WalkBody period={period} autoStart={params.get('run') === '1'} /> : null}
+            {kind === 'walk' ? <WalkBody period={period} date={date} autoStart={params.get('run') === '1'} /> : null}
             {kind === 'health' ? (
               <RecentCard title="최근 기록" rows={RECENT.health} onMore={() => navigate(historyTo)} />
             ) : null}
