@@ -14227,3 +14227,10 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 홈 카드의 정상·완료 태그 바탕도 그 카드의 지표색을 따른다 */
 .elder-home .elder-fit-card.tile .elder-menu-tag.ok { background: var(--m-soft); }
 .metric-ico i { color: inherit !important; }
+/* 바디 리듬 항목별 점수: 아이콘은 원형 바탕 없이 알맹이만 (홈 카드와 같게) */
+/* 아이콘 · 이름(남는 폭) · 상태 · 짧은 막대 · 점수 · 화살표 */
+.day-score-page .day-metric-row { grid-template-columns: 18px 1fr 30px 84px 28px 18px; }
+.day-score-page .day-metric-status { font-style: normal; font-size: 13px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.day-score-page .day-metric-copy b { font-size: 15px; }
+.day-score-page .day-metric-ico { width: 18px; height: 18px; background: transparent; border-radius: 0; }
+.day-score-page .day-metric-row { padding: 16px 0; }

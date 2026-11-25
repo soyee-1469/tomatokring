@@ -70,13 +70,15 @@ function MetricRow({
 }) {
   return (
     <button type="button" className="day-metric-row" onClick={onOpen}>
-      <span className="day-metric-ico" style={{ background: metric.soft, color: metric.color }}>
-        <Ri name={metric.icon} fill size={22} />
+      {/* 홈 카드와 같은 크기(18px)의 아이콘만 (뒤에 원형 바탕 없음) */}
+      <span className="day-metric-ico" style={{ color: metric.color }}>
+        <Ri name={metric.icon} fill size={18} />
       </span>
+      {/* 아이콘 바로 옆에 이름 → 상태(정상·보통·주의) → 짧은 막대 → 점수 (막대는 점수 바로 옆) */}
       <span className="day-metric-copy">
         <b>{metric.label}</b>
-        <em className={`tone-${metric.tone}`}>{metric.status}</em>
       </span>
+      <em className="day-metric-status">{metric.status}</em>
       <span className="day-metric-bar" aria-hidden>
         <i style={{ width: `${metric.score}%`, background: metric.color }} />
       </span>
