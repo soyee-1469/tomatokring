@@ -14110,18 +14110,22 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .home-vital-copy > span.got { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; color: var(--tag-ok-fg); }
 /* 작은 카드 속: 위쪽(이름·값·그래프)은 누르면 상세, 아래는 받기 버튼(카드 폭에 맞춰 48px). 재기는 오른쪽 위 작은 원형 */
 .elder-home .home-tiles .elder-fit-card.tile { position: relative; }
+.elder-home .home-tiles .elder-fit-card.tile:has(> .home-tile-action) { grid-template-rows: 1fr auto; }
 .elder-home .home-tile-hit { display: grid; gap: 8px; width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; color: inherit; cursor: pointer; }
 .elder-home .home-tiles .home-vital-head { padding-right: 44px; min-height: 36px; } /* 오른쪽 위 원형 버튼 자리 */
 /* 값 / 상태 / 그래프를 세로로 쌓는다: 값 줄은 28px 한 줄, 상태는 두 줄 자리(34px), 그래프는 카드 전체 폭 36px. 비어 있어도 높이를 잡아 옆 카드와 버튼 줄이 나란히 */
 .elder-home .home-tiles .home-vital-value { display: block; min-height: 28px; line-height: 28px; }
 .elder-home .home-tiles .home-vital-value strong { display: block; line-height: 28px; }
 .elder-home .home-tiles .home-vital-state { margin-top: -4px; min-height: 34px; align-content: start; }
+.elder-home .home-tiles :is(.stress, .walk) .home-vital-state { grid-template-rows: 16px auto; }
+.elder-home .home-tiles :is(.stress, .walk) .home-vital-state > span { line-height: 16px; }
+.elder-home .home-tiles :is(.stress, .walk) .home-vital-state > .sub { grid-row: 2; }
 .elder-home .home-tiles .home-vital-graph { display: flex; align-items: center; width: 100%; height: 36px; min-width: 0; margin-top: 2px; }
 .elder-home .home-tiles .home-vital-graph .home-vital-spark { display: block; width: 100%; height: 36px; margin: 0; }
 /* 걷기는 시간대별 세로 막대(HourBars), 수면은 지난밤 하이프노그램(SleepHypnogram) — 둘 다 .home-vital-spark 와 같은 전체 폭 36px SVG */
 .elder-home .home-tile-corner { position: absolute; top: 14px; right: 12px; display: flex; align-items: center; height: 36px; } /* 카드 안쪽 여백(14/12)에 맞추고, 높이는 머리글 줄(36px)과 같게 해 원형 버튼·자동 알약의 세로 중심이 아이콘·이름 중심과 일치 */
 /* 측정하기: '자동' 알약과 같은 24px 알약(작은 아이콘 + 글자). 누르는 것이라 글자는 본문색, 누르는 범위는 위아래로 넓힘 */
-.elder-home .home-tile-measure { position: relative; display: inline-flex; align-items: center; gap: 3px; height: 24px; margin: 0; padding: 0 6px; border: 0; border-radius: 999px; background: #F2F4F6; color: var(--text); font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.elder-home .home-tile-measure { position: relative; display: inline-flex; align-items: center; gap: 3px; height: 24px; margin: 0; padding: 0 8px; border: 0; border-radius: 999px; background: #F2F4F6; color: var(--text); font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer; }
 .elder-home .home-tile-measure::after { content: ''; position: absolute; inset: -10px -6px; }
 .elder-home .home-tile-measure i { font-size: 12px; line-height: 1; }
 .elder-home .home-tile-measure:disabled:not(.busy) { opacity: 0.4; cursor: default; }
@@ -14234,3 +14238,39 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .day-score-page .day-metric-copy b { font-size: 15px; }
 .day-score-page .day-metric-ico { width: 18px; height: 18px; background: transparent; border-radius: 0; }
 .day-score-page .day-metric-row { padding: 16px 0; }
+/* 홈 카드: 상태(정상·낮음·높음)는 값·단위 바로 옆에 */
+.elder-home .home-vital-copy strong small.st { margin-left: 8px; font-weight: 600; color: var(--text-2); }
+/* 바디 리듬 첫 카드: 해석 한 문장 → 조언 → 링·점수 → 내 평균. 따뜻한 크림색은 이 카드에만 (아래 카드들은 흰색) */
+.day-score-page .rd-gauge.rd-first, .day-score-page .rhythm-hero.collecting { background: linear-gradient(180deg, #FFF4DF 0%, #FFFBF2 100%); }
+.day-score-page .rd-first { padding: 22px 18px 20px; }
+.rd-headline { margin: 0; text-align: left; font-size: 22px; font-weight: 700; line-height: 1.35; letter-spacing: -0.03em; word-break: keep-all; }
+.rd-advice { margin: 6px 0 18px; text-align: left; font-size: 15px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
+.rhythm-progress { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; }
+.rhythm-progress .rhythm-days { margin: 0; }
+.rhythm-progress b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.day-score-page .rhythm-hero.collecting .rhythm-days i { background: #EADFC8; }
+.day-score-page .rhythm-hero.collecting .rhythm-days i.on { background: var(--text); }
+/* 카드 순서 편집: 아이콘은 원형 바탕 없이 알맹이만 (홈 카드와 같게) */
+.card-order-item .card-order-ico { width: auto; height: auto; background: transparent; border-radius: 0; }
+/* 홈 포인트 카드: 버튼 아래 설명 한 줄(언제 포인트를 받는지). 글이 없어도 한 줄 높이를 비워 카드끼리 높이가 같다 */
+.elder-home .home-tile-note { margin: -4px 0 0; min-height: 16px; font-size: 12px; line-height: 16px; text-align: center; color: var(--text-3); white-space: nowrap; letter-spacing: -0.03em; }
+/* 버튼이 없는 카드(심박수 등)가 순서 편집으로 포인트 카드 옆에 오면: 카드 높이는 옆 카드와 같아지고, 버튼·설명 자리만큼 그래프가 아래로 커진다 (아래가 비지 않게) */
+.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) { grid-template-rows: 1fr; align-content: stretch; }
+.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-tile-hit { align-self: stretch; grid-template-rows: auto auto auto 1fr; }
+.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-vital-graph { height: auto; min-height: 36px; align-items: stretch; }
+.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-vital-graph .home-vital-spark { height: 100%; min-height: 36px; }
+/* 홈 식단 카드: 아이콘은 원형 바탕 없이 알맹이만 (2열 카드와 같은 18px) */
+.elder-home .elder-fit-card .elder-fit-head i.metric-ico { width: auto; height: auto; background: transparent; border-radius: 0; font-size: 18px !important; }
+.elder-home .elder-fit-card .elder-fit-head i.metric-ico svg { width: 18px; height: 18px; }
+.elder-home .elder-fit-card .elder-fit-head[data-metric] { gap: 6px; }
+/* 홈 2열 카드 이름(아이콘 옆)을 20% 키움: 12px → 14.4px. '심박변이도'가 오른쪽 알약과 겹치지 않게 자간·아이콘 간격을 조금 조임 */
+.elder-home .home-tiles .home-vital-head em { font-size: 14.4px; letter-spacing: -0.04em; overflow: visible; }
+.elder-home .home-tiles .home-vital-head { gap: 4px; padding-right: 0; }
+/* 이름이 커진 만큼 오른쪽 위 알약(측정·자동)을 조금 줄임: 둘 다 같은 규격 */
+.elder-home .home-tile-measure, .elder-home .home-tile-auto { padding: 0 7px; gap: 2px; }
+.elder-home .home-tile-measure i, .elder-home .home-tile-auto i { font-size: 10px !important; }
+.elder-home .home-tile-measure svg, .elder-home .home-tile-auto svg { width: 10px; height: 10px; }
+.elder-home .home-tile-corner { right: 10px; }
+/* 지급 기준 안내(아직 조건 전): 아이콘을 글 첫 줄과 나란히 (두 줄이 되어도 아이콘이 가운데로 내려가지 않게) */
+.claim-banner.off { align-items: flex-start; }
+.claim-banner.off > i { flex-shrink: 0; margin-top: 1px; }

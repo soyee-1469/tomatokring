@@ -149,19 +149,25 @@ export function DayScoreScreen() {
             {!ready && (
               <section className="rhythm-hero collecting">
                 <span className="rhythm-date">{isToday ? `오늘 · ${dateLabel}` : dateLabel}</span>
-                <h2>아직 데이터가 충분하지 않아요.</h2>
-                <p>유효한 기록 {validDays}일 / {RHYTHM_MIN_DAYS}일. 하루에 2개 이상의 유효 데이터가 기록되고 수면 기록이 포함돼야 1회로 인정돼요.</p>
-                <span className="rhythm-days" aria-hidden>
-                  {Array.from({ length: RHYTHM_MIN_DAYS }, (_, i) => <i key={i} className={i < validDays ? 'on' : ''} />)}
-                </span>
+                {/* 기록이 쌓이는 중에는 '부족하다'가 아니라 진행 상황부터: 며칠 모였고 며칠 남았는지 → 인정 조건은 그 아래 작게 */}
+                <h2>{validDays === 0 ? `${RHYTHM_MIN_DAYS}일 기록이 모이면 바디 리듬을 볼 수 있어요.` : `${RHYTHM_MIN_DAYS - validDays}일만 더 모이면 바디 리듬을 볼 수 있어요.`}</h2>
+                <div className="rhythm-progress">
+                  <span className="rhythm-days" aria-hidden>
+                    {Array.from({ length: RHYTHM_MIN_DAYS }, (_, i) => <i key={i} className={i < validDays ? 'on' : ''} />)}
+                  </span>
+                  <b>{validDays}일 / {RHYTHM_MIN_DAYS}일</b>
+                </div>
+                <p>하루에 2개 이상의 유효 데이터가 기록되고 수면 기록이 포함돼야 하루로 인정돼요.</p>
                 <button type="button" className="rhythm-collect-link" onClick={() => navigate('/vitaling/my')}>이전 기록이 있다면 데이터 복원 <Ri name="arrow-right-s" size={16} /></button>
               </section>
             )}
 
             {ready && (
               <>
-                {/* 1) 링 게이지가 주인공 — 홈과 같은 그림 (단색 링, 눈금 없음) */}
-                <section className="rd-gauge">
+                {/* 1) 첫 카드: 오늘 몸 상태를 설명하는 한 문장이 먼저, 그 아래 링과 점수 (해석 카드를 따로 두지 않고 한 카드로) */}
+                <section className="rd-gauge rd-first">
+                  <h2 className="rd-headline">{isToday ? status.headline : status.headlinePast}</h2>
+                  <p className="rd-advice">{status.advice}</p>
                   <div className="rd-gauge-wrap ring">
                     <TodayScoreArc score={bundle.score} size="lg" />
                     <div className="rd-gauge-center">
@@ -173,15 +179,6 @@ export function DayScoreScreen() {
                     {Math.abs(bundle.score - myAvg) < 3 ? `내 평균 ${myAvg}점과 비슷해요` : bundle.score > myAvg ? `내 평균 ${myAvg}점보다 ${bundle.score - myAvg}점 높아요` : `내 평균 ${myAvg}점보다 ${myAvg - bundle.score}점 낮아요`}
                     {!isToday && ` · 전날보다 ${delta >= 0 ? '+' : ''}${delta}`}
                   </p>
-                </section>
-
-                {/* 2) 한 줄 해석 + 조언 */}
-                <section className="rd-say">
-                  <span className="rd-say-ico"><Ri name="chat-smile-3" fill size={20} /></span>
-                  <div>
-                    <b>{isToday ? status.headline : status.headlinePast}</b>
-                    <p>{status.advice}</p>
-                  </div>
                 </section>
 
                 {/* 3) 회복 · 피로도 — 홈 바이탈 칸과 같은 2칸 */}

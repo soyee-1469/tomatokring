@@ -1135,7 +1135,7 @@ export function HomeScreen() {
   }
 
   /** 2열 작은 카드 한 장 — 아이콘·이름 / 값 / 상태·보조 줄 / 그래프(카드 전체 폭) / 아래 받기 버튼. 세로로 쌓아 숫자가 숨 쉬고 그래프는 흐름이 읽히게. 오른쪽 위 모서리엔 작은 원형 측정 버튼이나 자동 기록 표시. 누르면 상세 */
-  const tile = (kind: HomeCardKind, label: string, icon: string, value: ReactNode, state: ReactNode, spark: ReactNode, onOpen: () => void, action: ReactNode = null, corner: ReactNode = null) => (
+  const tile = (kind: HomeCardKind, label: string, icon: string, value: ReactNode, state: ReactNode, spark: ReactNode, onOpen: () => void, action: ReactNode = null, corner: ReactNode = null, /** 버튼 아래 설명 한 줄 (언제 포인트를 받는지). 버튼이 있는 카드는 글이 없어도 자리를 비워 둔다 */ note: ReactNode = null) => (
     <div key={kind} className={`elder-fit-card tile ${kind}`}>
       {/* 위쪽(이름·값·상태·그래프)을 누르면 상세 */}
       <button type="button" className="home-tile-hit" onClick={onOpen} aria-label={label}>
@@ -1152,6 +1152,7 @@ export function HomeScreen() {
       {corner && <div className="home-tile-corner">{corner}</div>}
       {/* 포인트가 걸린 카드는 조건이 되면 큰 받기 버튼 (받기는 눈에 띄어야 해서 크게 유지) */}
       {action && <div className="home-tile-action">{action}</div>}
+      {action && <p className="home-tile-note">{note}</p>}
     </div>
   )
   // 재기는 걷기·수면의 '자동' 알약과 같은 크기의 알약 버튼: 작은 아이콘 + '측정' (2열 카드 폭에서 '측정하기'는 '심박변이도' 같은 긴 이름을 덮음). 재는 동안은 아이콘만 돌아가는 것으로 바뀜
@@ -1212,10 +1213,10 @@ export function HomeScreen() {
         const stale = now != null ? null : staleLabel(dayLog(v.id, new Date())[0]?.time)
         return tile(
           kind, v.label, v.icon,
-          <strong>{value}<small>{v.unit}</small></strong>,
+          // 상태(정상·낮음·높음)는 값 바로 옆에
+          <strong>{value}<small>{v.unit}</small><small className="st">{vitalStatus(v.id, value).label}</small></strong>,
           <>
-            <span>{busyTile === kind ? '재는 중…' : vitalStatus(v.id, value).label}</span>
-            {stale && <span className="sub">{stale}</span>}
+            {busyTile === kind ? <span>재는 중…</span> : stale && <span className="sub">{stale}</span>}
           </>,
           <Spark values={week} color={v.color} width={170} height={36} fluid avg />,
           () => navigate(`/vitaling/measure/stress?m=${v.id}`),
@@ -1226,13 +1227,11 @@ export function HomeScreen() {
       case 'stress':
         return tile(
           kind, '스트레스', 'brain',
-          stressShow ? <strong>{stressSel}<small>점</small></strong> : <strong className="empty">기록 전</strong>,
+          stressShow ? <strong>{stressSel}<small>점</small><small className="st">{stressInfo.label}</small></strong> : <strong className="empty">기록 전</strong>,
           <>
-            <span>{busyTile === 'stress' ? '재는 중…' : stressShow ? stressInfo.label : '반지가 자동으로 재요'}</span>
-            {/* 조건이 될 때까지만 지급 기준 한 줄. 그 뒤엔 마지막 기록이 오래됐을 때만 "n시간 전 기록" */}
-            {!stressClaimed && !(stressShow && stressEligible)
-              ? <span className="sub">{STRESS_REWARD_MAX}점 이하면 {formatClaimP(STRESS_REWARD_P)}</span>
-              : stressStale && <span className="sub">{stressStale}</span>}
+            {/* 마지막 기록이 오래됐을 때만 상태 옆에 "n시간 전 기록" */}
+            {/* 마지막 기록이 오래됐을 때만 "n시간 전 기록" */}
+            {busyTile === 'stress' ? <span>재는 중…</span> : !stressShow ? <span>반지가 자동으로 재요</span> : stressStale && <span>{stressStale}</span>}
           </>,
           // 오늘 기록(자동+직접)의 흐름. 7일은 상세에서
           stressShow ? <Spark values={stressToday} color={METRIC_STYLE.stress.color} width={170} height={36} fluid avg /> : null,
@@ -1240,20 +1239,22 @@ export function HomeScreen() {
           // 버튼 자리는 늘 유지(받기·획득·조건 전), 재기는 오른쪽 위 원형
           pointBtn('stress', STRESS_REWARD_P, stressClaimed, stressShow && stressEligible),
           measureBtn('stress'),
+          `${STRESS_REWARD_MAX}점 이하 ${formatClaimP(STRESS_REWARD_P)}`,
         )
       case 'walk':
         return tile(
           kind, '걷기', 'walk',
           <strong>{stepsLabel}<small>걸음</small></strong>,
           <>
-            <span>{walkEligible ? '목표 달성' : `목표까지 ${(WALK_REWARD_STEPS - stepsSel).toLocaleString('ko-KR')}걸음`}</span>
-            {!walkClaimed && !walkEligible && <span className="sub">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음이면 {formatClaimP(WALK_REWARD_P)}</span>}
+            {/* 달성하면 따로 말하지 않는다 (받기 버튼이 초록이 되는 것으로 충분). 달성 전에는 남은 걸음만 */}
+            {!walkEligible && <span>{(WALK_REWARD_STEPS - stepsSel).toLocaleString('ko-KR')}걸음 남음</span>}
           </>,
           <HourBars values={STEPS_BY_HOUR} color={METRIC_STYLE.walk.color} />,
           () => goMeasure('walk'),
           // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고(오른쪽 위 '자동'), 버튼 자리는 받기·획득·조건 전으로 늘 유지
           pointBtn('walk', WALK_REWARD_P, walkClaimed, walkEligible),
           autoTip,
+          `${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상 ${formatClaimP(WALK_REWARD_P)}`,
         )
       case 'sleep':
         return tile(
@@ -1266,13 +1267,14 @@ export function HomeScreen() {
           () => goMeasure('sleep'),
           pointBtn('sleep', SLEEP_REWARD_P, sleepClaimed, sleepShow),
           autoTip,
+          `수면 기록 ${formatClaimP(SLEEP_REWARD_P)}`,
         )
       case 'survey':
         return tile(
           kind, '설문', 'survey',
           surveyMeasured ? <strong className="text">설문 완료</strong> : <strong className="empty">참여 전</strong>,
           <>
-            <span>{surveyMeasured ? '이번 달 참여' : `월 1회 · ${formatClaimP(SURVEY_REWARD_P)}`}</span>
+            {!surveyMeasured && <span>월 1회</span>}
           </>,
           null,
           () => goMeasure('survey'),
@@ -1282,6 +1284,8 @@ export function HomeScreen() {
               <span>참여하기</span>
             </button>
           ),
+          null,
+          `설문 완료 ${formatClaimP(SURVEY_REWARD_P)}`,
         )
       case 'diet':
         return (
