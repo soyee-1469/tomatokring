@@ -24,6 +24,8 @@ import { MetricInfoButton } from './components/AccuracyInfo'
 import { Ri } from './components/Ri'
 import { SLEEP_LAST_NIGHT, SleepHypnogram } from './components/Sleep'
 import { STEPS_BY_HOUR } from './steps'
+import { METRIC_STYLE } from './metricStyle'
+import { PointGuideButton, STRESS_REWARD_MAX, WALK_REWARD_STEPS } from './components/PointGuide'
 import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
 import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
@@ -34,8 +36,6 @@ import {
   ACTIVITY_LEGEND,
   SLEEP_COLORS,
   VITAL_COLORS,
-  HOME_COLORS,
-  HOME_SOFT,
 } from './palette'
 import { TERMS_DOCS, TERMS_LIST, type TermsDocId } from './termsDocs'
 import { useSession } from './useSession'
@@ -445,7 +445,7 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
                 aria-label={`${meta.label}, ${i + 1}번째`}
               >
                 <span className="card-order-head">
-                  <i className="card-order-ico"><Ri name={meta.icon} size={18} /></i>
+                  <i className="card-order-ico metric-ico" data-metric={kind}><Ri name={meta.icon} size={18} /></i>
                   <b>{meta.label}</b>
                 </span>
                 <span className="card-order-grip" aria-hidden="true"><i className="ri-draggable" /></span> {/* 끌 수 있다는 표시 (이 아이콘만 -line 접미사가 없어 Ri 대신 직접) */}
@@ -460,7 +460,7 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
               style={{ left: drag.left + drag.dx, top: drag.top + drag.dy, width: drag.w, height: drag.h }}
             >
               <span className="card-order-head">
-                <i className="card-order-ico"><Ri name={HOME_CARD_META[drag.kind].icon} size={18} /></i>
+                <i className="card-order-ico metric-ico" data-metric={drag.kind}><Ri name={HOME_CARD_META[drag.kind].icon} size={18} /></i>
                 <b>{HOME_CARD_META[drag.kind].label}</b>
               </span>
             </li>
@@ -490,9 +490,8 @@ function statusFromScore(score: number) {
 
 
 /** 포인트 지급 정책 (11/09 수정본 · 50~70대 기준) — 항목당 1일 1회, 설문은 월 1회 */
-const STRESS_REWARD_MAX = 30 // 스트레스 30점 이하(0~30)일 때 지급
+// 지급 기준 수치(STRESS_REWARD_MAX·WALK_REWARD_STEPS)는 components/PointGuide.tsx — 안내 시트와 같은 값을 쓴다
 // 또래 평균(초기 스펙 참고값 39.98)은 실제 데이터가 없어 쓰지 않는다. 대신 내 최근 7일 평균을 보여준다
-const WALK_REWARD_STEPS = 8_000 // 8,000걸음 이상일 때 지급
 // 또래 평균 걸음 5,680 (스펙 참고값, 화면에는 미표시)
 const STRESS_REWARD_P = 200_000
 const DIET_REWARD_P = 200_000
@@ -833,8 +832,8 @@ function DietUploadCard({
   return (
     <div className="elder-fit-card diet">
       <button type="button" className="elder-card-hit" onClick={onOpen} aria-label="식단">
-        <div className="elder-fit-head">
-          <Ri name="restaurant" fill />
+        <div className="elder-fit-head" data-metric="diet">
+          <Ri name="restaurant" fill className="metric-ico" />
           <b>식단</b>
           <StatusTag tone={measured ? 'done' : 'pending'}>{measured ? '기록 완료' : '등록 전'}</StatusTag>
         </div>
@@ -880,10 +879,10 @@ function DietUploadCard({
 /** 홈 바이탈 4종 — 최신 자동 측정값과 상태 한 단어 */
 /** 지난밤 수면 타임라인 — 취침~기상 시간축 위에 단계를 색으로. 홈용이라 숫자는 시작·끝 시각만 */
 const HOME_VITALS = [
-  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', icon: 'heart-pulse', color: HOME_COLORS.coral, soft: HOME_SOFT.coral, week: [68, 71, 74, 70, 73, 69, 72] },
-  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', icon: 'drop', color: HOME_COLORS.teal, soft: HOME_SOFT.teal, week: [97, 98, 96, 98, 97, 98, 98] },
-  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', icon: 'temp-hot', color: HOME_COLORS.orange, soft: HOME_SOFT.orange, week: [36.4, 36.5, 36.6, 36.7, 36.5, 36.6, 36.6] },
-  { id: 'hrv', label: '심박변이도', value: 42, unit: 'ms', icon: 'pulse', color: HOME_COLORS.beet, soft: HOME_SOFT.beet, week: [40, 38, 45, 41, 44, 39, 42] },
+  { id: 'hr', label: '심박수', value: 72, unit: 'bpm', icon: 'heart-pulse', color: METRIC_STYLE.hr.color, soft: METRIC_STYLE.hr.soft, week: [68, 71, 74, 70, 73, 69, 72] },
+  { id: 'spo2', label: '혈중 산소', value: 98, unit: '%', icon: 'drop', color: METRIC_STYLE.spo2.color, soft: METRIC_STYLE.spo2.soft, week: [97, 98, 96, 98, 97, 98, 98] },
+  { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', icon: 'temp-hot', color: METRIC_STYLE.temp.color, soft: METRIC_STYLE.temp.soft, week: [36.4, 36.5, 36.6, 36.7, 36.5, 36.6, 36.6] },
+  { id: 'hrv', label: '심박변이도', value: 42, unit: 'ms', icon: 'pulse', color: METRIC_STYLE.hrv.color, soft: METRIC_STYLE.hrv.soft, week: [40, 38, 45, 41, 44, 39, 42] },
 ] as const
 
 /** 아주 작은 7일 선 그래프 (홈 바이탈 칸용) — 축·눈금 없이 흐름만, 마지막 점은 오늘 */
@@ -1022,14 +1021,14 @@ export function HomeScreen() {
         addStressReading(25 + (Math.floor(Date.now() / 1000) % 21))
         const v = dayLog('stress', new Date())[0]?.value ?? 0
         const st = stressLevel(v)
-        setResult({ label: '스트레스', icon: 'brain', value: v, unit: '점', tone: st.tone === 'ok' ? 'ok' : st.tone === 'warn' ? 'mid' : 'low', status: st.label })
+        setResult({ kind: 'stress', label: '스트레스', icon: 'brain', value: v, unit: '점', tone: st.tone === 'ok' ? 'ok' : st.tone === 'warn' ? 'mid' : 'low', status: st.label })
       } else {
         const sample = { hr: j(72, 4, 0), spo2: Math.min(99, j(98, 1, 0)), temp: j(36.6, 0.2, 1), hrv: j(42, 4, 0) }
         const v = sample[kind]
         const meta = HOME_VITALS.find((x) => x.id === kind)!
         setVitalNow((prev) => ({ ...prev, [kind]: v }))
         const st = vitalStatus(kind, v)
-        setResult({ label: meta.label, icon: meta.icon, value: v, unit: meta.unit, tone: st.tone, status: st.label })
+        setResult({ kind, label: meta.label, icon: meta.icon, value: v, unit: meta.unit, tone: st.tone, status: st.label })
       }
       setBusyTile(null)
     }, MEASURE_MS[kind])
@@ -1141,7 +1140,7 @@ export function HomeScreen() {
       {/* 위쪽(이름·값·상태·그래프)을 누르면 상세 */}
       <button type="button" className="home-tile-hit" onClick={onOpen} aria-label={label}>
         <span className="home-vital-head">
-          <span className="home-vital-ico"><Ri name={icon} fill size={18} /></span>
+          <span className="home-vital-ico metric-ico" data-metric={kind}><Ri name={icon} fill size={18} /></span>
           <em>{label}</em>
         </span>
         <span className="home-vital-copy home-vital-value">{value}</span>
@@ -1155,15 +1154,17 @@ export function HomeScreen() {
       {action && <div className="home-tile-action">{action}</div>}
     </div>
   )
-  // 재기는 작은 원형 아이콘 버튼 (첫 측정이든 다시 재든 같은 동작). 재는 동안은 돌아가는 아이콘 + 테두리가 차오름
+  // 재기는 걷기·수면의 '자동' 알약과 같은 크기의 알약 버튼: 작은 아이콘 + '측정' (2열 카드 폭에서 '측정하기'는 '심박변이도' 같은 긴 이름을 덮음). 재는 동안은 아이콘만 돌아가는 것으로 바뀜
   const measureBtn = (kind: MeasureTileKind) =>
     busyTile === kind ? (
       <button type="button" className="home-tile-measure busy" disabled aria-label="재는 중" style={{ ['--busy-ms' as string]: `${MEASURE_MS[kind]}ms` }}>
-        <Ri name="loader-4" size={18} className="spin" />
+        <Ri name="loader-4" size={12} className="spin" />
+        측정
       </button>
     ) : (
       <button type="button" className="home-tile-measure" onClick={() => measureTile(kind)} disabled={busyTile !== null} aria-label="측정하기" title="측정하기">
-        <Ri name="play" fill size={18} />
+        <Ri name="play" fill size={12} />
+        측정
       </button>
     )
   const claimBtn = (kind: MissionCardKind, points: number) => (
@@ -1234,7 +1235,7 @@ export function HomeScreen() {
               : stressStale && <span className="sub">{stressStale}</span>}
           </>,
           // 오늘 기록(자동+직접)의 흐름. 7일은 상세에서
-          stressShow ? <Spark values={stressToday} color={HOME_COLORS.beet} width={170} height={36} fluid avg /> : null,
+          stressShow ? <Spark values={stressToday} color={METRIC_STYLE.stress.color} width={170} height={36} fluid avg /> : null,
           () => goMeasure('stress'),
           // 버튼 자리는 늘 유지(받기·획득·조건 전), 재기는 오른쪽 위 원형
           pointBtn('stress', STRESS_REWARD_P, stressClaimed, stressShow && stressEligible),
@@ -1248,7 +1249,7 @@ export function HomeScreen() {
             <span>{walkEligible ? '목표 달성' : `목표까지 ${(WALK_REWARD_STEPS - stepsSel).toLocaleString('ko-KR')}걸음`}</span>
             {!walkClaimed && !walkEligible && <span className="sub">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음이면 {formatClaimP(WALK_REWARD_P)}</span>}
           </>,
-          <HourBars values={STEPS_BY_HOUR} color={HOME_COLORS.leaf} />,
+          <HourBars values={STEPS_BY_HOUR} color={METRIC_STYLE.walk.color} />,
           () => goMeasure('walk'),
           // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고(오른쪽 위 '자동'), 버튼 자리는 받기·획득·조건 전으로 늘 유지
           pointBtn('walk', WALK_REWARD_P, walkClaimed, walkEligible),
@@ -1382,7 +1383,7 @@ export function HomeScreen() {
             ) : (
               <>
                 <div className="elder-section-row">
-                  <p className="elder-section-label">오늘의 미션</p>
+                  <p className="elder-section-label with-info">오늘의 미션<PointGuideButton /></p>
                   <button type="button" className="elder-mission-link" onClick={() => navigate('/reward/history')}>
                     보상 내역 <Ri name="arrow-right" size={14} />
                   </button>
@@ -1450,7 +1451,7 @@ function vitalStatus(id: 'hr' | 'spo2' | 'temp' | 'hrv', v: number): { label: st
 type MeasureTileKind = 'hr' | 'spo2' | 'temp' | 'hrv' | 'stress'
 /** 목업 측정 시간 — 실제는 지표마다 다르다 (온도는 바로, 나머지는 30초~수 분) */
 const MEASURE_MS: Record<MeasureTileKind, number> = { hr: 3000, spo2: 3000, temp: 1500, hrv: 3000, stress: 3000 }
-type ResultRow = { label: string; icon: string; value: number; unit: string; tone: 'ok' | 'mid' | 'low'; status: string }
+type ResultRow = { kind: 'hr' | 'spo2' | 'temp' | 'hrv' | 'stress'; label: string; icon: string; value: number; unit: string; tone: 'ok' | 'mid' | 'low'; status: string }
 function VitalResultSheet({ row, onClose }: { row: ResultRow; onClose: () => void }) {
   const now = new Date()
   const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
@@ -1466,7 +1467,7 @@ function VitalResultSheet({ row, onClose }: { row: ResultRow; onClose: () => voi
         </div>
         <ul className="vital-result-list">
           <li>
-            <span className="home-vital-ico"><Ri name={row.icon} fill size={18} /></span>
+            <span className="home-vital-ico metric-ico" data-metric={row.kind}><Ri name={row.icon} fill size={18} /></span>
             <b>{row.label}</b>
             <strong>{row.value}<small>{row.unit}</small></strong>
             <StatusTag tone={row.tone}>{row.status}</StatusTag>

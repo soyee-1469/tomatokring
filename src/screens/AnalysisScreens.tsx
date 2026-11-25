@@ -225,7 +225,11 @@ export function SleepAnalysisScreen() {
               <div className="v2-top">
                 <span className="v2-say-ico"><Ri name="moon" size={22} /></span>
                 <div className="v2-val">
-                  <strong className="text">{sleepMinutesLabel(night.total)}</strong>
+                  {/* 다른 상세의 값과 같은 규격: 숫자 48px + 단위 18px */}
+                  <strong className="dur">
+                    {night.total >= 60 && <span>{Math.floor(night.total / 60)}<small>시간</small></span>}
+                    {(night.total % 60 > 0 || night.total < 60) && <span>{night.total % 60}<small>분</small></span>}
+                  </strong>
                   <span className="v2-val-sub">{night.start} 취침 · {night.end} 기상</span>
                 </div>
               </div>
@@ -297,7 +301,7 @@ export function SleepAnalysisScreen() {
                 ] as const).map((row) => (
                   <li key={row.id}>
                     <div className="sleep-vital-head">
-                      <span className="sleep-vital-ico"><Ri name={row.icon} fill size={18} /></span>
+                      <span className="sleep-vital-ico metric-ico chip" data-metric={row.id}><Ri name={row.icon} fill size={18} /></span>
                       <b>{row.label}</b>
                       <small>{row.unit}</small>
                     </div>

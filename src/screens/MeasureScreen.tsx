@@ -18,7 +18,7 @@ import { VitalDayBodyV2 } from './VitalDayBodyV2'
 import { Ri } from '../components/Ri'
 import { MEALS } from '../meals'
 import { STEPS_BY_HOUR } from '../steps'
-import { HOME_COLORS } from '../palette'
+import { METRIC_STYLE } from '../metricStyle'
 
 type Period = 'day' | 'week' | 'month'
 
@@ -505,7 +505,7 @@ function WalkChart({ mode, hourSteps, cumSteps, latest, goal, picked, onPick }: 
   mode: 'hour' | 'sum'; hourSteps: readonly number[]; cumSteps: readonly number[]; latest: number; goal: number
   picked: number | null; onPick: (h: number | null) => void
 }) {
-  const color = HOME_COLORS.leaf
+  const color = METRIC_STYLE.walk.color
   const W = 320, H = 172, padL = 44, padR = 8, top = 14, bottom = 138
   const slot = (W - padL - padR) / 24
   const bw = 7

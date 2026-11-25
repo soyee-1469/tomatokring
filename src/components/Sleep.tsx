@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { SLEEP_COLORS } from '../palette'
 import { useScrub } from './useScrub'
 
@@ -46,6 +47,9 @@ export function sleepStageTotals(segments: readonly SleepSegment[]) {
   })
 }
 
+/** 단계 사이 세로 연결선 색 (옅은 보라) */
+const JOIN_COLOR = '#DCCFFB'
+
 /** 단계별 층 (위→아래: 깸·렘·얕은·깊은) — 하이프노그램 세로 위치 */
 const HYPNO_LANES: readonly SleepStage[] = ['awake', 'rem', 'light', 'deep']
 
@@ -62,10 +66,12 @@ function clockLabel(min: number) {
 /** start·end(취침·기상 시각)를 주면 꾹 눌러 단계와 시간대를 읽을 수 있다 (상세용) */
 export function SleepHypnogram({ segments, height = 36, detail = false, className, start, end }: { segments: readonly SleepSegment[]; height?: number; detail?: boolean; className?: string; start?: string; end?: string }) {
   const scrub = useScrub<HTMLDivElement>()
+  const gradientId = useId()
   const width = 300
   const total = segments.reduce((a, s) => a + s.min, 0) || 1
   const lane = height / HYPNO_LANES.length
-  const band = Math.max(4, Math.round(lane * 0.62))
+  const bar = detail ? lane * 0.6 : 3
+  const corner = detail ? 2 : bar / 2
   const cy = (st: SleepStage) => HYPNO_LANES.indexOf(st) * lane + lane / 2
   let x = 0
   const blocks = segments.map((sg) => {
@@ -84,15 +90,25 @@ export function SleepHypnogram({ segments, height = 36, detail = false, classNam
   const tipAt = pick ? ((pick.x + pick.w / 2) / width) * 100 : 0
   const chart = (
     <svg className={className} viewBox={`0 0 ${width} ${height}`} width="100%" height={height} preserveAspectRatio="none" aria-hidden>
+      {detail && (
+        <defs>
+          {HYPNO_LANES.map((stage) => (
+            <linearGradient key={stage} id={`${gradientId}-${stage}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={SLEEP_TONES[stage]} stopOpacity={0.78} />
+              <stop offset="100%" stopColor={SLEEP_TONES[stage]} />
+            </linearGradient>
+          ))}
+        </defs>
+      )}
       {detail && HYPNO_LANES.map((st, i) => (
         <line key={st} x1={0} x2={width} y1={(i + 1) * lane} y2={(i + 1) * lane} stroke={i === HYPNO_LANES.length - 1 ? '#D6DAE0' : '#EEF0F3'} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       ))}
-      {/* 띠 사이 세로 연결선 (다음 띠 색) */}
-      {blocks.map((b, i) => (i === 0 ? null : (
-        <line key={`c${i}`} x1={b.x} x2={b.x} y1={cy(blocks[i - 1].stage)} y2={cy(b.stage)} stroke={SLEEP_TONES[b.stage]} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+      {blocks.map((b, i) => (i === 0 || blocks[i - 1].stage === b.stage ? null : (
+        <line key={`c${i}`} x1={b.x} x2={b.x} y1={cy(blocks[i - 1].stage)} y2={cy(b.stage)} stroke={JOIN_COLOR} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       )))}
+      {/* 고른 구간이 있으면 나머지 막대를 흐리게 */}
       {blocks.map((b, i) => (
-        <rect key={i} x={b.x.toFixed(2)} y={(cy(b.stage) - band / 2).toFixed(2)} width={b.w.toFixed(2)} height={band} rx={1.5} fill={SLEEP_TONES[b.stage]} opacity={pick && i !== pickIdx ? 0.3 : 1} />
+        <rect key={i} x={b.x.toFixed(2)} y={cy(b.stage) - bar / 2} width={b.w.toFixed(2)} height={bar} rx={Math.min(corner, b.w / 2)} fill={detail ? `url(#${gradientId}-${b.stage})` : SLEEP_TONES[b.stage]} opacity={pick && i !== pickIdx ? 0.3 : 1} />
       ))}
     </svg>
   )

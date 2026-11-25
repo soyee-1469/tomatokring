@@ -8,6 +8,7 @@ import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measu
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
 import { useScrub } from '../components/useScrub'
+import { METRIC_STYLE } from '../metricStyle'
 
 /**
  * 토마톡 링 식 바이탈 상세 (심박수부터 적용):
@@ -32,7 +33,7 @@ type Spec = {
 }
 const SPEC: Record<LiveMetricId, Spec> = {
   hr: {
-    color: '#CD313E', trendMin: 50, trendMax: 100,
+    color: METRIC_STYLE.hr.color, trendMin: 50, trendMax: 100,
     label: '심박수', unit: 'bpm', digits: 0, normal: [60, 100], yMin: 40, yMax: 120, zoneUnit: '분',
     zones: [
       { label: '일상생활', color: '#50B83D', test: (v) => v < 96 },
@@ -42,13 +43,13 @@ const SPEC: Record<LiveMetricId, Spec> = {
       { label: '최대 심박', color: '#E4605A', test: (v) => v >= 144 },
     ],
   },
-  spo2: { color: '#2F80ED', trendMax: 100, trendMin: 90, label: '혈중 산소', unit: '%', digits: 0, normal: [95, 100], yMin: 94, yMax: 100, zoneUnit: '%', zones: [
+  spo2: { color: METRIC_STYLE.spo2.color, trendMax: 100, trendMin: 90, label: '혈중 산소', unit: '%', digits: 0, normal: [95, 100], yMin: 94, yMax: 100, zoneUnit: '%', zones: [
     { label: '보통', color: '#50B83D', test: (v) => v >= 95 }, { label: '약간 낮음', color: '#F2994A', test: (v) => v >= 90 && v < 95 }, { label: '낮음', color: '#E4605A', test: (v) => v < 90 } ] },
-  temp: { color: '#FF6B4A', trendMin: 35, trendMax: 38, label: '피부 온도', unit: '°C', digits: 1, normal: [36.0, 37.0], yMin: 36.0, yMax: 37.0, zoneUnit: '분', zones: [
+  temp: { color: METRIC_STYLE.temp.color, trendMin: 35, trendMax: 38, label: '피부 온도', unit: '°C', digits: 1, normal: [36.0, 37.0], yMin: 36.0, yMax: 37.0, zoneUnit: '분', zones: [
     { label: '정상', color: '#50B83D', test: (v) => v >= 36.0 && v < 37.0 }, { label: '약간 높음', color: '#F2994A', test: (v) => v >= 37.0 && v < 37.5 }, { label: '고온', color: '#E4605A', test: (v) => v >= 37.5 }, { label: '약간 낮음', color: '#9DBBE8', test: (v) => v >= 35.5 && v < 36.0 }, { label: '저온', color: '#2F80ED', test: (v) => v < 35.5 } ] },
-  hrv: { color: '#8B5CF6', trendMin: 0, trendMax: 80, label: '심박변이도', unit: 'ms', digits: 0, normal: [40, 60], yMin: 30, yMax: 50, zoneUnit: '%', zones: [
+  hrv: { color: METRIC_STYLE.hrv.color, trendMin: 0, trendMax: 80, label: '심박변이도', unit: 'ms', digits: 0, normal: [40, 60], yMin: 30, yMax: 50, zoneUnit: '%', zones: [
     { label: '평균', color: '#50B83D', test: (v) => v >= 40 && v < 50 }, { label: '평균 이상', color: '#9DBBE8', test: (v) => v >= 50 && v < 60 }, { label: '높음', color: '#2F80ED', test: (v) => v >= 60 }, { label: '평균 이하', color: '#F2994A', test: (v) => v < 40 } ] },
-  stress: { color: '#8B5CF6', trendMax: 100, label: '스트레스', unit: '점', digits: 0, normal: [0, 40], yMin: 0, yMax: 100, zoneUnit: '%', zones: [
+  stress: { color: METRIC_STYLE.stress.color, trendMax: 100, label: '스트레스', unit: '점', digits: 0, normal: [0, 40], yMin: 0, yMax: 100, zoneUnit: '%', zones: [
     { label: '매우 낮음', color: '#50B83D', test: (v) => v < 21 }, { label: '낮음', color: '#A8D45A', test: (v) => v >= 21 && v < 41 }, { label: '보통', color: '#E9C34A', test: (v) => v >= 41 && v < 61 }, { label: '높음', color: '#F2994A', test: (v) => v >= 61 && v < 81 }, { label: '매우 높음', color: '#E4605A', test: (v) => v >= 81 } ] },
 }
 

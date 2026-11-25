@@ -1,10 +1,12 @@
-import { CaretRight, Drop, Heartbeat, Thermometer, Waveform, Brain } from '@phosphor-icons/react'
+import { CaretRight } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { dayLog, formatLogValue, type LiveMetricId } from '../measureLog'
 import { DateBar, parseDateKey, todayStart } from './MeasureScreen'
 import { Header, Phone } from '../components/ui'
 import { type MeasureKind } from '../session'
+import { Ri } from '../components/Ri'
+import { METRIC_STYLE } from '../metricStyle'
 
 type HistoryRow = {
   id: string
@@ -106,7 +108,6 @@ function isMeasureKind(v: string | undefined): v is MeasureKind {
 }
 
 const LIVE_TITLES: Record<LiveMetricId, string> = { hr: '심박수', hrv: '심박변이도', spo2: '혈중 산소', temp: '피부 온도', stress: '스트레스' }
-const LIVE_ICONS: Record<LiveMetricId, typeof Heartbeat> = { hr: Heartbeat, hrv: Waveform, spo2: Drop, temp: Thermometer, stress: Brain }
 function isLiveMetric(v: string | null): v is LiveMetricId {
   return !!v && v in LIVE_TITLES
 }
@@ -115,7 +116,6 @@ function isLiveMetric(v: string | null): v is LiveMetricId {
 function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initialDate: Date }) {
   const [date, setDate] = useState(initialDate)
   const rows = dayLog(metric, date)
-  const Icon = LIVE_ICONS[metric]
   const autoCount = rows.filter((r) => r.mode === 'auto').length
   const manualCount = rows.length - autoCount
   const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -139,7 +139,7 @@ function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initial
                   {rows.map((row) => (
                     <li key={row.id}>
                       <div className="ms-log-row">
-                        <span className="ms-log-ico"><Icon size={18} weight="fill" /></span>
+                        <span className="ms-log-ico metric-ico" data-metric={metric}><Ri name={METRIC_STYLE[metric].icon} fill size={18} /></span>
                         <strong>{formatLogValue(metric, row.value)}</strong>
                         <i className={row.mode}>{row.mode === 'auto' ? '자동 측정' : '직접 측정'}</i>
                         <em>{row.time}</em>

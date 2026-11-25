@@ -5,6 +5,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Phone } from '../components/ui'
+import { PointGuideButton } from '../components/PointGuide'
 import adBg from '../assets/reward/ad-bg.svg'
 import adFg from '../assets/reward/ad-fg.svg'
 import attendBg from '../assets/reward/attend-bg.svg'
@@ -399,7 +400,7 @@ export function RewardHistoryAllScreen() {
               <img src={backIcon} alt="" width={40} height={40} />
             </button>
             <h1>보상 내역</h1>
-            <span className="rh-header-spacer" />
+            <span className="rh-header-spacer rh-header-info"><PointGuideButton /></span>
           </header>
 
           <div className="scroll rh-body rh-history-body">

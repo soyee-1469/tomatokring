@@ -13152,9 +13152,11 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .pair-steps li.past { color: var(--text-2); }
 .pair-steps li.past i { background: var(--brand-green-soft); color: var(--brand-green); }
 .scan-hint { text-align: center; font-size: 14px; color: var(--text-2); margin-top: 8px; }
-.scan-device { display: flex; align-items: center; gap: 10px; border: 1.5px solid #e3e6ea; border-radius: 14px; background: #fff; }
+/* 줄 안쪽 좌우 여백 16px (아이콘·체크가 테두리에 붙지 않게), 줄 폭은 아래 버튼과 같게 */
+.scan-list { padding-left: 0; padding-right: 0; }
+.scan-device { display: flex; align-items: center; gap: 10px; padding: 0 16px; border: 1.5px solid #e3e6ea; border-radius: 14px; background: #fff; }
 .scan-device span { flex: 1; text-align: left; }
-.scan-device.on { border-color: var(--text); background: var(--chip-gray); }
+.scan-device.on, .scan-device:active { border-color: var(--text); background: var(--chip-gray); color: var(--text); }
 .scan-device i:last-child { color: var(--brand-green); }
 .scan-retry { display: block; margin: 14px auto 0; border: 0; background: transparent; font-size: 14px; font-weight: 600; color: var(--text-2); cursor: pointer; }
 .scan-done-ico { display: grid; place-items: center; width: 72px; height: 72px; margin: 36px auto 16px; border-radius: 50%; background: var(--brand-green-soft); color: var(--brand-green); }
@@ -14118,13 +14120,13 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .home-tiles .home-vital-graph .home-vital-spark { display: block; width: 100%; height: 36px; margin: 0; }
 /* 걷기는 시간대별 세로 막대(HourBars), 수면은 지난밤 하이프노그램(SleepHypnogram) — 둘 다 .home-vital-spark 와 같은 전체 폭 36px SVG */
 .elder-home .home-tile-corner { position: absolute; top: 14px; right: 12px; display: flex; align-items: center; height: 36px; } /* 카드 안쪽 여백(14/12)에 맞추고, 높이는 머리글 줄(36px)과 같게 해 원형 버튼·자동 알약의 세로 중심이 아이콘·이름 중심과 일치 */
-.elder-home .home-tile-measure { display: grid; place-items: center; width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: #F2F4F6; color: var(--text); cursor: pointer; } /* 테두리 없이 아이콘 칩·자동 알약과 같은 연회색 바탕 */
+/* 측정하기: '자동' 알약과 같은 24px 알약(작은 아이콘 + 글자). 누르는 것이라 글자는 본문색, 누르는 범위는 위아래로 넓힘 */
+.elder-home .home-tile-measure { position: relative; display: inline-flex; align-items: center; gap: 3px; height: 24px; margin: 0; padding: 0 6px; border: 0; border-radius: 999px; background: #F2F4F6; color: var(--text); font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.elder-home .home-tile-measure::after { content: ''; position: absolute; inset: -10px -6px; }
+.elder-home .home-tile-measure i { font-size: 12px; line-height: 1; }
 .elder-home .home-tile-measure:disabled:not(.busy) { opacity: 0.4; cursor: default; }
-.elder-home .home-tile-measure.busy { background: #E8EFFF; color: var(--brand-blue); cursor: default; position: relative; }
-/* 재는 동안 테두리가 시계 방향으로 차오름 (--busy-ms 만큼) */
-.elder-home .home-tile-measure.busy::before { content: ''; position: absolute; inset: -2px; border-radius: 50%; background: conic-gradient(var(--brand-blue) var(--p, 0%), transparent 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); animation: tile-busy-ring var(--busy-ms, 3s) linear forwards; }
-@property --p { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-@keyframes tile-busy-ring { from { --p: 0% } to { --p: 100% } }
+.elder-home .home-tile-measure.busy { background: #E8EFFF; cursor: default; }
+.elder-home .home-tile-measure.busy i { color: var(--brand-blue); }
 .elder-home .home-tile-auto { display: inline-flex; align-items: center; gap: 3px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--chip-gray); color: var(--text-3); font-size: 11px; font-weight: 600; }
 .elder-home .home-tile-auto i { color: var(--brand-green); font-size: 12px; line-height: 1; }
 .elder-home .home-tile-action .elder-claim-btn { height: 48px; gap: 4px; padding: 0 10px; border-radius: 12px; font-size: 14px; }
@@ -14176,3 +14178,52 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .ms-bar-pick span { font-size: 13px; font-weight: 600; color: var(--text-3); font-variant-numeric: tabular-nums; }
 /* 연두 그래프 카드 안에서는 전환 버튼에 파랑을 쓰지 않는다 (한 카드에 색 하나) */
 .ms-walk-card .ms-seg button.on { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+/* 포인트 받는 방법: ⓘ 버튼(홈 '오늘의 미션' 머리글·보상 내역 헤더) + 시트 */
+.point-guide-btn { display: inline-grid; place-items: center; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text-3); cursor: pointer; position: relative; }
+.point-guide-btn::after { content: ''; position: absolute; inset: -8px; }
+.elder-section-label.with-info { display: inline-flex; align-items: center; gap: 2px; }
+.rh-header-info { display: flex; justify-content: flex-end; align-items: center; }
+.rh-header-info .point-guide-btn { width: 40px; height: 40px; color: var(--text); }
+.point-guide-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
+.point-guide-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--cream); }
+.point-guide-list li span { display: grid; gap: 2px; min-width: 0; }
+.point-guide-list li b { font-size: 15px; font-weight: 700; color: var(--text); }
+.point-guide-list li em { font-style: normal; font-size: 13px; font-weight: 500; color: var(--text-2); word-break: keep-all; }
+.point-guide-list li strong { flex-shrink: 0; font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+/* 수면 시간 값: 다른 상세와 같은 숫자 48px + 단위 18px, '7시간 12분'의 두 덩이 사이만 띄움 */
+.v2-page .v2-val strong.dur { display: flex; align-items: baseline; gap: 8px; }
+.v2-page .v2-val strong.dur small { margin-left: 3px; }
+
+/* ── 지표별 색 (src/metricStyle.ts 와 같은 값) — 아이콘·상세 히어로·그래프가 모든 화면에서 같은 색을 쓴다 ── */
+:root {
+  --m-hr: #F96B6D; --m-hr-soft: #FFEDED;
+  --m-spo2: #2BCFDD; --m-spo2-soft: #E3FAFC;
+  --m-temp: #FF8E50; --m-temp-soft: #FFF1E8;
+  --m-hrv: #568EE4; --m-hrv-soft: #EAF1FC;
+  --m-stress: #E07DE5; --m-stress-soft: #FBEEFC;
+  --m-walk: #1CCE68; --m-walk-soft: #E4FAEC;
+  --m-sleep: #7E3FF2; --m-sleep-soft: #F1EAFE;
+  --m-diet: #F2A900; --m-diet-soft: #FFF8D9;
+  --m-survey: #1a2332; --m-survey-soft: #F2F4F6;
+}
+[data-metric="hr"], .v2-m-hr, .elder-fit-card.tile.hr { --m: var(--m-hr); --m-soft: var(--m-hr-soft); }
+[data-metric="spo2"], .v2-m-spo2, .elder-fit-card.tile.spo2 { --m: var(--m-spo2); --m-soft: var(--m-spo2-soft); }
+[data-metric="temp"], .v2-m-temp, .elder-fit-card.tile.temp { --m: var(--m-temp); --m-soft: var(--m-temp-soft); }
+[data-metric="hrv"], .v2-m-hrv, .elder-fit-card.tile.hrv { --m: var(--m-hrv); --m-soft: var(--m-hrv-soft); }
+[data-metric="stress"], .v2-m-stress, .elder-fit-card.tile.stress { --m: var(--m-stress); --m-soft: var(--m-stress-soft); }
+[data-metric="walk"], .v2-m-walk, .elder-fit-card.tile.walk { --m: var(--m-walk); --m-soft: var(--m-walk-soft); }
+[data-metric="sleep"], .v2-m-sleep, .elder-fit-card.tile.sleep { --m: var(--m-sleep); --m-soft: var(--m-sleep-soft); }
+[data-metric="diet"], .v2-m-diet, .elder-fit-card.tile.diet { --m: var(--m-diet); --m-soft: var(--m-diet-soft); }
+[data-metric="survey"], .v2-m-survey, .elder-fit-card.tile.survey { --m: var(--m-survey); --m-soft: var(--m-survey-soft); }
+/* 아이콘은 어디서든 지표색 (칩 배경이 필요한 곳만 .chip 으로 연한 지표색) */
+.metric-ico { color: var(--m) !important; }
+.metric-ico.chip { background: var(--m-soft) !important; }
+/* 상세 히어로: 아이콘은 지표색, 바탕은 연한 지표색에서 흰색으로 */
+.v2-page .v2-hero[class*="v2-m-"] { background: linear-gradient(180deg, var(--m-soft) 0%, #fff 100%) !important; }
+.v2-page .v2-hero[class*="v2-m-"] .v2-say-ico { color: var(--m) !important; }
+/* 상세 하루 그래프 */
+.v2-page .v2-chart[class*="v2-m-"] .rangeband, .v2-page .v2-chart[class*="v2-m-"] .mdot { fill: var(--m) !important; }
+.v2-page .v2-chart[class*="v2-m-"] .mline { stroke: var(--m) !important; }
+/* 홈 카드의 정상·완료 태그 바탕도 그 카드의 지표색을 따른다 */
+.elder-home .elder-fit-card.tile .elder-menu-tag.ok { background: var(--m-soft); }
+.metric-ico i { color: inherit !important; }

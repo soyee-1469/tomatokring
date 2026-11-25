@@ -86,7 +86,7 @@ function RangeSlider({ m }: { m: Metric }) {
   return (
     <li className={`signal-metric ${out ? 'out' : ''}`}>
       <div className="signal-metric-head">
-        <span className="signal-metric-ico"><Ri name={m.icon} fill size={18} /></span>
+        <span className="signal-metric-ico metric-ico" data-metric={m.id}><Ri name={m.icon} fill size={18} /></span>
         <b>{m.label}</b>
         <small>{m.unit}</small>
         <span className={`elder-menu-tag ${out ? 'low' : 'calm'}`}>{out ? (m.value > m.hi ? '평소보다 높음' : '평소보다 낮음') : '평소 범위'}</span>
