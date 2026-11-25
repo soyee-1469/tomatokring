@@ -1,6 +1,6 @@
 /**
  * 지표별 아이콘·색 — 모든 화면이 이 표 하나를 쓴다 (아이콘만 봐도 어떤 지표인지 알 수 있게).
- * 아이콘 칩에는 `metric-ico` 클래스와 `data-metric` 을 달면 색이 입혀진다 (index.css 의 --m-* 토큰과 같은 값).
+ * 아이콘 칩에는 `metric-ico` 클래스(연한 바탕까지 원하면 `tinted` 추가)와 `data-metric` 을 달면 색이 입혀진다 (index.css 의 --m-* 토큰과 같은 값).
  * 설문은 측정값이 아니라 색을 주지 않는다(먹색).
  */
 export type MetricId = 'hr' | 'spo2' | 'temp' | 'hrv' | 'stress' | 'walk' | 'sleep' | 'diet' | 'survey'

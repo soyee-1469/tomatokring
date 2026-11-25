@@ -14215,9 +14215,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 [data-metric="sleep"], .v2-m-sleep, .elder-fit-card.tile.sleep { --m: var(--m-sleep); --m-soft: var(--m-sleep-soft); }
 [data-metric="diet"], .v2-m-diet, .elder-fit-card.tile.diet { --m: var(--m-diet); --m-soft: var(--m-diet-soft); }
 [data-metric="survey"], .v2-m-survey, .elder-fit-card.tile.survey { --m: var(--m-survey); --m-soft: var(--m-survey-soft); }
-/* 아이콘은 어디서든 지표색 (칩 배경이 필요한 곳만 .chip 으로 연한 지표색) */
+/* 아이콘은 어디서든 지표색 (칩 배경이 필요한 곳만 .tinted 로 연한 지표색 — .chip 은 다른 곳에서 쓰는 이름이라 좌우 여백이 딸려 온다) */
 .metric-ico { color: var(--m) !important; }
-.metric-ico.chip { background: var(--m-soft) !important; }
+.metric-ico.tinted { background: var(--m-soft) !important; }
 /* 상세 히어로: 아이콘은 지표색, 바탕은 연한 지표색에서 흰색으로 */
 .v2-page .v2-hero[class*="v2-m-"] { background: linear-gradient(180deg, var(--m-soft) 0%, #fff 100%) !important; }
 .v2-page .v2-hero[class*="v2-m-"] .v2-say-ico { color: var(--m) !important; }

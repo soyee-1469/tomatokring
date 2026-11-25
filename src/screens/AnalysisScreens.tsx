@@ -301,7 +301,7 @@ export function SleepAnalysisScreen() {
                 ] as const).map((row) => (
                   <li key={row.id}>
                     <div className="sleep-vital-head">
-                      <span className="sleep-vital-ico metric-ico chip" data-metric={row.id}><Ri name={row.icon} fill size={18} /></span>
+                      <span className="sleep-vital-ico metric-ico tinted" data-metric={row.id}><Ri name={row.icon} fill size={18} /></span>
                       <b>{row.label}</b>
                       <small>{row.unit}</small>
                     </div>
