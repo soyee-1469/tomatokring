@@ -14200,13 +14200,13 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* ── 지표별 색 (src/metricStyle.ts 와 같은 값) — 아이콘·상세 히어로·그래프가 모든 화면에서 같은 색을 쓴다 ── */
 :root {
-  --m-hr: #F96B6D; --m-hr-soft: #FFEDED;
-  --m-spo2: #2BCFDD; --m-spo2-soft: #E3FAFC;
-  --m-temp: #FF8E50; --m-temp-soft: #FFF1E8;
-  --m-hrv: #568EE4; --m-hrv-soft: #EAF1FC;
-  --m-stress: #E07DE5; --m-stress-soft: #FBEEFC;
-  --m-walk: #1CCE68; --m-walk-soft: #E4FAEC;
-  --m-sleep: #7E3FF2; --m-sleep-soft: #F1EAFE;
+  --m-hr: #EE8C84; --m-hr-soft: #FDEEEC;
+  --m-spo2: #6CC4D2; --m-spo2-soft: #E8F7F9;
+  --m-temp: #F2AE6B; --m-temp-soft: #FDF3E8;
+  --m-hrv: #7FA6E8; --m-hrv-soft: #EEF3FC;
+  --m-stress: #D69BDD; --m-stress-soft: #F8EEF9;
+  --m-walk: #7FCB8E; --m-walk-soft: #EBF7EE;
+  --m-sleep: #A98BEA; --m-sleep-soft: #F3EEFC;
   --m-diet: #F2A900; --m-diet-soft: #FFF8D9;
   --m-survey: #1a2332; --m-survey-soft: #F2F4F6;
 }
@@ -14507,3 +14507,17 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-home .diet-upload-thumb, .elder-home .diet-upload-more { flex: none; width: 72px; height: 72px; margin: 0; padding: 0; border: 0; border-radius: 14px; overflow: hidden; cursor: pointer; }
 .elder-home .diet-upload-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .elder-home .diet-upload-more { display: grid; place-items: center; background: #FFF6D6; box-shadow: inset 0 0 0 1.5px #F5D776; color: #C98A00; }
+/* 홈 2열 카드: 묶음 끝에 한 장만 남으면 그 카드는 한 줄 전체(1열)로 (순서 편집 결과와 같게) */
+.elder-home .home-tiles > .elder-fit-card.tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* 식단: 사진 전 버튼 하나 = 사진 올리기 + 받기 (식단 노랑) */
+.elder-home .elder-fit-card.diet .diet-claim .elder-claim-btn.diet-upload-btn { background: #FFF1B8; color: #8A5A00; font-weight: 700; }
+.elder-home .elder-fit-card.diet .diet-claim .elder-claim-btn.diet-upload-btn i { color: #C98A00; }
+/* 식단 상세 (2026-11-27): 영양소 줄 맞춤 — 이름·숫자 칸 폭을 고정해 막대 길이가 세 줄 모두 같게, 숫자는 오른쪽 정렬 */
+.diet-macro-row { grid-template-columns: 64px minmax(0, 1fr) 84px; }
+.diet-macro-row em { white-space: nowrap; }
+.diet-macro-row b { text-align: right; }
+/* 칼로리 막대: 진한 초록 → 식단 파스텔 노랑 (홈·지표 색과 같은 톤) */
+.diet-bar i { background: #EECB55; }
+/* 오른쪽 아래 ＋ 버튼이 마지막 기록을 가리지 않게 목록 아래 여백 */
+.scroll:has(.diet-fab) { padding-bottom: 96px; }
+.diet-macros { padding-left: 0; padding-right: 0; } /* 영양소 줄 왼쪽·오른쪽 끝을 위 칼로리 줄과 같은 선에 */

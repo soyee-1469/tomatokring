@@ -29,8 +29,10 @@ import { PointGuideButton, STRESS_REWARD_MAX, WALK_REWARD_STEPS } from './compon
 import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { SURVEY_OPEN } from './survey'
+import { shrinkImage } from './imageUtil'
+import { MEALS } from './meals'
 import { GradeTicks } from './components/RhythmGrade'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -362,10 +364,19 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
   const listRef = useRef<HTMLDivElement>(null)
   // 끄는 중: 어떤 카드를, 잡았을 때 카드 자리(목록 기준)와 크기, 지금 포인터 이동량
   const [drag, setDrag] = useState<{ kind: HomeCardKind; left: number; top: number; w: number; h: number; dx: number; dy: number } | null>(null)
-  const dragRef = useRef<{ kind: HomeCardKind; startX: number; startY: number; armed: boolean; timer: number | null } | null>(null)
+  const dragRef = useRef<{ kind: HomeCardKind; startX: number; startY: number; startScroll: number; armed: boolean; timer: number | null } | null>(null)
   // 묶음 통째로 끄는 중: 어느 묶음을, 세로 이동량
   const [gdrag, setGdrag] = useState<{ g: 'measure' | 'point'; dy: number } | null>(null)
-  const gdragRef = useRef<{ g: 'measure' | 'point'; startY: number } | null>(null)
+  const gdragRef = useRef<{ g: 'measure' | 'point'; startY: number; startScroll: number; lastDy: number } | null>(null)
+  /** 끄는 동안 창 위·아래 끝 근처면 저절로 스크롤 (창이 화면보다 길 때 아래 카드를 위로 가져갈 수 있게) */
+  const panelOf = () => listRef.current?.closest<HTMLElement>('.card-order-sheet') ?? null
+  const autoScroll = (clientY: number) => {
+    const panel = panelOf()
+    if (!panel) return
+    const r = panel.getBoundingClientRect()
+    if (clientY < r.top + 80) panel.scrollTop -= 10
+    else if (clientY > r.bottom - 80) panel.scrollTop += 10
+  }
   const boxRefs = useRef<Record<string, HTMLElement | null>>({})
 
   const commit = (next: HomeCardKind[]) => {
@@ -390,14 +401,14 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
   const onPointerDown = (kind: HomeCardKind, e: React.PointerEvent<HTMLElement>) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return
     const el = e.currentTarget
-    const d = { kind, startX: e.clientX, startY: e.clientY, armed: false, timer: null as number | null }
+    const d = { kind, startX: e.clientX, startY: e.clientY, startScroll: panelOf()?.scrollTop ?? 0, armed: false, timer: null as number | null }
     dragRef.current = d
     lift(kind, el, e.pointerId) // 누르는 즉시 들린다 (격자 안에서는 스크롤이 없어 꾹 누를 필요 없음)
   }
   /** 묶음 머리 줄을 잡으면 묶음 전체가 들린다 */
   const onGroupDown = (g: 'measure' | 'point', e: React.PointerEvent<HTMLElement>) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return
-    gdragRef.current = { g, startY: e.clientY }
+    gdragRef.current = { g, startY: e.clientY, startScroll: panelOf()?.scrollTop ?? 0, lastDy: 0 }
     setGdrag({ g, dy: 0 })
     try { navigator.vibrate?.(12) } catch { /* 지원 안 하는 기기 */ }
     listRef.current?.setPointerCapture?.(e.pointerId)
@@ -406,17 +417,26 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
     const gd = gdragRef.current
     if (gd) {
       e.preventDefault()
-      const dy = e.clientY - gd.startY
+      autoScroll(e.clientY)
+      // 창이 스크롤된 만큼도 이동량에 더한다 (상자는 내용과 함께 움직이므로)
+      const dy = e.clientY - gd.startY + ((panelOf()?.scrollTop ?? 0) - gd.startScroll)
       const [first, second] = groupsInOrder(draft)
       const other = gd.g === first ? second : first
       const otherBox = boxRefs.current[other]?.getBoundingClientRect()
-      // 다른 묶음의 절반을 넘어가면 자리를 바꾼다 (위 묶음은 아래로, 아래 묶음은 위로)
-      if (otherBox && ((gd.g === first && dy > otherBox.height / 2) || (gd.g === second && -dy > otherBox.height / 2))) {
+      const shown = boxRefs.current[gd.g]?.getBoundingClientRect()
+      // 화면에 그려진 위치에서 지난 이동량을 빼고 이번 이동량을 더해, 빠르게 끌어도 지금 손가락 위치로 판정
+      const meTop = shown ? shown.top - gd.lastDy + dy : 0
+      const meBottom = shown ? shown.bottom - gd.lastDy + dy : 0
+      // 끌고 있는 상자의 끝이 다른 상자 안쪽으로 30% 들어가면 자리를 바꾼다 (절반까지 끌지 않아도 되게)
+      if (otherBox && shown && ((gd.g === first && meBottom > otherBox.top + otherBox.height * 0.3) || (gd.g === second && meTop < otherBox.bottom - otherBox.height * 0.3))) {
         commit([...draft.filter((k) => cardGroupOf(k) === second), ...draft.filter((k) => cardGroupOf(k) === first)])
         gd.startY = e.clientY
+        gd.startScroll = panelOf()?.scrollTop ?? 0
+        gd.lastDy = 0
         setGdrag({ g: gd.g, dy: 0 })
         return
       }
+      gd.lastDy = dy
       setGdrag({ g: gd.g, dy })
       return
     }
@@ -430,7 +450,10 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
       return
     }
     e.preventDefault()
-    setDrag((cur) => (cur ? { ...cur, dx, dy } : cur))
+    autoScroll(e.clientY)
+    // 떠다니는 카드는 목록 기준이라, 창이 스크롤된 만큼 더해야 손가락을 따라온다
+    const scrolled = (panelOf()?.scrollTop ?? 0) - d.startScroll
+    setDrag((cur) => (cur ? { ...cur, dx, dy: dy + scrolled } : cur))
     // 포인터가 같은 묶음의 다른 카드 위에 오면 그 자리로 바로 끼워 넣는다 (상하좌우 모두)
     const items = listRef.current?.querySelectorAll<HTMLElement>('.card-order-item:not(.ghost)') // 떠다니는 복사본은 자리 판정에서 뺀다
     if (!items) return
@@ -495,10 +518,14 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
                 <span className="card-order-grip" aria-hidden="true"><i className="ri-draggable" /></span>
               </div>
               <ul className="card-order-list">
-                {draft.filter((k) => cardGroupOf(k) === g).map((kind) => {
+                {draft.filter((k) => cardGroupOf(k) === g).map((kind, idx, list) => {
                   const meta = HOME_CARD_META[kind]
                   const isDrag = drag?.kind === kind
-                  const wide = kind === 'diet'
+                  // 홈과 같은 규칙: 식단은 늘 1열, 2열 카드가 이어지다 한 장만 남으면 그 카드도 1열
+                  const runEnd = (i: number) => i === list.length - 1 || list[i + 1] === 'diet'
+                  let runLen = 0
+                  for (let i = idx; i >= 0 && list[i] !== 'diet'; i--) runLen++
+                  const wide = kind === 'diet' || (runEnd(idx) && runLen % 2 === 1)
                   return (
                     <li
                       key={kind}
@@ -762,7 +789,6 @@ function DietUploadCard({
   measured,
   claimed,
   onOpen,
-  onMeasure,
   onClaim,
 }: {
   kcal: number
@@ -772,13 +798,22 @@ function DietUploadCard({
   claimed: boolean
   /** 카드 탭 → 식단 상세 보기 */
   onOpen: () => void
-  /** 버튼 → 상세에서 바로 사진 올리기 */
-  onMeasure: () => void
   onClaim: () => void
 }) {
   const shown = measured ? kcal : 0
+  // 홈에서 바로 사진 고르기 (카메라·앨범 선택은 휴대폰이 띄워 줌) — 상세로 넘어가지 않게
+  const fileRef = useRef<HTMLInputElement>(null)
+  const pick = () => fileRef.current?.click()
+  const onFile = (file?: File | null) => {
+    if (!file) return
+    shrinkImage(file)
+      .then((dataUrl) => saveDietPhoto(dataUrl))
+      .catch(() => saveDietPhoto(''))
+      .finally(() => markMeasureDone('diet'))
+  }
   return (
     <div className="elder-fit-card diet">
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = '' }} />
       <button type="button" className="elder-card-hit" onClick={onOpen} aria-label="식단">
         {/* 머리 줄: 2열 카드와 같은 크기의 아이콘·이름 (오른쪽 위 '+ 사진'은 카드에 따로 얹음) */}
         <span className="home-vital-head diet-head">
@@ -788,21 +823,24 @@ function DietUploadCard({
         <span className="diet-value">
           {measured ? <strong>{shown.toLocaleString('ko-KR')}<small>kcal</small><small className="st">목표 {goal.toLocaleString('ko-KR')}</small></strong> : <strong className="empty">기록 전</strong>}
         </span>
-        <span className="diet-sub">{measured ? '오늘 올린 사진은 상세에서 볼 수 있어요' : 'AI가 칼로리를 알려 드려요'}</span>
+        {/* 올리기 전에만 안내 한 줄. 상세는 다른 카드처럼 카드(이름·칼로리·사진)를 누르면 간다 */}
+        {!measured && <span className="diet-sub">AI가 칼로리를 알려 드려요</span>}
       </button>
-      {/* 가운데: 누르면 사진을 올리는 칸 하나 (끼니로 나누지 않음). 올린 뒤엔 사진 썸네일 + 옆에 작은 ＋(더 올리기) */}
-      {photo ? (
+      {/* 오른쪽 위: 다른 카드의 '▶ 측정'·'♥ 자동'과 같은 알약으로 '＋ 등록' — 누르면 홈에서 바로 사진 고르기 */}
+      <div className="home-tile-corner">
+        <button type="button" className="home-tile-measure" onClick={pick} aria-label="식단 사진 등록">
+          <Ri name="add" size={12} />
+          등록
+        </button>
+      </div>
+      {/* 사진을 올린 뒤에만: 올린 사진 썸네일 + 옆 작은 ＋(더 올리기). 올리기 전엔 아래 버튼 하나로 올리기·받기를 함께 */}
+      {photo && (
         <div className="diet-upload has-photo">
           <button type="button" className="diet-upload-thumb" onClick={onOpen} aria-label="올린 식단 사진 보기"><img src={photo} alt="" /></button>
-          <button type="button" className="diet-upload-more" onClick={onMeasure} aria-label="식단 사진 더 올리기"><Ri name="add" size={24} /></button>
+          <button type="button" className="diet-upload-more" onClick={pick} aria-label="식단 사진 더 올리기"><Ri name="add" size={24} /></button>
         </div>
-      ) : (
-        <button type="button" className="diet-upload" onClick={onMeasure} aria-label="식단 사진 올리기">
-          <Ri name="add" size={28} />
-          <b>사진 올리기</b>
-        </button>
       )}
-      {/* 받기 버튼은 다른 포인트 카드와 같은 규칙: 사진 전 회색 → 사진 올리면 초록 받기 → 받은 뒤 회색 획득 (올리기는 위 노란 줄이 맡음) */}
+      {/* 버튼 하나: 사진 전 노란 '사진 올리고 받기' → 사진 올리면 초록 받기 → 받은 뒤 회색 획득 */}
       <div className="home-tile-action diet-claim">
         {claimed ? (
           <button type="button" className="elder-claim-btn done" disabled>
@@ -815,9 +853,10 @@ function DietUploadCard({
             <span>{formatClaimP(DIET_REWARD_P)} 받기</span>
           </button>
         ) : (
-          // 사진 전: 버튼 글자에 조건까지 (아래 설명 줄 없이)
-          <button type="button" className="elder-claim-btn with-points locked" onClick={onMeasure}>
-            <span>식단 올리고 {formatClaimP(DIET_REWARD_P)} 받기</span>
+          // 사진 전: 버튼 하나로 '사진 올리기 + 받기' (식단 노랑). 사진을 올리면 초록 받기 버튼으로 바뀜
+          <button type="button" className="elder-claim-btn diet-upload-btn" onClick={pick}>
+            <Ri name="add" size={18} />
+            <span>사진 올리고 {formatClaimP(DIET_REWARD_P)} 받기</span>
           </button>
         )}
       </div>
@@ -1255,13 +1294,12 @@ export function HomeScreen() {
         return (
           <Fragment key="diet">
       <DietUploadCard
-        kcal={day.dietKcal}
+        kcal={MEALS.reduce((a, m) => a + m.kcal, 0)} // 상세 '총 섭취 칼로리'와 같은 기록 합계
         goal={profile.diet.goal}
         photo={todayDietPhoto(session)}
         measured={dietMeasured}
         claimed={dietClaimed}
         onOpen={() => goMeasure('diet')}
-        onMeasure={() => goMeasure('diet', true)}
         onClaim={() => markClaimed('diet')}
       />
           </Fragment>

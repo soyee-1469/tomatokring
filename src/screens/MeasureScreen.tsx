@@ -17,6 +17,7 @@ import { useScrub } from '../components/useScrub'
 import { VitalDayBodyV2 } from './VitalDayBodyV2'
 import { Ri } from '../components/Ri'
 import { MEALS } from '../meals'
+import { shrinkImage } from '../imageUtil'
 import { stepsByHourOn, stepsOnDay } from '../steps'
 import { METRIC_STYLE } from '../metricStyle'
 
@@ -330,34 +331,6 @@ function LiveBody({
   return <VitalDayBodyV2 metric={initialMetric ?? 'stress'} date={date} onDate={onDate} busy={busy} onMeasure={onMeasure} onHistory={onHistory} />
 }
 
-/** 선택한 사진을 긴 변 640px JPEG data URL로 축소 (localStorage 저장용) */
-function shrinkImage(file: File, maxSide = 640) {
-  return new Promise<string>((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(img.width * scale)
-      canvas.height = Math.round(img.height * scale)
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        URL.revokeObjectURL(url)
-        reject(new Error('canvas'))
-        return
-      }
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      URL.revokeObjectURL(url)
-      resolve(canvas.toDataURL('image/jpeg', 0.8))
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('image'))
-    }
-    img.src = url
-  })
-}
-
 const DIET_GOAL = { kcal: 2300, protein: 72, fat: 70, carb: 316 }
 
 function MacroBar({ label, value, goal, color }: { label: string; value: number; goal: number; color: string }) {
@@ -428,9 +401,9 @@ function DietBody({ period, date, autoStart = false }: { period: Period; date: D
         <div className="diet-bar" aria-hidden><i style={{ width: `${Math.min(100, (kcal / (DIET_GOAL.kcal * scale)) * 100)}%` }} /></div>
         <div className="diet-bar-labels"><b>{kcal.toLocaleString('ko-KR')}kcal</b><span>{(DIET_GOAL.kcal * scale).toLocaleString('ko-KR')}kcal</span></div>
         <div className="diet-macros">
-          <MacroBar label="단백질" value={macro.protein} goal={DIET_GOAL.protein * scale} color="#E4605A" />
-          <MacroBar label="지방" value={macro.fat} goal={DIET_GOAL.fat * scale} color="#E9C34A" />
-          <MacroBar label="탄수화물" value={macro.carb} goal={DIET_GOAL.carb * scale} color="#8BC34A" />
+          <MacroBar label="단백질" value={macro.protein} goal={DIET_GOAL.protein * scale} color="#EE8C84" />
+          <MacroBar label="지방" value={macro.fat} goal={DIET_GOAL.fat * scale} color="#EECB55" />
+          <MacroBar label="탄수화물" value={macro.carb} goal={DIET_GOAL.carb * scale} color="#93CF7F" />
         </div>
       </div>
 
