@@ -583,7 +583,7 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
         <p className="elder-mission-say">지금 받을 수 있는 포인트 <b>{formatClaimP(readySum)}</b></p>
       ) : doneCount > 0 ? (
         // 받을 수 있는 건 다 받았고, 남은 미션은 아직 조건 전 (조건은 각 카드·포인트 Tip에)
-        <p className="elder-mission-say"><b>받을 수 있는 포인트를 모두 받았어요</b></p>
+        <p className="elder-mission-say"><b>지금 받을 수 있는 포인트는 다 받았어요</b></p>
       ) : (
         // 아직 아무것도 받지 않았고 받을 것도 없으면: 남은 미션 수와 금액
         <p className="elder-mission-say">

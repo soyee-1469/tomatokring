@@ -14606,3 +14606,4 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rv-tick-row:not(.solo) .grade-ticks { flex: 0 1 152px; }
 .rv-tick-list > span > em { min-width: 54px; }
 @media (max-width: 340px) { .rv-tick-row:not(.solo) { gap: 10px; } }
+.elder-mission-say { word-break: keep-all; text-wrap: balance; } /* 좁은 화면에서 낱말 단위·고르게 줄바꿈 */
