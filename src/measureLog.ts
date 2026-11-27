@@ -1,4 +1,5 @@
 import {getSession, type AutoMeasureMode, type AutoMeasureKind} from './session'
+import { dateKey, sameDay } from './dates'
 
 export type LiveMetricId = 'hr' | 'hrv' | 'spo2' | 'temp' | 'stress'
 export type LogMode = 'auto' | 'manual'
@@ -25,9 +26,6 @@ function pad2(n: number) {
 }
 function hhmmss(min: number, sec = 0) {
   return `${pad2(Math.floor(min / 60))}:${pad2(min % 60)}:${pad2(sec)}`
-}
-function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
 /** 오늘 스트레스를 직접 측정한 뒤에만 채워지는 기록. 측정 전에는 비어 있다. */
@@ -58,12 +56,12 @@ export function formatLogValue(metric: LiveMetricId, v: number) {
 export function dayLog(metric: LiveMetricId, date: Date): LogRow[] {
   const b = BASE[metric]
   const now = new Date()
-  const today = isSameDay(date, now)
+  const today = sameDay(date, now)
   if (metric === 'stress') {
     if (today) {
       // 반지가 자동으로 잰 값(지금 시각까지) + 사용자가 직접 잰 값(stressExtra). 정책: 스트레스는 자동 측정 + 원할 때 직접 측정
       const ses = getSession()
-      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const key = dateKey(now)
       const nowMin = now.getHours() * 60 + now.getMinutes()
       const extra = (ses.stressExtra?.[key] ?? []).map((e, i) => ({ id: `x-${i}`, time: e.time, value: e.value, mode: 'manual' as const }))
       const base = STRESS_DAY_POINTS.filter((pt) => Math.round(pt.h * 60) <= nowMin).map((pt) => ({ id: `a-${pt.h}`, time: hhmmss(Math.round(pt.h * 60)), value: pt.v, mode: 'auto' as const }))

@@ -1,17 +1,5 @@
 import { useEffect, useRef } from 'react'
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
-export function startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-}
-export function addDays(d: Date, n: number) {
-  const x = startOfDay(d)
-  x.setDate(x.getDate() + n)
-  return x
-}
-export function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
+import { addDays, sameDay, WEEKDAYS } from '../dates'
 
 /** 보여줄 과거 일수 (오늘 포함) */
 const DAYS_BACK = 60

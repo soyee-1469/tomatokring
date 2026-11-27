@@ -10,7 +10,8 @@ import { useScrub } from '../components/useScrub'
 import { dayLabel, pickIndex, RhythmWeekBars } from '../components/RhythmWeekBars'
 import { useSession } from '../useSession'
 import { hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, validDayCount } from '../session'
-import { addDays, dayBundle, daySeed, recentAvg7, sameDay, startOfDay, type DayMetric } from '../rhythm'
+import { dayBundle, daySeed, recentAvg7, type DayMetric } from '../rhythm'
+import { addDays, sameDay, startOfDay } from '../dates'
 
 function MetricRow({
   metric,

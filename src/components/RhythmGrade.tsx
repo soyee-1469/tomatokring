@@ -26,28 +26,6 @@ export function rainbowAt(v: number) {
   return `#${mix(r1, r2)}${mix(g1, g2)}${mix(b1, b2)}`
 }
 
-/** 무지개 눈금 (바디 리듬 상세 첫 카드, 날짜 하나): 0~100을 등급 구간 길이대로 5칸, 지금 점수 자리에 표시. 지금 등급 이름만 진하게 */
-export function GradeScale({ score }: { score: number }) {
-  const s = Math.min(100, Math.max(0, score))
-  const cur = gradeOf(s)
-  return (
-    <div className="grade-scale" aria-label={`0~100 중 ${s}점, ${cur.label}`}>
-      <div className="grade-scale-bar">
-        {GRADE_BANDS.map((b) => (
-          // 칸마다 시작~끝 위치의 무지개 색으로 그라데이션 (끊기지 않고 이어져 보이게)
-          <i key={b.label} style={{ flex: Math.min(100, b.to) - b.from, background: `linear-gradient(90deg, ${rainbowAt(b.from)}, ${rainbowAt(Math.min(100, b.to))})` }} />
-        ))}
-        <span className="grade-scale-mark" style={{ left: `${s}%`, borderColor: cur.color }} />
-      </div>
-      <div className="grade-scale-labels">
-        {GRADE_BANDS.map((b) => (
-          <em key={b.label} style={{ flex: Math.min(100, b.to) - b.from }} className={b.label === cur.label ? 'on' : ''}>{b.label}</em>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 /** 눈금 반원 게이지 (홈 오늘의 상태): 가는 눈금 41개로 된 반원. 0점부터 오늘 점수까지의 눈금만 그 구간의 무지개 색, 나머지는 연회색.
  *  가운데에 점수(덜 굵게) + 등급 이름 */
 export function GradeTicks({ score, width = 168, center }: { score: number; width?: number;

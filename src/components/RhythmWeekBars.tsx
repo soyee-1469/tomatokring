@@ -1,10 +1,8 @@
 import { useScrub } from './useScrub'
 import { useId } from 'react'
 import { gradeColor } from './RhythmGrade'
-import { addDays, dayBundle, GRADE_BANDS, sameDay, startOfDay } from '../rhythm'
-
-/** 바디 리듬 최근 7일 막대 — 홈 배너 카드와 상세 화면이 같은 그림을 쓴다 */
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
+import { dayBundle, GRADE_BANDS } from '../rhythm'
+import { addDays, sameDay, startOfDay, WEEKDAYS } from '../dates'
 
 /** 고른 칸 번호: 누르지 않았으면 마지막(오늘·고른 날), 누르면 그 위치의 칸 */
 export function pickIndex(pos: number | null, w: number, padL: number, slot: number, n = 7) {

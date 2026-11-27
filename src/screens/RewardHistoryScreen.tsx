@@ -21,22 +21,8 @@ import inviteBg from '../assets/reward/invite-bg.svg'
 import inviteFg from '../assets/reward/invite-fg.svg'
 import vitalingBg from '../assets/reward/vitaling-bg.svg'
 import vitalingFg from '../assets/reward/vitaling-fg.svg'
-
-export type RewardSource = 'vitaling' | 'game' | 'attend' | 'invite' | 'exchange'
 export type RewardFilter = 'all' | 'vitaling' | 'game' | 'attend' | 'invite'
 export type PayType = 'all' | 'point' | 'tott'
-
-type Activity = {
-  id: string
-  source: RewardSource
-  title: string
-  date: string
-  sub?: string
-  /** 포인트 변동 (없으면 null) */
-  point?: number
-  /** TOTT 변동 (없으면 null) */
-  tott?: number
-}
 
 export const REWARD_FILTERS: { id: RewardFilter; label: string }[] = [
   { id: 'all', label: '전체' },
@@ -52,30 +38,6 @@ const PAY_TYPE_OPTIONS: { id: PayType; label: string }[] = [
   { id: 'tott', label: 'TOTT' },
 ]
 
-/** 시안 잔액 — 교환 미충족(진행률 UX) 데모 */
-export const BALANCES = {
-  pointAvailable: 320_000,
-  pointLifetime: 1_250_000,
-  tottHeld: 3.5,
-  tottLifetime: 12.5,
-}
-
-/** 1 TOTT = 1,000,000P (월 29,000,000P = 29 TOTT 정책 기준) */
-export const P_PER_TOTT = 1_000_000
-export const MIN_P_TO_EXCHANGE = 1_000_000
-
-/** 교환 가능 여부 · 진행률 */
-export function getExchangeStatus(pointAvailable = BALANCES.pointAvailable) {
-  const canExchange = pointAvailable >= MIN_P_TO_EXCHANGE
-  const maxTott = canExchange ? Math.floor(pointAvailable / P_PER_TOTT) : 0
-  const progress = Math.min(100, Math.round((pointAvailable / MIN_P_TO_EXCHANGE) * 100))
-  const remain = Math.max(0, MIN_P_TO_EXCHANGE - pointAvailable)
-  /** 임계 도달 시 받을 수 있는 TOTT (1,000,000P = 1) */
-  const unlockTott = Math.floor(MIN_P_TO_EXCHANGE / P_PER_TOTT)
-  return { canExchange, maxTott, progress, remain, unlockTott }
-}
-
-
 /** '25-10-11' / '2026.08.04' → '2025년 10월 11일' (올해는 연도 생략) */
 function fmtHistDate(raw: string) {
   const m = /^(\d{2,4})[-.](\d{1,2})[-.](\d{1,2})$/.exec(raw)
@@ -88,96 +50,6 @@ function fmtHistDate(raw: string) {
 function formatP(n: number) {
   return n.toLocaleString('ko-KR')
 }
-
-/** 통합 내역 — 발생 경로 + 지급 형태 */
-export const ACTIVITIES: Activity[] = [
-  {
-    id: 'a1',
-    source: 'invite',
-    title: '친구 초대 이벤트',
-    date: '2026.08.04',
-    sub: '30명 달성 보상',
-    point: 2_000_000,
-  },
-  {
-    id: 'a2',
-    source: 'game',
-    title: '토마콩즈 참여 보상',
-    date: '2026.08.04',
-    point: 1_000,
-  },
-  {
-    id: 'a3',
-    source: 'invite',
-    title: '친구 추천 보상',
-    date: '2026.08.04',
-    sub: 'Anna님 추천코드 입력',
-    tott: 0.5,
-  },
-  {
-    id: 'a4',
-    source: 'vitaling',
-    title: '스트레스 측정 보상',
-    date: '2026.08.04',
-    sub: '스트레스 24점 (30점 이하)',
-    point: 200_000,
-  },
-  {
-    id: 'a5',
-    source: 'exchange',
-    title: '포인트를 TOTT로 교환',
-    date: '2026.08.04',
-    sub: '1,000,000P = 1 TOTT',
-    point: -4_000_000,
-    tott: 4,
-  },
-  {
-    id: 'a6',
-    source: 'attend',
-    title: '출석 체크 보상',
-    date: '2026.08.03',
-    sub: '7일 연속 출석',
-    point: 1_000,
-  },
-  {
-    id: 'a7',
-    source: 'vitaling',
-    title: '수면 기록 보상',
-    date: '2026.08.03',
-    point: 3_000,
-  },
-  {
-    id: 'a8',
-    source: 'vitaling',
-    title: '착용 연속 보상',
-    date: '2026.08.02',
-    sub: '7일 착용',
-    point: 5_000,
-  },
-  {
-    id: 'a9',
-    source: 'game',
-    title: '게임 참여 보상',
-    date: '2026.08.01',
-    sub: '데일리 플레이',
-    point: 10_000,
-  },
-  {
-    id: 'a10',
-    source: 'vitaling',
-    title: 't.ring 연동 보상',
-    date: '2026.07.20',
-    tott: 0.2,
-  },
-  {
-    id: 'a11',
-    source: 'invite',
-    title: '친구 추천 보상',
-    date: '2026.03.19',
-    sub: 'Soorim님 추천코드 입력',
-    tott: 0.5,
-  },
-]
 
 function parseSource(raw: string | null): RewardFilter {
   if (raw === 'vitaling' || raw === 'game' || raw === 'attend' || raw === 'invite') return raw

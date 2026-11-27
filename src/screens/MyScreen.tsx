@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addDays, dateKey } from '../dates'
 import { X } from '@phosphor-icons/react'
 import { Header, Phone, PrimaryButton } from '../components/ui'
 import { Ri } from '../components/Ri'
@@ -72,18 +73,9 @@ export function MyScreen() {
 
 /** 복원 가능한 최대 기간: 오늘 포함 73일 (실제 앱 기준, 예: 11월 18일이면 9월 7일부터) */
 const RESTORE_MAX_DAYS = 73
-
-function toKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 function fromKey(k: string) {
   const [y, m, d] = k.split('-').map(Number)
   return new Date(y, m - 1, d)
-}
-function addDays(d: Date, n: number) {
-  const x = new Date(d)
-  x.setDate(x.getDate() + n)
-  return x
 }
 function fmtK(k: string) {
   const d = fromKey(k)
@@ -98,8 +90,8 @@ type RestorePeriod = 7 | 14 | 30 | 'custom'
  */
 function RestoreSheet({ onClose }: { onClose: () => void }) {
   const today = new Date()
-  const todayKey = toKey(today)
-  const minKey = toKey(addDays(today, -(RESTORE_MAX_DAYS - 1)))
+  const todayKey = dateKey(today)
+  const minKey = dateKey(addDays(today, -(RESTORE_MAX_DAYS - 1)))
   const [step, setStep] = useState<'period' | 'running' | 'done'>('period')
   const [period, setPeriod] = useState<RestorePeriod>(7)
   const [start, setStart] = useState(minKey)
@@ -108,7 +100,7 @@ function RestoreSheet({ onClose }: { onClose: () => void }) {
 
   const range = period === 'custom'
     ? { from: start, to: end }
-    : { from: toKey(addDays(today, -(period - 1))), to: todayKey }
+    : { from: dateKey(addDays(today, -(period - 1))), to: todayKey }
   const dayCount = Math.max(0, Math.round((fromKey(range.to).getTime() - fromKey(range.from).getTime()) / 86_400_000) + 1)
   const customValid = period !== 'custom' || (start >= minKey && end <= todayKey && start <= end)
 

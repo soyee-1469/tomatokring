@@ -7,6 +7,7 @@ import { Header, Phone } from '../components/ui'
 import { type MeasureKind } from '../session'
 import { Ri } from '../components/Ri'
 import { METRIC_STYLE } from '../metricStyle'
+import { dateKey } from '../dates'
 
 type HistoryRow = {
   id: string
@@ -118,12 +119,12 @@ function LiveLogHistory({ metric, initialDate }: { metric: LiveMetricId; initial
   const rows = dayLog(metric, date)
   const autoCount = rows.filter((r) => r.mode === 'auto').length
   const manualCount = rows.length - autoCount
-  const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  const dayKey = dateKey(date)
   return (
     <div className="stage">
       <Phone>
         <div className="screen elder-home">
-          <Header title={`${LIVE_TITLES[metric]} 전체 기록`} backTo={`/vitaling/measure/stress?m=${metric}&d=${dateKey}`} />
+          <Header title={`${LIVE_TITLES[metric]} 전체 기록`} backTo={`/vitaling/measure/stress?m=${metric}&d=${dayKey}`} />
           <DateBar period="day" date={date} onDate={setDate} />
           <div className="scroll elder-body">
             <div className="elder-sleep-card ms-hist-card">

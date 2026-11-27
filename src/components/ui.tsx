@@ -7,41 +7,6 @@ import {
 } from '@phosphor-icons/react'
 import { useId, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Ri } from './Ri'
-
-export type NavTab = 'friends' | 'chat' | 'wallet' | 'service' | 'more'
-
-export function BottomNav({ active = 'service' }: { active?: NavTab }) {
-  const navigate = useNavigate()
-  const tabs: { id: NavTab; label: string; icon: string; badge?: string; to?: string; fab?: boolean }[] = [
-    { id: 'friends', label: '친구', icon: 'user-3' },
-    { id: 'chat', label: '대화', icon: 'chat-3', badge: '88' },
-    { id: 'wallet', label: '지갑', icon: 'wallet-3', fab: true, to: '/wallet' },
-    { id: 'more', label: '더보기', icon: 'more' },
-  ]
-
-  return (
-    <nav className="bottom-nav" aria-label="메인 메뉴">
-      {tabs.map((tab) => {
-        const isOn = active === tab.id
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            className={`bottom-nav-item ${isOn ? 'on' : ''} ${tab.fab ? 'fab' : ''}`}
-            onClick={() => tab.to && navigate(tab.to)}
-          >
-            <span className={`nav-icon-wrap ${tab.fab ? 'fab-wrap' : ''}`}>
-              <Ri name={tab.icon} fill={tab.fab || isOn} size={tab.fab ? 26 : 24} />
-              {tab.badge && <span className="nav-badge">{tab.badge}</span>}
-            </span>
-            <span className="nav-label">{tab.label}</span>
-          </button>
-        )
-      })}
-    </nav>
-  )
-}
 
 export function Phone({
   children,
@@ -105,30 +70,6 @@ export function PrimaryButton({
     <button type="button" className="btn btn-primary" disabled={disabled} onClick={onClick}>
       {children}
     </button>
-  )
-}
-
-export function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  unit,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  placeholder?: string
-  unit?: string
-}) {
-  return (
-    <InputComponent
-      label={label}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      trailing={unit ? <span className="input-unit">{unit}</span> : undefined}
-    />
   )
 }
 
@@ -203,12 +144,6 @@ export function InputComponent({
         <p className={`toma-helper ${error ? 'err' : ''}`}>{error || helper}</p>
       )}
     </div>
-  )
-}
-
-export function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button type="button" className={`toggle ${on ? 'on' : ''}`} aria-pressed={on} onClick={onToggle} />
   )
 }
 

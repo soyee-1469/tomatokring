@@ -1,18 +1,5 @@
 import { METRIC_STYLE } from './metricStyle'
-
-/** 바디 리듬 점수·등급의 단일 소스. 홈과 상세가 같은 날 같은 값을 쓴다. */
-
-export function startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-}
-export function addDays(d: Date, n: number) {
-  const x = startOfDay(d)
-  x.setDate(x.getDate() + n)
-  return x
-}
-export function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
+import { addDays, startOfDay } from './dates'
 /** 날짜 → 안정적인 샘플 시드 (같은 날은 항상 같은 값) */
 export function daySeed(d: Date) {
   return Math.round(startOfDay(d).getTime() / 86_400_000)
@@ -31,7 +18,6 @@ export type DayMetric = {
   icon: string
   to: string
 }
-
 
 export function dayBundle(date: Date) {
   const seed = daySeed(date)
@@ -116,8 +102,6 @@ export function dayBundle(date: Date) {
   const prev = Math.round(score + ((dayIndex % 3) - 1) * 4)
   return { score, prev, metrics }
 }
-
-
 
 /** 지난 7일(어제부터 7일 전까지) 중 기록이 있는 날의 바디 리듬 평균. 기록이 하루도 없으면 null.
  *  홈 '오늘의 상태'와 바디 리듬 상세가 같은 값을 쓴다 (2026-11-27: 28일 → 7일, 기록 없는 날 제외) */

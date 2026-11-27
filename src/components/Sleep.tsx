@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { SLEEP_COLORS } from '../palette'
 import { useScrub } from './useScrub'
+import { clockMinutes } from '../dates'
 
 /** 수면 단계 색 — 보라 한 색의 농담 4단계 (홈·상세 공통) */
 export const SLEEP_TONES = SLEEP_COLORS.stages
@@ -52,12 +53,6 @@ const JOIN_COLOR = '#DCCFFB'
 
 /** 단계별 층 (위→아래: 깸·렘·얕은·깊은) — 하이프노그램 세로 위치 */
 const HYPNO_LANES: readonly SleepStage[] = ['awake', 'rem', 'light', 'deep']
-
-/** 밤새 수면 단계 흐름 (브링 수면 화면과 같은 하이프노그램): 단계별 층에 가로 띠를 시간순으로 놓고 얇은 세로선으로 잇는다.
- *  SVG는 담긴 칸 폭에 맞춰 가로로만 늘어남(preserveAspectRatio none) — 선 굵기는 non-scaling-stroke 로 고정.
- *  detail=true 면 층 사이 연한 가로 눈금·바닥선을 함께 그린다 (상세 카드용). 홈 카드는 36px 띠만 */
-/** 'HH:MM' → 분 */
-function clockMinutes(t: string) { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 function clockLabel(min: number) {
   const m = ((Math.round(min) % 1440) + 1440) % 1440
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
@@ -123,27 +118,6 @@ export function SleepHypnogram({ segments, height = 36, detail = false, classNam
         </div>
       )}
       {chart}
-    </div>
-  )
-}
-
-export function SleepTimeline({ start, end, segments, legend = true }: { start: string; end: string; segments: readonly SleepSegment[]; legend?: boolean }) {
-  const total = segments.reduce((a, s) => a + s.min, 0)
-  return (
-    <div className="sleep-timeline" aria-label={`지난밤 수면 ${start}부터 ${end}까지`}>
-      <div className="sleep-timeline-bar">
-        {segments.map((s, i) => (
-          <span key={i} className={`st-${s.stage}`} style={{ flex: s.min / total, background: SLEEP_TONES[s.stage] }} />
-        ))}
-      </div>
-      <div className="sleep-timeline-axis"><span>{start} 취침</span><span>{end} 기상</span></div>
-      {legend && (
-        <ul className="sleep-timeline-legend">
-          {SLEEP_STAGE_ORDER.map((st) => (
-            <li key={st.stage}><i style={{ background: SLEEP_TONES[st.stage] }} />{st.name}</li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

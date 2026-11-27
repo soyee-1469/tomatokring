@@ -1,5 +1,5 @@
 import { CaretRight, Info, X } from '@phosphor-icons/react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 const ROWS: [string, string][] = [
@@ -103,17 +103,6 @@ export function AccuracySheet({
     host,
   )
 }
-
-export function WithInfoTitle({ children, title }: { children?: ReactNode; title: string }) {
-  return (
-    <div className="with-info-title">
-      <span>{title}</span>
-      <AccuracyInfoButton />
-      {children}
-    </div>
-  )
-}
-
 
 /* ===== 지표별 정보(i) 안내 — 브링 앱의 정보 팝업 구성(지표 설명 → 기록이 없을 때 확인 → 면책)을 우리 스타일로 ===== */
 export type MetricInfoKey = 'stress' | 'hr' | 'hrv' | 'spo2' | 'temp' | 'sleep' | 'diet' | 'walk' | 'health' | 'survey'

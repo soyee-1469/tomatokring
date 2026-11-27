@@ -1,4 +1,5 @@
 import { MetricInfoButton } from '../components/AccuracyInfo'
+import { dateKey, sameDay, WEEKDAYS } from '../dates'
 import {
   CalendarBlank,
   CaretDown,
@@ -31,8 +32,6 @@ type RecentRow = {
   today?: boolean
 }
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 const LIVE_METRICS = [
   { id: 'hr', label: '심박수', avg: '68', unit: 'bpm', min: '58', mean: '68', max: '92', zone: '심박수 구간' },
   { id: 'hrv', label: '심박변이도', avg: '32', unit: 'ms', min: '28', mean: '32', max: '48', zone: '심박변이도 구간' },
@@ -40,8 +39,6 @@ const LIVE_METRICS = [
   { id: 'spo2', label: '혈중 산소', avg: '97', unit: '%', min: '94', mean: '97', max: '99', zone: '혈중 산소 구간' },
   { id: 'stress', label: '스트레스', avg: '1', unit: '점', min: '1', mean: '3', max: '8', zone: '스트레스 구간' },
 ] as const
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 /** 오늘 0시 (홈·상세 공통 날짜 기준) */
 export function todayStart() {
   const d = new Date()
@@ -64,9 +61,8 @@ export function dayLabelOf(d: Date) {
 export function recentDate(ago: number) {
   const d = todayStart()
   d.setDate(d.getDate() - ago)
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${WEEKDAY_KO[d.getDay()]}`
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${WEEKDAYS[d.getDay()]}`
 }
-
 
 const RHYTHM_TILES = [
   { label: '회복', value: '80', unit: '점', color: '#2F80ED' },
@@ -290,7 +286,6 @@ function MeasureNow({
     </button>
   )
 }
-
 
 function LiveBody({
   onHistory,
@@ -554,11 +549,6 @@ function WalkChart({ mode, bars, cum, latest, goal, picked, onPick, labels, bw }
   )
 }
 
-/** 기간별 걸음 칸: 오늘 = 시간별, 이번 주 = 월~일, 이번 달 = 1일~말일 (각 칸의 날짜도 같이) */
-function sameDayLocal(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
-
 function walkSeries(period: Period, date: Date) {
   if (period === 'day') {
     // 고른 날짜의 시간대별 걸음 (오늘이 아니면 그날 기록)
@@ -609,7 +599,7 @@ function WalkBody({ period, date, autoStart = false }: { period: Period; date: D
   // 탭·날짜를 바꾸면 누른 칸은 푼다. 바뀐 첫 그림에서도 이전 칸 번호로 새 배열을 읽지 않게 범위를 바로 확인
   useEffect(() => { setPicked(null) }, [period, date])
   const picked = pickedRaw !== null && pickedRaw <= latest && pickedRaw < bars.length ? pickedRaw : null
-  const isToday = sameDayLocal(date, new Date())
+  const isToday = sameDay(date, new Date())
   const values = mode === 'each' ? bars : cum
   const unitName = period === 'day' ? '시간별' : '일별'
   const pickLabel = (i: number) => (dates ? `${dates[i].getMonth() + 1}월 ${dates[i].getDate()}일` : `${date.getMonth() + 1}월 ${date.getDate()}일 ${i}시`)
@@ -701,8 +691,8 @@ export function MeasureScreen() {
   if (kind === 'sleep') return <Navigate to="/vitaling/sleep" replace />
   if (kind === 'survey') return <Navigate to="/vitaling/survey" replace />
 
-  const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-  const historyTo = kind === 'stress' ? `/vitaling/measure/stress/history?m=${liveMetric}&d=${dateKey}` : `/vitaling/measure/${kind}/history`
+  const dayKey = dateKey(date)
+  const historyTo = kind === 'stress' ? `/vitaling/measure/stress/history?m=${liveMetric}&d=${dayKey}` : `/vitaling/measure/${kind}/history`
 
   return (
     <div className="stage">

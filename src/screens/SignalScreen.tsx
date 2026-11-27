@@ -1,6 +1,7 @@
 import { Info } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { WEEKDAYS } from '../dates'
 import { Header, Phone, PrimaryButton } from '../components/ui'
 import { Ri } from '../components/Ri'
 import { CONDITION_OPTIONS } from '../screens'
@@ -35,10 +36,8 @@ const SIGNAL_SAMPLE: Record<Exclude<SignalState, 'collecting'>, { say: string; d
 }
 const COLLECTED_DAYS = 11
 
-
 /** 최근 4주 달력 — 깃허브 잔디처럼 날짜마다 작은 네모 하나. 파랑 평소 · 토마토 평소와 다름 · 회색 기록 없음 */
 type DayState = 'ok' | 'bad' | 'none'
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 function SignalCalendar({ bad, none }: { bad: readonly number[]; none: readonly number[] }) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Ri } from '../components/Ri'
-import { addDays, sameDay, startOfDay } from '../components/WeekStrip'
+import { addDays, clockMinutes, sameDay, startOfDay, WEEKDAYS } from '../dates'
 import { DateLine } from '../components/DateLine'
 import { TrendBars } from '../components/TrendBars'
 import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measureLog'
@@ -53,8 +53,6 @@ const SPEC: Record<LiveMetricId, Spec> = {
   stress: { color: METRIC_STYLE.stress.color, trendMax: 100, label: '스트레스', unit: '점', digits: 0, normal: [0, 40], yMin: 0, yMax: 100, zoneUnit: '%', zones: [
     { label: '매우 낮음', color: '#50B83D', test: (v) => v < 21 }, { label: '낮음', color: '#A8D45A', test: (v) => v >= 21 && v < 41 }, { label: '보통', color: '#E9C34A', test: (v) => v >= 41 && v < 61 }, { label: '높음', color: '#F2994A', test: (v) => v >= 61 && v < 81 }, { label: '매우 높음', color: '#E4605A', test: (v) => v >= 81 } ] },
 }
-
-function minutesOf(t: string) { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 const fmt = (v: number, d: number) => v.toFixed(d)
 
 /** 오늘 값을 사실로만 두 줄: ① 정상 범위(또는 구간) 안인지 ② 지난 7일 평균과 차이. 해석·조언은 넣지 않는다 (2026-11-27) */
@@ -107,7 +105,7 @@ function DayBars({ metric, rows }: { metric: LiveMetricId; rows: LogRow[] }) {
   const y = (v: number) => padT + (H - padT - padB) * (1 - (Math.min(hi, Math.max(lo, v)) - lo) / Math.max(1, hi - lo))
   const hourly = useMemo(() => {
     const m = new Map<number, number[]>()
-    rows.forEach((r) => { const h = Math.floor(minutesOf(r.time) / 60); m.set(h, [...(m.get(h) ?? []), r.value]) })
+    rows.forEach((r) => { const h = Math.floor(clockMinutes(r.time) / 60); m.set(h, [...(m.get(h) ?? []), r.value]) })
     return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([h, vs]) => ({ h, mean: vs.reduce((a, b) => a + b, 0) / vs.length, min: Math.min(...vs), max: Math.max(...vs) }))
   }, [rows])
   const mean = rows.length ? rows.reduce((a, r) => a + r.value, 0) / rows.length : null
@@ -183,11 +181,10 @@ export function VitalDayBodyV2({
   }, [metric, date])
   const say = has ? interpret(metric, isToday ? latest : mean, usual, isToday) : null
   const week = useMemo(() => {
-    const WD = ['일', '월', '화', '수', '목', '금', '토']
     const days = Array.from({ length: 7 }, (_, i) => addDays(date, i - 6))
     return {
       values: days.map((d) => { const rs = dayLog(metric, d); return rs.length ? rs.reduce((a, r) => a + r.value, 0) / rs.length : 0 }),
-      labels: days.map((d, i) => (i === 6 && isToday ? '오늘' : WD[d.getDay()])),
+      labels: days.map((d, i) => (i === 6 && isToday ? '오늘' : WEEKDAYS[d.getDay()])),
     }
   }, [metric, date, isToday, session.autoMeasure, session.doneDates])
   const month = useMemo(() => {

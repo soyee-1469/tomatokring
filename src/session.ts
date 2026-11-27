@@ -152,7 +152,6 @@ export function subscribeSession(listener: () => void) {
   return () => listeners.delete(listener)
 }
 
-
 export function completeOnboarding(phone: string) {
   write({ ...read(), onboarded: true, phone })
 }
@@ -164,10 +163,6 @@ export function pairRing(serial: string) {
 
 export function unpairRing() {
   write({ ...read(), paired: false, serial: null, vitalId: null })
-}
-
-export function markMeasuredToday() {
-  write({ ...read(), measuredToday: true })
 }
 
 export function markMeasureDone(kind: MeasureKind) {
@@ -290,23 +285,6 @@ export function isClaimed(session: VitalingSession, kind: MeasureKind) {
   return session.claimedDates?.[kind] === periodKey(kind)
 }
 
-export function clearMeasureDone(kind: MeasureKind) {
-  const cur = read()
-  const nextDone = { ...cur.doneMeasures }
-  delete nextDone[kind]
-  const nextDates = { ...cur.doneDates }
-  delete nextDates[kind]
-  const nextClaimed = { ...cur.claimedDates }
-  delete nextClaimed[kind]
-  write({
-    ...cur,
-    measuredToday: kind === 'health' ? false : cur.measuredToday,
-    doneMeasures: nextDone,
-    doneDates: nextDates,
-    claimedDates: nextClaimed,
-  })
-}
-
 export function setBatteryDemo(v: BatteryDemo) {
   write({ ...read(), batteryDemo: v })
 }
@@ -324,10 +302,6 @@ export function setConditionCheck(answer: ConditionAnswer | null) {
 }
 export function todayCondition(session: VitalingSession): ConditionAnswer | null {
   return session.conditionChecks?.[periodKey('stress')] ?? null
-}
-
-export function resetSession() {
-  write({ ...defaultSession })
 }
 
 /** e.g. VRing-A9C3004 → VRing-A9C3**** */

@@ -42,9 +42,8 @@ import {
 } from './palette'
 import { TERMS_DOCS, TERMS_LIST, type TermsDocId } from './termsDocs'
 import { useSession } from './useSession'
-
-
-
+import { addDays, startOfDay, WEEKDAYS } from './dates'
+import { formatP } from './components/ClaimBanner'
 
 export function TermsScreen() {
   const navigate = useNavigate()
@@ -136,8 +135,6 @@ export function TermsScreen() {
     </div>
   )
 }
-
-
 
 export function PairScreen() {
   const navigate = useNavigate()
@@ -255,20 +252,8 @@ export function PairScreen() {
 /** 홈 기준 '오늘' = 실제 오늘 (측정·보상 상태 처리와 같은 날짜 기준) */
 const HOME_TODAY = startOfDay(new Date())
 
-const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-function startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-}
-
-function addDays(d: Date, n: number) {
-  const x = startOfDay(d)
-  x.setDate(x.getDate() + n)
-  return x
-}
-
 function formatHomeDate(d: Date) {
-  const wd = WEEKDAYS_KO[d.getDay()]
+  const wd = WEEKDAYS[d.getDay()]
   return `${d.getMonth() + 1}월 ${d.getDate()}일 ${wd}요일`
 }
 
@@ -506,17 +491,13 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
   )
 }
 
-
-
 /** 군더더기 없는 7일 막대: 오늘만 진하게 + 값 말풍선 (참고 이미지 스타일) */
-
 
 /** 0~100 바디 리듬 점수 → 5단계 상태 (브링 활동 지수 기준: 나쁨·주의·보통·좋음·최상) */
 function statusFromScore(score: number) {
   const g = gradeOf(score)
   return { tone: g.tone, title: GRADE_COPY[g.label].short, level: g.label }
 }
-
 
 /** 포인트 지급 정책 (11/09 수정본 · 50~70대 기준) — 항목당 1일 1회, 설문은 월 1회 */
 // 지급 기준 수치(STRESS_REWARD_MAX·WALK_REWARD_STEPS)는 components/PointGuide.tsx — 안내 시트와 같은 값을 쓴다
@@ -537,9 +518,6 @@ function StatusTag({ tone, children }: { tone: 'ok' | 'mid' | 'low' | 'pending' 
     </span>
   )
 }
-function formatClaimP(points: number) {
-  return points % 10_000 === 0 ? `${(points / 10_000).toLocaleString('ko-KR')}만 P` : `${points.toLocaleString('ko-KR')} P`
-}
 
 /** 스트레스 지수 등급 — 낮을수록 좋음 */
 function stressLevel(score: number) {
@@ -549,8 +527,6 @@ function stressLevel(score: number) {
   if (score <= 80) return { label: '높음', tone: 'bad' as const }
   return { label: '매우 높음', tone: 'bad' as const }
 }
-
-
 
 /** 홈 맨 위 '오늘의 미션' 카드 — 토마톡 게임 탭의 미션 카드와 같은 형식(문장 + 도장 체크 5개 + n/5).
  *  토마톡 링만의 차별점(건강 확인 = 포인트)을 첫 화면에서, 메신저 쪽과 같은 모양으로 보여준다 */
@@ -576,18 +552,18 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
         <div className="elder-mission-done">
           <Ri name="checkbox-circle" fill size={22} />
           <b>미션을 모두 완료했어요</b>
-          <span>{formatClaimP(got)} 획득</span>
+          <span>{formatP(got)} 획득</span>
         </div>
       ) : readySum > 0 ? (
         // 지금 받을 수 있는 게 있으면: 금액만 알려 준다 (받기는 각 카드·도장에서)
-        <p className="elder-mission-say">지금 받을 수 있는 포인트 <b>{formatClaimP(readySum)}</b></p>
+        <p className="elder-mission-say">지금 받을 수 있는 포인트 <b>{formatP(readySum)}</b></p>
       ) : doneCount > 0 ? (
         // 받을 수 있는 건 다 받았고, 남은 미션은 아직 조건 전: 받은 개수 + 조건 전 항목 이름 (사실만)
         <p className="elder-mission-say"><b>{doneCount}개 받았어요</b> · {active.filter((it) => !claimed[it.kind]).map((it) => it.label).join('·')}{(() => { const n = active.filter((it) => !claimed[it.kind]).map((it) => it.label).join(''); const c = n.charCodeAt(n.length - 1); return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0 ? '은' : '는' })()} 아직 조건 전이에요</p>
       ) : (
         // 아직 아무것도 받지 않았고 받을 것도 없으면: 남은 미션 수와 금액
         <p className="elder-mission-say">
-          {leftCount}개만 더 하면 <b>{formatClaimP(left)} 획득</b>
+          {leftCount}개만 더 하면 <b>{formatP(left)} 획득</b>
         </p>
       )}
       <div className="elder-mission-row">
@@ -615,7 +591,6 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
     </section>
   )
 }
-
 
 /** 홈 '이상 징후' 카드 — 브링 판정이 '감지'인 날에만 홈에 나온다. 컨디션 체크(좋아요·보통·안 좋아요)를 받는다.
  *  토마토 연한 배경은 이 카드에만 쓴다 (홈에서 빨강 계열을 쓰는 유일한 자리). 평소와 비슷·준비 중 상태는 상세 화면에서만 본다 */
@@ -703,12 +678,11 @@ function RhythmBannerCard({ score, tiles, validDays, yesterdayRecorded, onOpen }
   )
 }
 
-
 type HomeProfile = (typeof TEAM_HOME)[keyof typeof TEAM_HOME]
 
 /** 오늘 기준 홈 데이터 (7일 창은 오늘로 끝남) */
 function homeDataFor(profile: HomeProfile) {
-  const labels = Array.from({ length: 7 }, (_, i) => WEEKDAYS_KO[addDays(HOME_TODAY, i - 6).getDay()])
+  const labels = Array.from({ length: 7 }, (_, i) => WEEKDAYS[addDays(HOME_TODAY, i - 6).getDay()])
   // 스트레스는 측정 기록이 생기기 전에는 오늘·이전 날 모두 비어 있다
   const stress = Array.from({ length: 7 }, () => 0)
   return {
@@ -787,18 +761,18 @@ function DietUploadCard({
         {claimed ? (
           <button type="button" className="elder-claim-btn done" disabled>
             <Ri name="checkbox-circle" fill size={16} />
-            <span>{formatClaimP(DIET_REWARD_P)} 획득</span>
+            <span>{formatP(DIET_REWARD_P)} 획득</span>
           </button>
         ) : measured ? (
           <button type="button" className="elder-claim-btn with-points" onClick={onClaim}>
             <Ri name="checkbox-circle" fill size={16} />
-            <span>{formatClaimP(DIET_REWARD_P)} 받기</span>
+            <span>{formatP(DIET_REWARD_P)} 받기</span>
           </button>
         ) : (
           // 사진 전: 버튼 하나로 '사진 올리기 + 받기' (식단 노랑). 사진을 올리면 초록 받기 버튼으로 바뀜
           <button type="button" className="elder-claim-btn diet-upload-btn" onClick={pick}>
             <Ri name="add" size={18} />
-            <span>사진 올리고 {formatClaimP(DIET_REWARD_P)} 받기</span>
+            <span>사진 올리고 {formatP(DIET_REWARD_P)} 받기</span>
           </button>
         )}
       </div>
@@ -814,7 +788,6 @@ const HOME_VITALS = [
   { id: 'temp', label: '피부 온도', value: 36.6, unit: '°C', icon: 'temp-hot', color: METRIC_STYLE.temp.color, soft: METRIC_STYLE.temp.soft, week: [36.4, 36.5, 36.6, 36.7, 36.5, 36.6, 36.6] },
   { id: 'hrv', label: '심박변이도', value: 42, unit: 'ms', icon: 'pulse', color: METRIC_STYLE.hrv.color, soft: METRIC_STYLE.hrv.soft, week: [40, 38, 45, 41, 44, 39, 42] },
 ] as const
-
 
 /** 상세 '하루 흐름'과 같은 기준의 홈 그래프 값: 0~23시 칸마다 그 시간 기록의 평균 (기록 없는 시간은 0 → Spark skipZero 로 건너뜀) */
 function hourlyMeans(rows: readonly { time: string; value: number }[]) {
@@ -1118,19 +1091,19 @@ export function HomeScreen() {
   const claimBtn = (kind: MissionCardKind, points: number) => (
     <button type="button" className="elder-claim-btn with-points" onClick={() => markClaimed(kind)}>
       <Ri name="checkbox-circle" fill size={16} />
-      <span>{formatClaimP(points)} 받기</span>
+      <span>{formatP(points)} 받기</span>
     </button>
   )
   /** 포인트가 걸린 카드는 버튼 자리를 늘 유지: 조건 전엔 회색 비활성, 받은 뒤엔 회색 '획득 완료' (카드 높이·줄이 흔들리지 않게) */
   const lockedBtn = (points: number) => (
     <button type="button" className="elder-claim-btn with-points locked" disabled>
-      <span>{formatClaimP(points)} 받기</span>
+      <span>{formatP(points)} 받기</span>
     </button>
   )
   const doneBtn = (points: number) => (
     <button type="button" className="elder-claim-btn done" disabled>
       <Ri name="checkbox-circle" fill size={16} />
-      <span>{formatClaimP(points)} 획득</span>
+      <span>{formatP(points)} 획득</span>
     </button>
   )
   /** 포인트 카드 버튼 한 자리: 받음 → 받을 수 있음 → 조건 전 */
@@ -1180,7 +1153,7 @@ export function HomeScreen() {
           stressShow ? <strong>{stressSel}<small>점</small><small className="st">{stressInfo.label}</small></strong> : <strong className="empty">기록 전</strong>,
           <>
             {/* 값 바로 아래: 포인트 받는 조건 (재는 동안만 '재는 중…') */}
-            {busyTile === 'stress' ? <span>재는 중…</span> : <span className="cond">{STRESS_REWARD_MAX}점<Ri name="arrow-down" size={12} aria-label="이하" /> {formatClaimP(STRESS_REWARD_P)}</span>}
+            {busyTile === 'stress' ? <span>재는 중…</span> : <span className="cond">{STRESS_REWARD_MAX}점<Ri name="arrow-down" size={12} aria-label="이하" /> {formatP(STRESS_REWARD_P)}</span>}
           </>,
           // 오늘 기록(자동+직접)의 흐름. 7일은 상세에서
           stressShow ? <DayFlowSpark rows={stressLog} color={METRIC_STYLE.stress.color} /> : null,
@@ -1195,7 +1168,7 @@ export function HomeScreen() {
           <strong>{stepsLabel}<small>걸음</small></strong>,
           <>
             {/* 값 바로 아래: 포인트 받는 조건 */}
-            <span className="cond">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음<Ri name="arrow-up" size={12} aria-label="이상" /> {formatClaimP(WALK_REWARD_P)}</span>
+            <span className="cond">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음<Ri name="arrow-up" size={12} aria-label="이상" /> {formatP(WALK_REWARD_P)}</span>
           </>,
           <HourBars values={STEPS_BY_HOUR} color={METRIC_STYLE.walk.color} />,
           () => goMeasure('walk'),
@@ -1208,7 +1181,7 @@ export function HomeScreen() {
           kind, '수면', 'moon',
           sleepShow ? <strong>{Math.floor(sleepH)}<small>시간</small> {Math.round((sleepH - Math.floor(sleepH)) * 60)}<small>분</small></strong> : <strong className="empty">기록 전</strong>,
           <>
-            <span>{`수면 기록 ${formatClaimP(SLEEP_REWARD_P)}`}</span>
+            <span>{`수면 기록 ${formatP(SLEEP_REWARD_P)}`}</span>
           </>,
           sleepShow ? <SleepHypnogram segments={SLEEP_LAST_NIGHT} height={36} className="home-vital-spark" /> : null,
           () => goMeasure('sleep'),
@@ -1221,7 +1194,7 @@ export function HomeScreen() {
           surveyMeasured ? <strong className="text">설문 완료</strong> : <strong className="empty">{SURVEY_OPEN ? '참여 전' : '준비 중'}</strong>,
           <>
             {/* 운영 전에는 상태만 (받을 수 없는 받기 버튼·금액은 숨김) */}
-            {(SURVEY_OPEN || surveyMeasured) && <span>{`설문 완료 ${formatClaimP(SURVEY_REWARD_P)}`}</span>}
+            {(SURVEY_OPEN || surveyMeasured) && <span>{`설문 완료 ${formatP(SURVEY_REWARD_P)}`}</span>}
           </>,
           null,
           () => goMeasure('survey'),
@@ -1433,10 +1406,6 @@ function VitalResultSheet({ row, onClose }: { row: ResultRow; onClose: () => voi
     </div>
   )
 }
-
-
-
-
 
 export function SettingsScreen() {
   const navigate = useNavigate()
@@ -1705,6 +1674,5 @@ export function HelpScreen() {
     </div>
   )
 }
-
 
 /** 이상 징후 상세 — 다음 단계에서 채움 (상태 히어로 · 5일 징후 변화 · 수면 중 지표 슬라이더 · 컨디션 체크) */
