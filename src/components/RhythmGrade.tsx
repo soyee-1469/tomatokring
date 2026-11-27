@@ -118,38 +118,37 @@ export function rhythmHeadline(score: number, prev: number | null, avg: number |
   return isToday ? `오늘 바디 리듬 ${score}점이에요` : `이 날 바디 리듬 ${score}점이었어요`
 }
 
-/** 기록 모으는 중 반원 (바디 리듬 준비 중): 반원을 total 칸으로 나눠 하루 = 한 칸. 모인 날은 진한 회색, 남은 날은 연한 회색.
- *  가운데에 n/7일 (점수 게이지와 같은 반원 모양이지만 칸 수가 날짜 수) */
+/** 기록 모으는 중 반원 (바디 리듬 준비 중): 점수 게이지와 같은 가는 눈금을 하루 단위로 묶어 total 묶음으로 (하루 = 눈금 5개 한 묶음, 묶음 사이 틈).
+ *  모인 날은 진한 회색, 남은 날은 연한 회색. 가운데에 n/7일 */
 export function DayArc({ days, total, width = 168, center }: { days: number; total: number; width?: number; center?: ReactNode }) {
-  const sw = 14
-  const r = (width - sw) / 2
+  const perDay = 5
+  const gapDeg = 9 // 하루 묶음 사이 틈(도)
   const cx = width / 2
-  const cy = r + sw / 2
-  const h = cy + sw / 2
-  const gapDeg = 4 // 칸 사이 틈(도)
-  const seg = (180 - gapDeg * (total - 1)) / total
-  const pt = (deg: number) => {
-    const a = (Math.PI * deg) / 180
-    return [cx - r * Math.cos(a), cy - r * Math.sin(a)] as const
-  }
+  const rOut = width / 2 - 2
+  const rIn = rOut - 14
+  const h = rOut + 6
+  const span = (180 - gapDeg * (total - 1)) / total // 하루 묶음이 차지하는 각도
+  const step = span / (perDay - 1)
   return (
     <div className="grade-ticks day-arc" style={{ width: '100%', maxWidth: width }}>
       <svg viewBox={`0 0 ${width} ${h}`} width="100%" style={{ height: 'auto' }} aria-label={`${total}일 중 ${days}일 기록`} role="img">
-        {Array.from({ length: total }, (_, i) => {
-          const from = i * (seg + gapDeg)
-          const [x1, y1] = pt(from)
-          const [x2, y2] = pt(from + seg)
-          return (
-            <path
-              key={i}
-              d={`M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`}
-              fill="none"
-              stroke={i < days ? '#A9B1BB' : '#E3E6EA'}
-              strokeWidth={sw}
-              strokeLinecap="butt"
-            />
-          )
-        })}
+        {Array.from({ length: total }, (_, d) =>
+          Array.from({ length: perDay }, (_, k) => {
+            const deg = d * (span + gapDeg) + k * step
+            const a = Math.PI * (1 - deg / 180)
+            return (
+              <line
+                key={`${d}-${k}`}
+                x1={cx + rIn * Math.cos(a)} y1={rOut + 2 - rIn * Math.sin(a)}
+                x2={cx + rOut * Math.cos(a)} y2={rOut + 2 - rOut * Math.sin(a)}
+                // 모인 날: 진한 회색, 남은 날: 연한 회색 (점수가 아니라 기록 진행이라 색을 쓰지 않음)
+                stroke={d < days ? '#A9B1BB' : '#E3E6EA'}
+                strokeWidth={3}
+                strokeLinecap="round"
+              />
+            )
+          }),
+        )}
       </svg>
       <span className="grade-ticks-center">{center}</span>
     </div>
