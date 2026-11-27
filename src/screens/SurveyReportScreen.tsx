@@ -104,7 +104,7 @@ export function SurveyReportScreen() {
                 </div>
               </div>
               <p className="ms-survey-lead">
-                t.ring이 모은 이번 달 수면·스트레스·걸음과 함께, 한 달에 한 번 짧은 설문에 답하면 포인트가 지급돼요.
+                t.ring이 모은 이번 달 수면·스트레스·걸음 기록이에요.
               </p>
             </div>
 

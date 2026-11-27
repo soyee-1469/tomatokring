@@ -249,7 +249,7 @@ export function VitalDayBodyV2({
       {/* 보상 칸은 오늘 기록(자동·직접)이 있을 때만 (기록 전엔 빈 흰 칸이 남지 않게). 정책: 하루 중 30점 이하 기록이 있으면 1일 1회 */}
       {metric === 'stress' && isToday && has && (
         <section className="v2-claim">
-          <ClaimBanner kind="stress" done doneText="오늘 30점 이하 기록" eligible={vals.some((v) => v <= 30)} ineligibleText="30점 이하일 때 지급돼요. 편안히 앉아 직접 재 보세요." />
+          <ClaimBanner kind="stress" done doneText="오늘 30점 이하 기록" eligible={vals.some((v) => v <= 30)} ineligibleText="아직 조건 전이에요. 편안히 앉아 직접 재 보세요." />
         </section>
       )}
 

@@ -60,10 +60,13 @@ export function PointTip({ kind }: { kind: MissionCardKind }) {
   if (!r) return null
   return (
     <div className="point-tip" role="note">
-      <span className="point-tip-badge">포인트 Tip</span>
+      {/* 윗줄: 표시 + 횟수, 아랫줄: 받는 조건 설명 */}
+      <span className="point-tip-head">
+        <span className="point-tip-badge">포인트 Tip</span>
+        <em>{kind === 'survey' ? '한 달에 1회' : '하루 1회'}</em>
+      </span>
       <p>
         {r.rule} <span className="nowrap"><b>{formatP(REWARD_P[kind])}</b>를 받아요</span>
-        <em> · {kind === 'survey' ? '한 달에 1회' : '하루 1회'}</em>
       </p>
     </div>
   )
