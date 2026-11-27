@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone } from '../components/ui'
 import { Ri } from '../components/Ri'
-import { GradePill, GradeScale } from '../components/RhythmGrade'
+import { GradeTicks } from '../components/RhythmGrade'
 import { METRIC_STYLE } from '../metricStyle'
 import { DateLine } from '../components/DateLine'
 import { useScrub } from '../components/useScrub'
@@ -96,15 +96,20 @@ function RecoveryFatigueChart({ endDate, hasRecord }: { endDate: Date; /** 기�
     </div>
   )
 }
-/** 전날과 비교 한 줄: '전날보다 3점 높아요' · '전날과 같아요' */
-function vsPrevDay(diff: number) {
-  if (diff === 0) return '전날과 같아요'
-  return `전날보다 ${Math.abs(diff)}점 ${diff > 0 ? '높아요' : '낮아요'}`
+/** 전날과 비교 칩: 화살표 + 차이. 색은 방향이 아니라 좋아졌는지로 (회복은 오르면, 피로도는 내리면 초록) */
+function DeltaChip({ diff, higherIsBetter }: { diff: number; higherIsBetter: boolean }) {
+  if (diff === 0) return <span className="rd-delta same">전날과 같아요</span>
+  const better = higherIsBetter ? diff > 0 : diff < 0
+  return (
+    <span className={`rd-delta ${better ? 'good' : 'bad'}`} aria-label={`전날보다 ${Math.abs(diff)}점 ${diff > 0 ? '높아요' : '낮아요'}`}>
+      <Ri name={diff > 0 ? 'arrow-up' : 'arrow-down'} size={13} />{Math.abs(diff)}점
+    </span>
+  )
 }
 function rhythmLabel(v: number, higherIsBetter: boolean) {
   const good = higherIsBetter ? v : 100 - v
   if (good >= 85) return '최상'
-  if (good >= 70) return '양호'
+  if (good >= 70) return '좋음'
   if (good >= 50) return '보통'
   return '주의'
 }
@@ -125,7 +130,6 @@ export function DayScoreScreen() {
   const status = statusFromScore(bundle.score)
   const isToday = sameDay(selected, today)
   const dateLabel = `${selected.getMonth() + 1}월 ${selected.getDate()}일`
-  const delta = bundle.score - bundle.prev
   const rhythm = rhythmOf(selected)
   const rhythmPrev = rhythmOf(addDays(selected, -1))
   // 내 평균: 최근 28일 활동 지수 평균 (브링 '내 평균' 마커 기준)
@@ -172,20 +176,19 @@ export function DayScoreScreen() {
 
             {ready && (
               <>
-                {/* 1) 첫 카드: 오늘 몸 상태를 설명하는 한 문장 → 조언 → 점수·등급 (링 없이 숫자로. 7일 흐름은 아래 막대에서) */}
+                {/* 1) 첫 카드: 한 문장 → 조언 → 홈과 같은 등급 목록 + 눈금 게이지. 7일 흐름은 아래 막대에서 */}
                 <section className="rd-gauge rd-first">
                   <h2 className="rd-headline">{isToday ? status.headline : status.headlinePast}</h2>
                   <p className="rd-advice">{status.advice}</p>
-                  <div className="rd-score">
-                    <strong>{bundle.score}<small>점</small></strong>
-                    <GradePill score={bundle.score} />
+                  {/* 홈 '오늘의 상태'와 같은 모양: 왼쪽 목록(등급 · 내 평균(14일부터) · 전날), 오른쪽 눈금 반원 게이지(가운데 점수) */}
+                  <div className="rv-tick-row rd-tick-row">
+                    <span className="rv-tick-list">
+                      <span><i style={{ background: gradeOf(bundle.score).color }} /><b>{gradeOf(bundle.score).label}</b> 상태</span>
+                      {trendReady && <span><b>{myAvg}점</b> 내 평균</span>}
+                      <span><b>{dayBundle(addDays(selected, -1)).score}점</b> 전날</span>
+                    </span>
+                    <GradeTicks score={bundle.score} />
                   </div>
-                  {/* 무지개 눈금: 이 날 점수가 5단계 중 어디인지 (날짜 하나라 가로) */}
-                  <GradeScale score={bundle.score} />
-                  {trendReady && <p className="rd-avg">
-                    {Math.abs(bundle.score - myAvg) < 3 ? `내 평균 ${myAvg}점과 비슷해요` : bundle.score > myAvg ? `내 평균 ${myAvg}점보다 ${bundle.score - myAvg}점 높아요` : `내 평균 ${myAvg}점보다 ${myAvg - bundle.score}점 낮아요`}
-                    {!isToday && ` · 전날보다 ${delta >= 0 ? '+' : ''}${delta}`}
-                  </p>}
                 </section>
 
                 {/* 3) 회복 · 피로도 — 홈 바이탈 칸과 같은 2칸 */}
@@ -193,12 +196,12 @@ export function DayScoreScreen() {
                   <div>
                     <em>회복</em>
                     <strong>{rhythm.recovery}<small>점</small></strong>
-                    <span>{rhythmLabel(rhythm.recovery, true)} · {vsPrevDay(rhythm.recovery - rhythmPrev.recovery)}</span>
+                    <span className="rd-pair-meta"><b>{rhythmLabel(rhythm.recovery, true)}</b><span className="rd-pair-vs"><em>전날보다</em><DeltaChip diff={rhythm.recovery - rhythmPrev.recovery} higherIsBetter /></span></span>
                   </div>
                   <div>
                     <em>피로도</em>
                     <strong>{rhythm.fatigue}<small>점</small></strong>
-                    <span>{rhythmLabel(rhythm.fatigue, false)} · {vsPrevDay(rhythm.fatigue - rhythmPrev.fatigue)}</span>
+                    <span className="rd-pair-meta"><b>{rhythmLabel(rhythm.fatigue, false)}</b><span className="rd-pair-vs"><em>전날보다</em><DeltaChip diff={rhythm.fatigue - rhythmPrev.fatigue} higherIsBetter={false} /></span></span>
                   </div>
                 </section>
 

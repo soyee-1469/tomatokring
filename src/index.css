@@ -14370,3 +14370,140 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .help-screen .faq-a p { font-size: 14px; }
 .help-screen .help-footer b { font-size: 15px; }
 .ms-survey-past { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
+/* 홈 오늘의 상태: 오른쪽 무지개 반원 (2026-11-27) */
+.rhythm-banner-head { display: flex; align-items: center; gap: 10px; }
+.rhythm-banner-head .rhythm-banner-top { flex: 1; min-width: 0; }
+.rhythm-banner-arc { flex: none; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; line-height: 0; }
+.grade-arc { display: block; overflow: visible; }
+.elder-home .rhythm-banner .rhythm-banner-more { position: static; margin-top: 4px; }
+/* 반원 가운데 점수 + 오른쪽 설명 (2026-11-27) */
+.grade-arc-score { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; fill: var(--text); font-variant-numeric: tabular-nums; }
+.grade-arc-unit { font-size: 15px; font-weight: 700; fill: var(--text-2); }
+.rhythm-banner-head { gap: 16px; }
+.rhythm-banner-head .rhythm-banner-top { justify-items: start; gap: 5px; }
+.rhythm-banner .rhythm-banner-top .rd-grade { margin: 0; }
+/* ——— 오늘의 상태 비교 시안 (?rv=a · ?rv=b, 개발 서버 전용) ——— */
+.rv-a-headline { display: block; margin: 0 0 10px; font-size: 17px; font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+.rv-a-arc { position: relative; flex: none; padding-bottom: 30px; }
+.rv-a-side { position: absolute; bottom: 0; display: grid; justify-items: center; width: 44px; font-size: 11px; font-weight: 500; color: var(--text-3); line-height: 1.2; }
+.rv-a-side b { font-size: 15px; font-weight: 700; color: var(--text); }
+.rv-a-side.left { left: -12px; }
+.rv-a-side.right { right: -12px; }
+.rv-b-cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.rv-b-cell { display: grid; gap: 2px; justify-items: start; margin: 0; padding: 10px 10px 12px; border: 0; border-radius: 14px; background: #F5F6F8; text-align: left; cursor: pointer; }
+.rv-b-cell em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.rv-b-cell strong { font-size: 22px; font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; color: var(--text); font-variant-numeric: tabular-nums; }
+.rv-b-cell span { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+.rv-b-cell > i { display: block; width: 100%; height: 5px; margin-top: 6px; border-radius: 999px; background: #E5E8EB; overflow: hidden; }
+.rv-b-cell > i > i { display: block; height: 100%; border-radius: 999px; }
+.rv-a-arc { margin: 0; border: 0; background: transparent; cursor: pointer; line-height: 0; }
+.rv-a-arc .rv-a-side { line-height: 1.2; }
+/* 오늘의 상태: 카드 폭 전체 반원 (2026-11-27) */
+.rv-full-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.rv-full-top > span:first-child { display: grid; gap: 2px; }
+.rv-full-top .rv-a-headline { margin: 0; }
+.elder-home .rhythm-banner .rv-full-top .rhythm-banner-more { position: static; flex: none; margin-top: 2px; }
+.rv-full-arc { position: relative; display: block; width: 100%; margin: 14px 0 0; padding: 0 0 30px; border: 0; background: transparent; cursor: pointer; line-height: 0; }
+.rv-full-arc .grade-arc { margin: 0 auto; }
+.rv-full-center { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); display: grid; justify-items: center; gap: 6px; line-height: 1; }
+.rv-full-center strong { font-size: 52px; font-weight: 800; letter-spacing: -0.05em; color: var(--text); font-variant-numeric: tabular-nums; }
+.rv-full-center strong small { margin-left: 2px; font-size: 18px; font-weight: 700; color: var(--text-2); }
+.rv-full-arc .rv-a-side { width: 56px; }
+.rv-full-arc .rv-a-side.left { left: 0; }
+.rv-full-arc .rv-a-side.right { right: 0; }
+.rv-full-alert { margin: 4px 0 0; text-align: center; }
+/* 양 끝 숫자를 반원 끝(띠 가운데, 약 7.5px) 바로 아래에 — 글자 상자 56px의 가운데가 띠 끝 가운데에 오게 */
+.rv-full-arc .rv-a-side.left { left: -20px; }
+.rv-full-arc .rv-a-side.right { right: -20px; }
+/* 오늘의 상태: 가로 무지개형 (첫 화면에 미션과 함께 보이게, 2026-11-27) */
+.rv-h-score { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; width: 100%; margin: 12px 0 0; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.rv-h-score .rhythm-banner-score strong { font-size: 40px; }
+.rv-h-compare { display: grid; justify-items: end; gap: 2px; padding-bottom: 6px; font-size: 13px; color: var(--text-3); white-space: nowrap; }
+.rv-h-compare b { font-weight: 700; color: var(--text); }
+.elder-home .rhythm-banner .grade-scale { margin-top: 12px; }
+.elder-home .rhythm-banner .rv-b-cells { margin-top: 14px; }
+/* 오늘의 상태: 작은 안내 글은 맨 아래 한 줄에 모음 (2026-11-27) */
+.rv-a-headline.alert.bad { color: #D2453F; }
+.rv-a-headline.alert.warn { color: #C26A1A; }
+.rv-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin: 14px 0 0; padding: 12px 0 0; border: 0; border-top: 1px solid #EEF0F2; background: transparent; font-size: 13px; color: var(--text-3); text-align: left; cursor: pointer; }
+.rv-foot-more { display: inline-flex; align-items: center; font-weight: 600; color: var(--text-2); }
+/* 내 평균 · 어제: 두 줄로 떠 있지 않게, 점수 '점' 글자와 같은 바닥선에 한 줄로 (하나만 있어도 같은 자리) */
+.rv-h-compare { display: flex; align-items: baseline; gap: 10px; padding-bottom: 7px; }
+.rv-h-compare > span + span::before { content: ''; display: inline-block; width: 1px; height: 11px; margin-right: 10px; background: #DDE1E6; vertical-align: -1px; }
+.rv-h-compare { padding-bottom: 1px; } /* 숫자 줄 바닥을 '점' 글자 바닥에 맞춤 */
+/* 홈 섹션 사이 간격: 카드 → 다음 섹션 제목 사이만 넓힘 (10px → 24px). 제목 → 자기 카드(6px)와 카드끼리(10px)는 그대로 */
+.elder-home .elder-body > * + .elder-section-row { margin-top: 24px; } /* 위 카드의 아래 여백(10px)과 겹쳐서 실제 간격 = 24px */
+.rv-b-cell em { display: inline-flex; align-items: center; gap: 4px; }
+.rv-b-cell { min-width: 0; overflow: hidden; } /* 긴 글자가 칸 폭을 밀어내지 않게 */
+/* 오늘의 상태: 왼쪽 목록 + 오른쪽 눈금 반원 게이지 (2026-11-27) */
+.rv-tick-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; width: 100%; margin: 10px 0 0; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.rv-tick-list { display: grid; gap: 8px; padding-bottom: 6px; font-size: 14px; color: var(--text-2); }
+.rv-tick-list > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.rv-tick-list i { width: 8px; height: 8px; border-radius: 50%; }
+.rv-tick-list b { font-weight: 700; color: var(--text); }
+.grade-ticks { position: relative; flex: none; line-height: 0; }
+.grade-ticks svg { display: block; }
+.grade-ticks-center { position: absolute; left: 0; right: 0; bottom: 0; display: grid; justify-items: center; gap: 2px; line-height: 1; }
+.grade-ticks-center strong { font-size: 40px; font-weight: 500; letter-spacing: -0.04em; color: var(--text); font-variant-numeric: tabular-nums; }
+.grade-ticks-center strong small { margin-left: 2px; font-size: 15px; font-weight: 600; color: var(--text-2); }
+.grade-ticks-center b { font-size: 13px; font-weight: 700; }
+/* 회복·피로도: 전날 대비는 색 칩으로 따로 (좋아짐 초록 · 나빠짐 빨강 · 같음 회색) */
+.rd-pair .rd-pair-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; font-size: 13px; color: var(--text-2); }
+.rd-pair .rd-pair-meta em { font-style: normal; color: var(--text-3); }
+.rd-delta { display: inline-flex; align-items: center; gap: 1px; height: 22px; padding: 0 7px; border-radius: 999px; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rd-delta.good { background: #E7F6EC; color: #23874A; }
+.rd-delta.bad { background: #FDECEC; color: #C8423C; }
+.rd-delta.same { background: #F2F4F6; color: var(--text-2); font-weight: 600; }
+.rd-pair .rd-pair-meta { display: grid; justify-items: start; gap: 6px; }
+.rd-pair .rd-pair-meta > b { font-weight: 600; color: var(--text-2); }
+.rd-pair .rd-pair-vs { display: inline-flex; align-items: center; gap: 6px; }
+/* 준비 중 카드: 점수 카드와 같은 틀 (회색 게이지). 예전 점 7개 카드의 여백 규칙은 덮어씀 */
+.elder-home .elder-score-card.rhythm-banner.rhythm-collecting { padding: 18px 16px 12px; }
+.rv-tick-list > span.muted { color: var(--text-3); font-size: 13px; }
+.grade-ticks-center strong.ticks-days { font-size: 36px; color: var(--text-2); }
+.grade-ticks-center strong.ticks-days small { font-size: 15px; }
+.rv-tick-list > span.muted { line-height: 1.4; white-space: normal; }
+/* 홈 식단 카드: 사진 올리기 줄 (점선 상자 → 둥근 카메라 + 두 줄 안내, 2026-11-27) */
+.elder-home .diet-snap { display: flex; align-items: center; gap: 14px; width: 100%; margin: 4px 0 0; padding: 14px; border: 0; border-radius: 16px; background: #FFFBEB; text-align: left; cursor: pointer; }
+.elder-home .diet-snap-ico { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #FFF1B8; color: #C98A00; }
+.elder-home .diet-snap-copy { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.elder-home .diet-snap-copy b { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+.elder-home .diet-snap-copy em { font-style: normal; font-size: 13px; color: var(--text-2); }
+.elder-home .diet-snap-go { flex: none; color: #C98A00; }
+/* 홈 식단 받기 버튼: 2열 포인트 카드와 같은 48px 규격 (파란 60px 버튼 대신) */
+.elder-home .elder-fit-card.diet .diet-claim { display: grid; gap: 8px; margin-top: 12px; }
+.elder-home .elder-fit-card.diet .diet-claim .elder-claim-btn { width: 100%; height: 48px; gap: 4px; padding: 0 10px; border-radius: 12px; font-size: 15px; }
+.elder-home .elder-fit-card.diet .diet-claim .elder-claim-btn.with-points.locked:disabled { background: var(--chip-gray); color: var(--text-3); opacity: 1; }
+.elder-home .elder-fit-card.diet .diet-claim .home-tile-note { margin: 0; text-align: center; }
+/* 조건 문구 '8,000걸음↑ 20만 P': 화살표는 글자 높이에 맞춰, 좁은 화면에서도 한 줄 */
+.elder-home .home-vital-state .cond { display: inline-flex; align-items: center; gap: 0; white-space: nowrap; }
+.elder-home .home-vital-state .cond i { margin: 0 1px; }
+
+/* ——— 홈 식단 카드: 2열 포인트 카드와 같은 틀 (2026-11-27) ——— */
+.elder-home .elder-fit-card.diet { position: relative; padding: 14px 12px 12px; }
+.elder-home .elder-fit-card.diet .elder-card-hit { display: grid; gap: 6px; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; color: inherit; cursor: pointer; }
+.elder-home .elder-fit-card.diet .diet-head { display: flex; align-items: center; gap: 4px; min-height: 36px; }
+.elder-home .elder-fit-card.diet .diet-head em { font-style: normal; font-size: 14.4px; font-weight: 700; letter-spacing: -0.04em; color: var(--text); }
+.elder-home .elder-fit-card.diet .diet-value strong { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); font-variant-numeric: tabular-nums; }
+.elder-home .elder-fit-card.diet .diet-value strong.empty { color: #C2C8D0; }
+.elder-home .elder-fit-card.diet .diet-value small { margin-left: 3px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.elder-home .elder-fit-card.diet .diet-value small.st { margin-left: 8px; color: var(--text-3); }
+.elder-home .elder-fit-card.diet .diet-sub { font-size: 13px; color: var(--text-3); }
+.elder-home .diet-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.elder-home .diet-slot { position: relative; display: grid; place-items: center; gap: 4px; aspect-ratio: 1.25; margin: 0; padding: 0; border: 0; border-radius: 14px; background: #F5F6F8; color: #AEB5BE; cursor: pointer; overflow: hidden; }
+.elder-home .diet-slot em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--text-3); }
+.elder-home .diet-slot.filled img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.elder-home .diet-slot.filled em { position: absolute; left: 6px; bottom: 5px; padding: 1px 6px; border-radius: 999px; background: rgba(0, 0, 0, 0.45); color: #fff; }
+.elder-home .elder-fit-card.diet .diet-claim .elder-claim-btn.with-points.locked { background: var(--chip-gray); color: var(--text-2); cursor: pointer; } /* 사진 전 버튼: 누르면 사진 올리기로 */
+.elder-home .elder-fit-card.diet .diet-head .metric-ico { width: auto; height: auto; background: transparent; border-radius: 0; } /* 아이콘만 (원형 바탕 없이, 2열 카드와 같게) */
+/* 식단 사진 칸 = 올리기 버튼: 큰 '+', 다음에 올릴 칸만 노란색 */
+.elder-home .diet-slot { color: #9AA3AD; }
+.elder-home .diet-slot.next { background: #FFF6D6; color: #C98A00; box-shadow: inset 0 0 0 1.5px #F5D776; }
+.elder-home .diet-slot.next em { color: #A87300; }
+/* 식단 가운데: 사진 올리기 칸 하나 (끼니 칸 대신) */
+.elder-home .diet-upload { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 72px; margin: 12px 0 0; padding: 0; border: 0; border-radius: 14px; background: #FFF6D6; box-shadow: inset 0 0 0 1.5px #F5D776; color: #C98A00; cursor: pointer; }
+.elder-home .diet-upload b { font-size: 15px; font-weight: 700; color: #A87300; }
+.elder-home .diet-upload.has-photo { justify-content: flex-start; gap: 8px; padding: 0; background: transparent; box-shadow: none; }
+.elder-home .diet-upload-thumb, .elder-home .diet-upload-more { flex: none; width: 72px; height: 72px; margin: 0; padding: 0; border: 0; border-radius: 14px; overflow: hidden; cursor: pointer; }
+.elder-home .diet-upload-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.elder-home .diet-upload-more { display: grid; place-items: center; background: #FFF6D6; box-shadow: inset 0 0 0 1.5px #F5D776; color: #C98A00; }

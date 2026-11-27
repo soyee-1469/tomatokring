@@ -121,11 +121,12 @@ export function dayBundle(date: Date) {
 
 /** 5단계 등급 (나쁨 0–34 · 주의 35–49 · 보통 50–74 · 좋음 75–89 · 최상 90–100) — 홈·상세 공통 */
 export const GRADE_BANDS = [
-  { label: '나쁨', from: 0, to: 35, color: '#E4605A', tone: 'bad' as const },
-  { label: '주의', from: 35, to: 50, color: '#F2994A', tone: 'warn' as const },
-  { label: '보통', from: 50, to: 75, color: '#E9C34A', tone: 'warn' as const },
-  { label: '좋음', from: 75, to: 90, color: '#50B83D', tone: 'ok' as const },
-  { label: '최상', from: 90, to: 101, color: '#2F80ED', tone: 'ok' as const },
+  // 파스텔 무지개 (2026-11-27): 산호 → 살구 → 노랑 → 연두 → 하늘. 칸 사이는 그라데이션으로 이어 그린다
+  { label: '나쁨', from: 0, to: 35, color: '#EE8C84', tone: 'bad' as const },
+  { label: '주의', from: 35, to: 50, color: '#F2AE6B', tone: 'warn' as const },
+  { label: '보통', from: 50, to: 75, color: '#EECB55', tone: 'warn' as const },
+  { label: '좋음', from: 75, to: 90, color: '#93CF7F', tone: 'ok' as const },
+  { label: '최상', from: 90, to: 101, color: '#78B4EE', tone: 'ok' as const },
 ] as const
 export function gradeOf(score: number) {
   return GRADE_BANDS.find((b) => score >= b.from && score < b.to) ?? GRADE_BANDS[0]

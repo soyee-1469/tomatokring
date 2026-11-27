@@ -29,7 +29,7 @@ import { PointGuideButton, STRESS_REWARD_MAX, WALK_REWARD_STEPS } from './compon
 import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { SURVEY_OPEN } from './survey'
-import { GradePill } from './components/RhythmGrade'
+import { GradeTicks } from './components/RhythmGrade'
 import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
@@ -636,8 +636,6 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
           })}
         </ul>
       </div>
-      {/* 도장 아래 n/5 카운터 (게임 탭과 같은 자리) */}
-      {leftCount > 0 && <div className="elder-mission-count">{doneCount}/{POINT_ITEMS.length}</div>}
     </section>
   )
 }
@@ -680,148 +678,62 @@ function SignalCard({ condition, onOpen, onCondition }: {
 }
 
 /** 점수 + 이상 바이탈을 반영한 오늘 종합 요약 (무지개) — 요약 전용, 보상 없음 */
-/** 바디 리듬 준비 중: 유효한 날이 7일 미만일 때 점수 대신 진행 상태 */
+/** 바디 리듬 준비 중 (유효한 날 7일 미만): 점수 카드와 같은 모양 — 왼쪽 목록 + 오른쪽 눈금 반원이 회색으로, 모인 날만큼 차오름 */
 function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }) {
   return (
-    <div className="elder-score-card arc rhythm-collecting">
-      <button type="button" className="rhythm-collecting-body" onClick={onOpen}>
-        <span className="rhythm-days" aria-label={`${RHYTHM_MIN_DAYS}일 중 ${days}일`}>
-          {Array.from({ length: RHYTHM_MIN_DAYS }, (_, i) => <i key={i} className={i < days ? 'on' : ''} />)}
+    <div className="elder-score-card rhythm-banner rv-a rhythm-collecting">
+      <button type="button" className="rv-full-top" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+        <b className="rv-a-headline">바디 리듬을 준비하고 있어요</b>
+      </button>
+      <button type="button" className="rv-tick-row" onClick={onOpen} aria-label={`${RHYTHM_MIN_DAYS}일 중 ${days}일`}>
+        <span className="rv-tick-list">
+          <span><b>{days}일</b> 모였어요</span>
+          {/* 데이터가 쌓이면 이 회색 반원이 무지개 점수로 바뀐다는 예고 */}
+          <span className="muted">다 모이면 점수로<br />보여 드려요</span>
         </span>
-        <strong>{days}<small>/ {RHYTHM_MIN_DAYS}일</small></strong>
-        <b>바디 리듬을 준비하고 있어요</b>
-        <p>반지를 끼고 자면 수면 기록이 쌓여요.</p>
+        <GradeTicks score={(days / RHYTHM_MIN_DAYS) * 100} gray center={<strong className="ticks-days">{days}<small>/{RHYTHM_MIN_DAYS}일</small></strong>} />
+      </button>
+      <button type="button" className="rv-foot" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+        <span>유효 기록 {days}회 · 반지를 끼고 주무세요</span>
+        <span className="rv-foot-more">자세히<Ri name="arrow-right-s" size={16} /></span>
       </button>
     </div>
   )
 }
 
-/** 홈 바디 리듬 카드 (점수·등급·한 줄만 — 일주일 막대는 상세에서, 2026-11-27): 점수·상태를 왼쪽 위에 크게 → 내 평균과 비교 한 줄 → 최근 7일 막대(상세와 같은 그림).
- *  위쪽 글자 영역과 '자세히'는 상세로, 막대는 눌러서 그날 점수 보기 */
-function RhythmBannerCard({ score, tiles, validDays, onOpen }: { score: number; tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]; /** 14일 미만이면 평균 비교 대신 남은 날 */ validDays: number; onOpen: () => void }) {
+/** 홈 '오늘의 상태' 카드 (2026-11-27): 맨 위 한 문장·기록 수·자세히 → 점수·등급(오른쪽 내 평균·어제) → 가로 무지개 눈금
+ *  항목별(수면·스트레스·걷기 등)은 바로 아래 '오늘 기록' 카드가 보여 주므로 여기엔 넣지 않는다. 일주일 막대는 상세에서만 */
+function RhythmBannerCard({ score, tiles, validDays, onOpen }: { score: number; tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]; /** 14일 미만이면 내 평균 대신 남은 날 */ validDays: number; onOpen: () => void }) {
   const trendReady = validDays >= RHYTHM_TREND_DAYS
   const byScore = statusFromScore(score)
   const alert = tiles.find((t) => t.tone === 'bad') ?? tiles.find((t) => t.tone === 'warn')
   const title = alert ? (alert.tone === 'bad' ? `${alert.label} 위험` : `${alert.label} 주의`) : byScore.title
   const myAvg = Math.round(Array.from({ length: 28 }, (_, i) => dayBundle(addDays(HOME_TODAY, -i)).score).reduce((a, b) => a + b, 0) / 28)
-  const diff = score - myAvg
+  const yesterday = dayBundle(addDays(HOME_TODAY, -1)).score
   return (
-    <div className="elder-score-card rhythm-banner">
-      <button type="button" className="rhythm-banner-top" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-      {/* 점수 옆 등급 알약(무지개 5색 중 하나) — 상세와 같은 이름(좋음 등). 위험·주의 항목이 있으면 아래 줄에 먼저 */}
-      <span className="rhythm-banner-score">
-        <strong>{score}<small>점</small></strong>
-        <GradePill score={score} />
-      </span>
-      <span className={`rhythm-banner-sub${alert ? ` alert ${alert.tone}` : ''}`}>{alert ? `오늘 ${title}` : !trendReady ? `${RHYTHM_TREND_DAYS - validDays}일 더 모이면 추세를 볼 수 있어요` : Math.abs(diff) < 3 ? `내 평균 ${myAvg}점과 비슷해요` : diff > 0 ? `내 평균보다 ${diff}점 높아요` : `내 평균보다 ${-diff}점 낮아요`}</span>
-      {/* 바디 리듬 계산에 들어간 측정 횟수 (하루 2개 이상 유효 데이터 + 수면 = 1회) */}
-      <span className="rhythm-banner-count">유효 기록 {validDays}회</span>
-      <span className="rhythm-banner-more">자세히<Ri name="arrow-right-s" size={16} /></span>
+    <div className="elder-score-card rhythm-banner rv-a">
+      {/* 맨 위: 한 문장만. 위험·주의 항목이 있으면 이 자리에 그 경고를 먼저 (빨강·주황) */}
+      <button type="button" className="rv-full-top" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+        <b className={`rv-a-headline${alert ? ` alert ${alert.tone}` : ''}`}>{alert ? `오늘 ${title}` : GRADE_COPY[gradeOf(score).label].headline}</b>
+      </button>
+      {/* 왼쪽: 등급 · 내 평균(14일부터) · 어제를 목록처럼, 오른쪽: 눈금 반원 게이지(가운데 점수) */}
+      <button type="button" className="rv-tick-row" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+        <span className="rv-tick-list">
+          <span><i style={{ background: gradeOf(score).color }} /><b>{gradeOf(score).label}</b> 상태</span>
+          {trendReady && <span><b>{myAvg}점</b> 내 평균</span>}
+          <span><b>{yesterday}점</b> 어제</span>
+        </span>
+        <GradeTicks score={score} />
+      </button>
+      {/* 맨 아래 한 줄: 기록 수 · 자세히 — 작은 안내 글은 여기에만 모은다 (추세 안내는 상세에서만) */}
+      <button type="button" className="rv-foot" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+        <span>유효 기록 {validDays}회</span>
+        <span className="rv-foot-more">자세히<Ri name="arrow-right-s" size={16} /></span>
       </button>
     </div>
   )
 }
 
-/** 카드 하단 보상 영역: 당일만 지급, 측정 전 → 측정 버튼, 측정 후 기준 충족 → 지급 버튼, 수령 후 → 비활성 완료 */
-function RewardBlock({
-  measured,
-  claimed,
-  eligible = true,
-  guide,
-  points,
-  measureLabel,
-  /** 여러 번 할 수 있는 항목: 버튼 아래 작은 링크 문구 */
-  repeatLabel,
-  readyText,
-  doneLabel,
-  tip,
-  onMeasure,
-  onClaim,
-  busy = false,
-  busyLabel = '측정 중',
-  busyMs = 3000,
-}: {
-  measured: boolean
-  claimed: boolean
-  eligible?: boolean
-  guide: string
-  /** 버튼에 함께 보여줄 지급 포인트 (예: '20만 P') */
-  points: string
-  measureLabel: string
-  repeatLabel?: string
-  readyText: string
-  doneLabel: string
-  tip?: string
-  onMeasure: () => void
-  onClaim: () => void
-  /** 카드 안에서 측정/불러오기 진행 중 */
-  busy?: boolean
-  busyLabel?: string
-  /** 진행 그래프가 차오르는 시간 */
-  busyMs?: number
-}) {
-  const navigate = useNavigate()
-  if (busy) {
-    return (
-      <div className="elder-score-reward">
-        <button type="button" className="elder-claim-btn busy" disabled style={{ ['--busy-ms' as string]: `${busyMs}ms` }}>
-          <Ri name="loader-4" size={18} className="spin" />
-          <span>{busyLabel}</span>
-        </button>
-        <p className="elder-claim-guide under">측정이 끝나면 결과를 보여드려요.</p>
-      </div>
-    )
-  }
-  return (
-    <div className="elder-score-reward">
-      {!measured ? (
-        <>
-          <button type="button" className="elder-claim-btn secondary with-points" onClick={onMeasure}>
-            <span>{measureLabel} {points} 받기</span>
-          </button>
-          <p className="elder-claim-guide under">{guide}</p>
-        </>
-      ) : claimed ? (
-        <>
-          {/* 받은 뒤: 회색 알약을 누르면 보상 내역으로. 카드마다 '적립 내역 보기' 버튼을 따로 두지 않는다 (입구는 미션 머리글의 보상내역) */}
-          <button type="button" className="elder-claim-btn done link" onClick={() => navigate('/reward/history')} aria-label={`${doneLabel} · 보상 내역 보기`}>
-            <Ri name="checkbox-circle" fill size={18} />
-            {doneLabel}
-            <Ri name="arrow-right-s" size={18} className="elder-claim-done-arrow" />
-          </button>
-          {repeatLabel && (
-            <div className="elder-claim-actions">
-              <button type="button" onClick={onMeasure}>
-                <Ri name={repeatLabel.includes('올리기') ? 'add' : 'refresh'} size={16} />
-                {repeatLabel}
-              </button>
-            </div>
-          )}
-        </>
-      ) : eligible ? (
-        <>
-          <button type="button" className="elder-claim-btn with-points" onClick={onClaim}>
-            <Ri name="checkbox-circle" fill size={18} />
-            <span>{readyText ? `${readyText} · ` : ''}{points} 받기</span>
-          </button>
-          {repeatLabel && (
-            <div className="elder-claim-actions">
-              <button type="button" onClick={onMeasure}>
-                <Ri name={repeatLabel.includes('올리기') ? 'add' : 'refresh'} size={16} />
-                {repeatLabel}
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
-        <p className="elder-claim-tip">
-          <Ri name="heart-3" fill size={12} />
-          {tip}
-        </p>
-      )}
-    </div>
-  )
-}
 
 type HomeProfile = (typeof TEAM_HOME)[keyof typeof TEAM_HOME]
 
@@ -868,46 +780,47 @@ function DietUploadCard({
   return (
     <div className="elder-fit-card diet">
       <button type="button" className="elder-card-hit" onClick={onOpen} aria-label="식단">
-        <div className="elder-fit-head" data-metric="diet">
-          <Ri name="restaurant" fill className="metric-ico" />
-          <b>식단</b>
-          <StatusTag tone={measured ? 'done' : 'pending'}>{measured ? '기록 완료' : '등록 전'}</StatusTag>
-        </div>
-        <div className="elder-fit-body">
-          {measured ? (
-            <>
-              {/* 홈은 kcal·목표 + 마지막 사진 한 장만 (오늘 올린 사진 전부와 식사 목록은 상세에서) */}
-              <div className="home-diet-row">
-                <div className="elder-fit-num">
-                  <div>
-                    <strong>{shown.toLocaleString('ko-KR')}<small>kcal</small></strong>
-                    <em>목표 {goal.toLocaleString('ko-KR')}kcal</em>
-                  </div>
-                </div>
-                {photo && <span className="home-diet-photo"><img src={photo} alt="오늘 마지막 식단 사진" /></span>}
-              </div>
-            </>
-          ) : (
-            <button type="button" className="diet-drop" onClick={onMeasure} aria-label="식단 사진 올리기">
-              <Ri name="restaurant" size={30} />
-              <span>오늘 식단 사진이 없어요</span>
-              <em>식사 사진을 올려 보세요.</em>
-            </button>
-          )}
-        </div>
+        {/* 머리 줄: 2열 카드와 같은 크기의 아이콘·이름 (오른쪽 위 '+ 사진'은 카드에 따로 얹음) */}
+        <span className="home-vital-head diet-head">
+          <span className="home-vital-ico metric-ico" data-metric="diet"><Ri name="restaurant" fill size={18} /></span>
+          <em>식단</em>
+        </span>
+        <span className="diet-value">
+          {measured ? <strong>{shown.toLocaleString('ko-KR')}<small>kcal</small><small className="st">목표 {goal.toLocaleString('ko-KR')}</small></strong> : <strong className="empty">기록 전</strong>}
+        </span>
+        <span className="diet-sub">{measured ? '오늘 올린 사진은 상세에서 볼 수 있어요' : 'AI가 칼로리를 알려 드려요'}</span>
       </button>
-      <RewardBlock
-        measured={measured}
-        claimed={claimed}
-        guide="식단 사진 등록 시 지급 · 하루 1회"
-        points={formatClaimP(DIET_REWARD_P)}
-        measureLabel="사진 올리고"
-        repeatLabel="사진 더 올리기"
-        readyText=""
-        doneLabel={`오늘 ${formatClaimP(DIET_REWARD_P)} 획득`}
-        onMeasure={onMeasure}
-        onClaim={onClaim}
-      />
+      {/* 가운데: 누르면 사진을 올리는 칸 하나 (끼니로 나누지 않음). 올린 뒤엔 사진 썸네일 + 옆에 작은 ＋(더 올리기) */}
+      {photo ? (
+        <div className="diet-upload has-photo">
+          <button type="button" className="diet-upload-thumb" onClick={onOpen} aria-label="올린 식단 사진 보기"><img src={photo} alt="" /></button>
+          <button type="button" className="diet-upload-more" onClick={onMeasure} aria-label="식단 사진 더 올리기"><Ri name="add" size={24} /></button>
+        </div>
+      ) : (
+        <button type="button" className="diet-upload" onClick={onMeasure} aria-label="식단 사진 올리기">
+          <Ri name="add" size={28} />
+          <b>사진 올리기</b>
+        </button>
+      )}
+      {/* 받기 버튼은 다른 포인트 카드와 같은 규칙: 사진 전 회색 → 사진 올리면 초록 받기 → 받은 뒤 회색 획득 (올리기는 위 노란 줄이 맡음) */}
+      <div className="home-tile-action diet-claim">
+        {claimed ? (
+          <button type="button" className="elder-claim-btn done" disabled>
+            <Ri name="checkbox-circle" fill size={16} />
+            <span>{formatClaimP(DIET_REWARD_P)} 획득</span>
+          </button>
+        ) : measured ? (
+          <button type="button" className="elder-claim-btn with-points" onClick={onClaim}>
+            <Ri name="checkbox-circle" fill size={16} />
+            <span>{formatClaimP(DIET_REWARD_P)} 받기</span>
+          </button>
+        ) : (
+          // 사진 전: 버튼 글자에 조건까지 (아래 설명 줄 없이)
+          <button type="button" className="elder-claim-btn with-points locked" onClick={onMeasure}>
+            <span>식단 올리고 {formatClaimP(DIET_REWARD_P)} 받기</span>
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -1287,7 +1200,7 @@ export function HomeScreen() {
           stressShow ? <strong>{stressSel}<small>점</small><small className="st">{stressInfo.label}</small></strong> : <strong className="empty">기록 전</strong>,
           <>
             {/* 값 바로 아래: 포인트 받는 조건 (재는 동안만 '재는 중…') */}
-            {busyTile === 'stress' ? <span>재는 중…</span> : <span>{`${STRESS_REWARD_MAX}점 이하 ${formatClaimP(STRESS_REWARD_P)}`}</span>}
+            {busyTile === 'stress' ? <span>재는 중…</span> : <span className="cond">{STRESS_REWARD_MAX}점<Ri name="arrow-down" size={12} aria-label="이하" /> {formatClaimP(STRESS_REWARD_P)}</span>}
           </>,
           // 오늘 기록(자동+직접)의 흐름. 7일은 상세에서
           stressShow ? <DayFlowSpark rows={stressLog} color={METRIC_STYLE.stress.color} /> : null,
@@ -1302,7 +1215,7 @@ export function HomeScreen() {
           <strong>{stepsLabel}<small>걸음</small></strong>,
           <>
             {/* 값 바로 아래: 포인트 받는 조건 */}
-            <span>{`${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상 ${formatClaimP(WALK_REWARD_P)}`}</span>
+            <span className="cond">{WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음<Ri name="arrow-up" size={12} aria-label="이상" /> {formatClaimP(WALK_REWARD_P)}</span>
           </>,
           <HourBars values={STEPS_BY_HOUR} color={METRIC_STYLE.walk.color} />,
           () => goMeasure('walk'),

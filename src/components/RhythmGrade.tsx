@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { GRADE_BANDS, gradeOf } from '../rhythm'
 
 /** 바디 리듬 무지개 5색 — 등급마다 색 하나 (나쁨 빨강 · 주의 주황 · 보통 노랑 · 좋음 초록 · 최상 파랑).
@@ -6,15 +7,23 @@ export function gradeColor(score: number) {
   return gradeOf(score).color
 }
 
-/** 등급 알약: 등급 색 점 + 이름, 바탕은 같은 색을 아주 연하게 */
-export function GradePill({ score, className = '' }: { score: number; className?: string }) {
-  const g = gradeOf(score)
-  return (
-    <span className={`rd-grade ${className}`} style={{ background: `${g.color}1F` }}>
-      <i style={{ background: g.color }} />
-      {g.label}
-    </span>
-  )
+/** 글자용 진한 색: 파스텔 등급 색을 어둡게 눌러 흰 바탕에서도 읽히게 (amount 0~1) */
+export function deepen(c: string, amount = 0.4) {
+  return '#' + [1, 3, 5].map((k) => Math.round(parseInt(c.slice(k, k + 2), 16) * (1 - amount)).toString(16).padStart(2, '0')).join('')
+}
+
+/** 0~100 위치의 무지개 색 — 등급 구간 가운데마다 그 등급 색, 사이는 섞어서 (그라데이션 눈금·막대용) */
+export function rainbowAt(v: number) {
+  const pts = GRADE_BANDS.map((b) => ({ at: (b.from + Math.min(100, b.to)) / 2, c: b.color }))
+  if (v <= pts[0].at) return pts[0].c
+  if (v >= pts[pts.length - 1].at) return pts[pts.length - 1].c
+  const i = pts.findIndex((p) => p.at >= v)
+  const a = pts[i - 1], b = pts[i]
+  const t = (v - a.at) / (b.at - a.at)
+  const hex = (c: string) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16))
+  const [r1, g1, b1] = hex(a.c), [r2, g2, b2] = hex(b.c)
+  const mix = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0')
+  return `#${mix(r1, r2)}${mix(g1, g2)}${mix(b1, b2)}`
 }
 
 /** 무지개 눈금 (바디 리듬 상세 첫 카드, 날짜 하나): 0~100을 등급 구간 길이대로 5칸, 지금 점수 자리에 표시. 지금 등급 이름만 진하게 */
@@ -25,7 +34,8 @@ export function GradeScale({ score }: { score: number }) {
     <div className="grade-scale" aria-label={`0~100 중 ${s}점, ${cur.label}`}>
       <div className="grade-scale-bar">
         {GRADE_BANDS.map((b) => (
-          <i key={b.label} style={{ flex: Math.min(100, b.to) - b.from, background: b.color, opacity: b.label === cur.label ? 1 : 0.35 }} />
+          // 칸마다 시작~끝 위치의 무지개 색으로 그라데이션 (끊기지 않고 이어져 보이게)
+          <i key={b.label} style={{ flex: Math.min(100, b.to) - b.from, background: `linear-gradient(90deg, ${rainbowAt(b.from)}, ${rainbowAt(Math.min(100, b.to))})` }} />
         ))}
         <span className="grade-scale-mark" style={{ left: `${s}%`, borderColor: cur.color }} />
       </div>
@@ -34,6 +44,49 @@ export function GradeScale({ score }: { score: number }) {
           <em key={b.label} style={{ flex: Math.min(100, b.to) - b.from }} className={b.label === cur.label ? 'on' : ''}>{b.label}</em>
         ))}
       </div>
+    </div>
+  )
+}
+
+/** 눈금 반원 게이지 (홈 오늘의 상태): 가는 눈금 41개로 된 반원. 0점부터 오늘 점수까지의 눈금만 그 구간의 무지개 색, 나머지는 연회색.
+ *  가운데에 점수(덜 굵게) + 등급 이름 */
+export function GradeTicks({ score, width = 168, gray = false, center }: { score: number; width?: number;
+  /** 준비 중(7일 미만): 무지개 대신 회색 — score 만큼 진한 회색으로 차오름 */ gray?: boolean;
+  /** 가운데 글자를 바꿀 때 (준비 중 '4/7일' 등) */ center?: ReactNode }) {
+  const s = Math.min(100, Math.max(0, score))
+  const cur = gradeOf(s)
+  const n = 41
+  const cx = width / 2
+  const rOut = width / 2 - 2
+  const rIn = rOut - 14
+  const h = rOut + 6
+  return (
+    <div className="grade-ticks" style={{ width }}>
+      <svg viewBox={`0 0 ${width} ${h}`} width={width} height={h} aria-label={`0~100 중 ${s}점, ${cur.label}`} role="img">
+        {Array.from({ length: n }, (_, i) => {
+          const v = (i / (n - 1)) * 100
+          const a = Math.PI * (1 - i / (n - 1))
+          const on = v <= s
+          return (
+            <line
+              key={i}
+              x1={cx + rIn * Math.cos(a)} y1={rOut + 2 - rIn * Math.sin(a)}
+              x2={cx + rOut * Math.cos(a)} y2={rOut + 2 - rOut * Math.sin(a)}
+              stroke={on ? (gray ? '#A9B1BB' : rainbowAt(v)) : '#E3E6EA'}
+              strokeWidth={3}
+              strokeLinecap="round"
+            />
+          )
+        })}
+      </svg>
+      <span className="grade-ticks-center">
+        {center ?? (
+          <>
+            <strong>{s}<small>점</small></strong>
+            <b style={{ color: deepen(cur.color) }}>{cur.label}</b>
+          </>
+        )}
+      </span>
     </div>
   )
 }
