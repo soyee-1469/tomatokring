@@ -40,7 +40,7 @@ type Activity = {
 
 export const REWARD_FILTERS: { id: RewardFilter; label: string }[] = [
   { id: 'all', label: '전체' },
-  { id: 'vitaling', label: '토마톡 링' },
+  { id: 'vitaling', label: 't.ring' },
   { id: 'game', label: '게임' },
   { id: 'attend', label: '출석' },
   { id: 'invite', label: '초대' },
@@ -165,7 +165,7 @@ export const ACTIVITIES: Activity[] = [
   {
     id: 'a10',
     source: 'vitaling',
-    title: '토마톡 링 연동 보상',
+    title: 't.ring 연동 보상',
     date: '2026.07.20',
     tott: 0.2,
   },

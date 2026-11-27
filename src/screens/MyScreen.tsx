@@ -16,7 +16,7 @@ export function MyScreen() {
   const menu: { icon: string; cls: string; title: string; desc: string; onClick: () => void }[] = [
     { icon: 'user-settings', cls: 'berry', title: '내 정보', desc: '성별 · 생일 · 키 · 몸무게', onClick: () => navigate('/vitaling/my/profile') },
     { icon: 'flag', cls: 'berry', title: '목표 설정', desc: '걸음 · 수면 시간 · 취침 시각 · 식단 칼로리', onClick: () => navigate('/vitaling/goals') },
-    { icon: 'settings-3', cls: 'berry', title: '기기 설정', desc: '반지 연결 · 자동 측정 · 고유번호 연동 · 약관', onClick: () => navigate('/vitaling/settings') },
+    { icon: 'settings-3', cls: 'berry', title: '기기 설정', desc: '반지 연결 · 자동 측정 · 약관', onClick: () => navigate('/vitaling/settings') },
     { icon: 'pulse', cls: 'beet', title: '자동 측정 모드', desc: '심박수 · 혈중 산소 측정 주기', onClick: () => navigate('/vitaling/settings/auto-measure') },
     { icon: 'refresh', cls: 'leaf', title: '데이터 복원', desc: '서버에 저장된 측정 기록 다시 불러오기', onClick: () => setRestoreOpen(true) },
     { icon: 'book-open', cls: 'orange', title: '가이드 (사용 방법)', desc: '처음 시작하기 · 반지 착용법 · 측정 방법', onClick: () => navigate('/vitaling/guide') },
@@ -33,7 +33,7 @@ export function MyScreen() {
               <div className="my-device-head">
                 <span className="my-device-ico"><Ri name="bluetooth" fill size={22} /></span>
                 <div>
-                  <b>토마톡 링</b>
+                  <b>t.ring</b>
                   <span className={session.paired ? 'ok' : 'off'}>{session.paired ? '연결됨 · 마지막 동기화 10:24' : '연결 안 됨'}</span>
                 </div>
                 {session.paired ? (

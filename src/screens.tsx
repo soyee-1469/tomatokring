@@ -19,7 +19,7 @@ import {
 import type { Icon } from '@phosphor-icons/react'
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Header, InputComponent, Phone, PrimaryButton, Row, Steps } from './components/ui'
+import { Header, Phone, PrimaryButton, Row, Steps } from './components/ui'
 import { MetricInfoButton } from './components/AccuracyInfo'
 import { Ri } from './components/Ri'
 import { SLEEP_LAST_NIGHT, SleepHypnogram } from './components/Sleep'
@@ -32,7 +32,7 @@ import { SURVEY_OPEN } from './survey'
 import { shrinkImage } from './imageUtil'
 import { MEALS } from './meals'
 import { GradeTicks } from './components/RhythmGrade'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -44,69 +44,6 @@ import { TERMS_DOCS, TERMS_LIST, type TermsDocId } from './termsDocs'
 import { useSession } from './useSession'
 
 
-export function SerialScreen() {
-  const navigate = useNavigate()
-  const session = useSession()
-  const [value, setValue] = useState(session.vitalId ?? '')
-  const [touched, setTouched] = useState(false)
-
-  const normalized = value.trim().toUpperCase()
-  const valid = /^[A-Z]{2,4}-\d{4,8}$/.test(normalized)
-  const showError = touched && normalized.length > 0 && !valid
-
-  const onChange = (raw: string) => {
-    setTouched(true)
-    setValue(raw.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 14))
-  }
-
-  const submit = () => {
-    if (!valid) {
-      setTouched(true)
-      return
-    }
-    saveVitalId(normalized)
-    // 고유번호 연동은 처음 시작 흐름에서 뺐고 설정에서만 한다 (2026-11-19)
-    navigate('/vitaling/settings', { replace: true })
-  }
-
-  return (
-    <div className="stage">
-      <Phone>
-        <div className="screen">
-          <Header title="고유번호 연동" backTo="/vitaling/settings" />
-          <div className="scroll">
-            <p className="eyebrow">토마톡 링 연동</p>
-            <h2 className="headline">
-              브링 앱의<br />
-              고유번호를 입력해 주세요
-            </h2>
-            <p className="lead" style={{ marginBottom: 22 }}>
-              반지 기록을 토마톡으로 가져오는 번호예요.
-              <br />
-              브링 앱 &gt; 마이 &gt; 기기 설정에서 확인할 수 있어요.
-            </p>
-
-            <InputComponent
-              label="고유번호"
-              value={value}
-              onChange={onChange}
-              placeholder="ABC-012345"
-              inputMode="text"
-              success={valid}
-              error={showError ? '예: ABC-012345 형식으로 입력해 주세요' : undefined}
-              helper={!showError && !valid ? '영문-숫자 조합 (예: ABC-012345)' : undefined}
-            />
-          </div>
-          <div className="footer shadow">
-            <PrimaryButton disabled={!valid} onClick={submit}>
-              다음
-            </PrimaryButton>
-          </div>
-        </div>
-      </Phone>
-    </div>
-  )
-}
 
 
 export function TermsScreen() {
@@ -127,8 +64,8 @@ export function TermsScreen() {
             <Steps step={1} total={2} />
             <div className="terms-head">
               <p className="eyebrow">서비스 시작</p>
-              <h2 className="headline">토마톡 링을 쓰려면<br />동의가 필요해요</h2>
-              <p className="lead">동의 → 고유번호 연동 → 반지 연결, 세 단계면 끝나요. 이름과 연락처는 토마톡 계정을 그대로 써요.</p>
+              <h2 className="headline">t.ring을 쓰려면<br />동의가 필요해요</h2>
+              <p className="lead">동의하고 반지를 연결하면 바로 시작할 수 있어요. 이름과 연락처는 토마톡 계정을 그대로 써요.</p>
             </div>
 
             <button type="button" className="check-all" onClick={toggleAll}>
@@ -152,7 +89,7 @@ export function TermsScreen() {
 
             <div className="terms-note">
               한 번 동의하면 다음부터는 서비스 탭에서 바로 홈으로 들어와요.
-              토마톡 링은 의료 진단 목적이 아닌 웰니스 서비스예요.
+              t.ring은 의료 진단 목적이 아닌 웰니스 서비스예요.
             </div>
           </div>
           <div className="footer shadow">
@@ -1331,7 +1268,7 @@ export function HomeScreen() {
             <button type="button" className="elder-gear" aria-label="뒤로" onClick={() => (window.history.length > 1 ? navigate(-1) : undefined)}>
               <Ri name="arrow-left-s" size={24} />
             </button>
-            <h1>토마톡 링</h1>
+            <h1>t.ring</h1>
             <div className="elder-top-actions">
               <button type="button" className="elder-gear" aria-label="마이 페이지" onClick={() => navigate('/vitaling/my')}>
                 <Ri name="user-3" size={22} />
@@ -1382,7 +1319,7 @@ export function HomeScreen() {
                 <div className="elder-ble-ico">
                   <Ri name="bluetooth" fill size={36} />
                 </div>
-                <b>토마톡 링을 연결해 주세요</b>
+                <b>t.ring을 연결해 주세요</b>
                 <p>블루투스를 켜고 반지를 휴대폰 가까이에 두세요.</p>
                 <PrimaryButton onClick={() => navigate('/vitaling/pair')}>반지 연결하기</PrimaryButton>
                 <button type="button" className="ghost-link" onClick={openVitalingShop}>
@@ -1556,29 +1493,21 @@ export function SettingsScreen() {
             />
             </div>
 
-            {/* 과거 기록·바디 리듬 등 서버 계산값은 브링 API로 받으므로 고유번호 연동은 유지 */}
-            <p className="section-label">토마톡 링 연동</p>
+            {/* 데이터 연동: 반지를 연결하면 반지 번호로 자동 연동 — 고유번호를 따로 입력하지 않는다 */}
+            <p className="section-label">t.ring 연동</p>
             <div className="device-card">
               <div className="device-card-row">
                 <span>연동 상태</span>
-                <b className={session.vitalId ? 'ok-text' : ''}>{session.vitalId ? '연동됨' : '미연동'}</b>
+                <b className={session.paired ? 'ok-text' : ''}>{session.paired ? '자동 연동됨' : '반지를 연결하면 자동 연동'}</b>
               </div>
               <div className="device-card-row">
                 <span>고유번호</span>
-                <b>{session.vitalId ?? '--'}</b>
+                <b>{session.paired ? maskSerial(session.vitalId ?? session.serial ?? '') || '--' : '--'}</b>
               </div>
               <div className="device-card-row">
                 <span>마지막 동기화</span>
-                <b>{session.vitalId ? '10:24' : '--'}</b>
+                <b>{session.paired ? '10:24' : '--'}</b>
               </div>
-            </div>
-            <div className="row-group">
-            <Row
-              title={session.vitalId ? '다른 고유번호로 연동' : '고유번호 연동하기'}
-              desc="브링 앱 설정에 있는 고유번호를 입력합니다"
-              trailing={<CaretRight size={14} weight="light" />}
-              onClick={() => navigate('/vitaling/serial')}
-            />
             </div>
 
             <p className="section-label">약관</p>
@@ -1589,7 +1518,7 @@ export function SettingsScreen() {
               onClick={() => setOpenDoc('privacy')}
             />
             <Row
-              title="토마톡 링 서비스 약관"
+              title="t.ring 서비스 약관"
               trailing={<CaretRight size={14} weight="light" />}
               onClick={() => setOpenDoc('service')}
             />
@@ -1627,14 +1556,13 @@ export function GuideScreen() {
   const navigate = useNavigate()
 
   const steps = [
-    { n: '1', title: '브링 앱 고유번호 연동', desc: '브링 앱 설정의 고유번호를 입력하면 기록과 바디 리듬을 토마톡에서 볼 수 있어요.' },
-    { n: '2', title: '반지 연결', desc: '블루투스를 켜고 반지를 가까이 두면 토마톡 링이 반지를 찾아 연결해요.' },
-    { n: '3', title: '매일 착용하고 잠자기', desc: '잘 때도 끼고 자야 수면 기록이 쌓이고, 7일이 모이면 바디 리듬이 계산돼요.' },
-    { n: '4', title: '홈에서 확인하고 포인트 받기', desc: '스트레스 · 식단 · 걷기 · 수면 · 설문을 확인하면 포인트가 지급돼요.' },
+    { n: '1', title: '반지 연결', desc: '블루투스를 켜고 반지를 가까이 두면 t.ring이 반지를 찾아 연결해요. 고유번호는 자동으로 찾아 연동해요.' },
+    { n: '2', title: '매일 착용하고 잠자기', desc: '잘 때도 끼고 자야 수면 기록이 쌓이고, 7일이 모이면 바디 리듬이 계산돼요.' },
+    { n: '3', title: '홈에서 확인하고 포인트 받기', desc: '스트레스 · 식단 · 걷기 · 수면 · 설문을 확인하면 포인트가 지급돼요.' },
   ]
 
   const features = [
-    { icon: Waveform, title: '바이탈 측정', desc: '심박수 · 혈중 산소 · 피부 온도 · 호흡 · 심박변이도' },
+    { icon: Waveform, title: '바이탈 측정', desc: '심박수 · 혈중 산소 · 피부 온도 · 심박변이도' },
     { icon: Moon, title: '수면 · 스트레스', desc: '수면 단계와 스트레스 구간 분석' },
     { icon: Heart, title: '바디 리듬', desc: '회복 · 피로도 · 활동 지수로 보는 오늘 상태' },
     { icon: Sparkle, title: '포인트 보상', desc: '매일 확인만 해도 쌓이는 토마톡 포인트' },
@@ -1710,7 +1638,7 @@ const FAQ: { group: string; icon: string; color: string; items: { q: string; a: 
       { q: '[지금 측정하기]가 안 돼요', a: ['심박수 직접 측정이 안 되면 순서대로 해 보세요.', '1. 반지 초기화: 마이 > 기기 설정 > 공장 초기화', '2. 토마톡 앱 다시 설치', '3. 반지 다시 연결', '그래도 안 되면 1:1 문의로 알려 주세요.'] },
       { q: '자동 측정이 안 돼요', a: ['반지를 끼고 있어도 기록이 없거나, 안 끼었는데 기록될 때 순서대로 해 보세요.', '· 반지 연결 해제 후 다시 연결 (마이 > 기기 설정 > 반지 연결 해제)', '· 펌웨어를 최신으로 업데이트 (마이 > 기기 설정 > 펌웨어 업데이트)', '· 자동 측정 모드를 다른 것으로 바꿔 보기 (마이 > 자동 측정 모드)', '· G2·Pro 모델이면 센서 보정 (마이 > 기기 설정 > 센서 보정)', '· 하루 이상 기록이 없으면 반지를 초기화한 뒤 다시 연결'] },
       { q: '측정 결과가 실제 상태와 다른 것 같아요', a: ['반지 착용 상태에 따라 결과가 다르게 나올 수 있어요.', '· 반지가 너무 크면 센서가 제대로 닿지 않아 오차가 생겨요.', '· 너무 꽉 끼면 손가락을 압박해 측정에 영향을 줘요.', '· 센서가 손바닥 쪽을 향하도록 끼워 주세요.', '심박수는 앉거나 가만히 있는 안정된 상태에서 재는 것이 가장 정확해요.'] },
-      { q: '의료용 기기와 수치가 달라요', a: ['토마톡 링은 의료기기가 아닌 웰니스용 기기예요. 센서 위치, 빛 반사, 착용 습관, 환경에 따라 결과가 달라질 수 있어요.', '일상적인 건강 관리와 컨디션 변화를 보는 데 알맞고, 정확한 진단이나 치료 목적으로는 권하지 않아요.', '수치가 계속 낮거나 불편한 증상이 있으면 의료 전문가와 상담해 주세요.'] },
+      { q: '의료용 기기와 수치가 달라요', a: ['t.ring은 의료기기가 아닌 웰니스용 기기예요. 센서 위치, 빛 반사, 착용 습관, 환경에 따라 결과가 달라질 수 있어요.', '일상적인 건강 관리와 컨디션 변화를 보는 데 알맞고, 정확한 진단이나 치료 목적으로는 권하지 않아요.', '수치가 계속 낮거나 불편한 증상이 있으면 의료 전문가와 상담해 주세요.'] },
     ],
   },
   {
@@ -1759,7 +1687,7 @@ export function HelpScreen() {
             ))}
 
             <div className="help-footer">
-              <b>토마톡 링 고객센터</b>
+              <b>t.ring 고객센터</b>
               <span>평일 09:00–17:00 (점심시간 12:00–13:00)</span>
               <span>토마톡 앱 &gt; 서비스 &gt; 1:1 문의</span>
             </div>

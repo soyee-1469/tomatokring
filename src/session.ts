@@ -31,7 +31,7 @@ export type VitalingSession = {
   phone: string
   paired: boolean
   serial: string | null
-  /** 브링 앱 고유번호 — 토마톡 링 데이터 연동 키 (예: ABC-012345) */
+  /** 데이터 연동 키 — 반지를 연결하면 반지 번호로 자동 설정 (사용자 입력 없음) */
   vitalId: string | null
   /** 오늘 측정 완료 여부 — 처음 진입 시에는 보상 대신 측정하기 */
   measuredToday: boolean
@@ -152,20 +152,18 @@ export function subscribeSession(listener: () => void) {
   return () => listeners.delete(listener)
 }
 
-export function saveVitalId(vitalId: string) {
-  write({ ...read(), vitalId: vitalId.trim().toUpperCase() })
-}
 
 export function completeOnboarding(phone: string) {
   write({ ...read(), onboarded: true, phone })
 }
 
+/** 반지 연결: 고유번호는 사용자가 입력하지 않고 연결한 반지 번호로 자동 연동 (2026-11-27) */
 export function pairRing(serial: string) {
-  write({ ...read(), paired: true, serial })
+  write({ ...read(), paired: true, serial, vitalId: serial })
 }
 
 export function unpairRing() {
-  write({ ...read(), paired: false, serial: null })
+  write({ ...read(), paired: false, serial: null, vitalId: null })
 }
 
 export function markMeasuredToday() {

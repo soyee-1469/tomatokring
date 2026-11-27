@@ -95,10 +95,10 @@ const DEFS: Record<MeasureKind, HistoryDef> = {
     emptyHint: '월간 기록이 여기에 쌓여요',
     startLabel: '이번 달 보기',
     detailTo: '/vitaling/survey',
-    today: { id: 'q-today', date: '2026년 9월', sub: '토마톡 링 월간 기록', value: '확인', today: true, badge: '이번 달' },
+    today: { id: 'q-today', date: '2026년 9월', sub: 't.ring 월간 기록', value: '확인', today: true, badge: '이번 달' },
     past: [
-      { id: 'q-1', date: '2026년 8월', sub: '토마톡 링 월간 기록', value: '확인' },
-      { id: 'q-2', date: '2026년 7월', sub: '토마톡 링 월간 기록', value: '확인' },
+      { id: 'q-1', date: '2026년 8월', sub: 't.ring 월간 기록', value: '확인' },
+      { id: 'q-2', date: '2026년 7월', sub: 't.ring 월간 기록', value: '확인' },
     ],
   },
 }

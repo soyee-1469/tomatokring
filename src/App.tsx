@@ -5,7 +5,6 @@ import {
   HomeScreen,
   PairScreen,
   SettingsScreen,
-  SerialScreen,
   TermsScreen,
 } from './screens'
 import { DayScoreScreen } from './screens/DayScoreScreen'
@@ -29,7 +28,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/vitaling/home" replace />} />
         <Route path="/vitaling" element={<Navigate to="/vitaling/home" replace />} />
-        <Route path="/vitaling/serial" element={<SerialScreen />} />
+        <Route path="/vitaling/serial" element={<Navigate to="/vitaling/settings" replace />} /> {/* 고유번호는 반지 연결 시 자동 연동 — 입력 화면 없음 */}
         <Route path="/vitaling/terms" element={<TermsScreen />} />
         <Route path="/vitaling/pair" element={<PairScreen />} />
         <Route path="/vitaling/home" element={<HomeScreen />} />

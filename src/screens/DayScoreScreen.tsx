@@ -163,11 +163,13 @@ export function DayScoreScreen() {
                 <span className="rhythm-date">{isToday ? `오늘 · ${dateLabel}` : dateLabel}</span>
                 {/* 기록이 쌓이는 중에는 '부족하다'가 아니라 진행 상황부터: 며칠 모였고 며칠 남았는지 → 인정 조건은 그 아래 작게 */}
                 <h2>{validDays === 0 ? `${RHYTHM_MIN_DAYS}일 기록이 모이면 바디 리듬을 볼 수 있어요.` : `${RHYTHM_MIN_DAYS - validDays}일만 더 모이면 바디 리듬을 볼 수 있어요.`}</h2>
-                <div className="rhythm-progress">
-                  <span className="rhythm-days" aria-hidden>
-                    {Array.from({ length: RHYTHM_MIN_DAYS }, (_, i) => <i key={i} className={i < validDays ? 'on' : ''} />)}
+                {/* 홈 준비 중 카드와 같은 모양: 왼쪽 목록 + 오른쪽 회색 눈금 반원(모인 날만큼 차오름, 가운데 n/7일) */}
+                <div className="rv-tick-row rd-tick-row">
+                  <span className="rv-tick-list">
+                    <span><b>{validDays}일</b> 모였어요</span>
+                    <span className="muted">다 모이면 점수로<br />보여 드려요</span>
                   </span>
-                  <b>{validDays}일 / {RHYTHM_MIN_DAYS}일</b>
+                  <GradeTicks score={(validDays / RHYTHM_MIN_DAYS) * 100} gray center={<strong className="ticks-days">{validDays}<small>/{RHYTHM_MIN_DAYS}일</small></strong>} />
                 </div>
                 <p>하루에 2개 이상의 유효 데이터가 기록되고 수면 기록이 포함돼야 하루로 인정돼요.</p>
                 <button type="button" className="rhythm-collect-link" onClick={() => navigate('/vitaling/my')}>이전 기록이 있다면 데이터 복원 <Ri name="arrow-right-s" size={16} /></button>
@@ -234,10 +236,12 @@ export function DayScoreScreen() {
                   /* 7~13일: 추세 분석 대신 진행 상황 (브링과 같이 14일부터) */
                   <section className="rd-week rd-trend-wait">
                     <b>추세 분석은 {RHYTHM_TREND_DAYS}일부터</b>
-                    <span className="rhythm-days" aria-label={`${RHYTHM_TREND_DAYS}일 중 ${validDays}일`}>
-                      {Array.from({ length: RHYTHM_TREND_DAYS }, (_, i) => <i key={i} className={i < validDays ? 'on' : ''} />)}
+                    {/* 점 14개 대신 회색 진행 막대 + n/14일 (준비 중 게이지와 같은 회색) */}
+                    <span className="rd-trend-bar" aria-label={`${RHYTHM_TREND_DAYS}일 중 ${validDays}일`}>
+                      <i><i style={{ width: `${Math.min(100, (validDays / RHYTHM_TREND_DAYS) * 100)}%` }} /></i>
+                      <b>{validDays}<small>/{RHYTHM_TREND_DAYS}일</small></b>
                     </span>
-                    <p>{RHYTHM_TREND_DAYS - validDays}일 더 모이면 회복·피로도 흐름과 14일 바디 리듬, 내 평균과의 비교를 볼 수 있어요.</p>
+                    <p>{RHYTHM_TREND_DAYS - validDays}일 더 모이면 회복·피로도 흐름과 그 전 7일 바디 리듬, 내 평균과의 비교를 볼 수 있어요.</p>
                   </section>
                 )}
               </>

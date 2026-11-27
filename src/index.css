@@ -14200,13 +14200,13 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* ── 지표별 색 (src/metricStyle.ts 와 같은 값) — 아이콘·상세 히어로·그래프가 모든 화면에서 같은 색을 쓴다 ── */
 :root {
-  --m-hr: #EE8C84; --m-hr-soft: #FDEEEC;
-  --m-spo2: #6CC4D2; --m-spo2-soft: #E8F7F9;
-  --m-temp: #F2AE6B; --m-temp-soft: #FDF3E8;
-  --m-hrv: #7FA6E8; --m-hrv-soft: #EEF3FC;
-  --m-stress: #D69BDD; --m-stress-soft: #F8EEF9;
-  --m-walk: #7FCB8E; --m-walk-soft: #EBF7EE;
-  --m-sleep: #A98BEA; --m-sleep-soft: #F3EEFC;
+  --m-hr: #F96B6D; --m-hr-soft: #FFEDED;
+  --m-spo2: #2BCFDD; --m-spo2-soft: #E3FAFC;
+  --m-temp: #FF8E50; --m-temp-soft: #FFF1E8;
+  --m-hrv: #568EE4; --m-hrv-soft: #EAF1FC;
+  --m-stress: #E07DE5; --m-stress-soft: #FBEEFC;
+  --m-walk: #1CCE68; --m-walk-soft: #E4FAEC;
+  --m-sleep: #7E3FF2; --m-sleep-soft: #F1EAFE;
   --m-diet: #F2A900; --m-diet-soft: #FFF8D9;
   --m-survey: #1a2332; --m-survey-soft: #F2F4F6;
 }
@@ -14521,3 +14521,9 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 오른쪽 아래 ＋ 버튼이 마지막 기록을 가리지 않게 목록 아래 여백 */
 .scroll:has(.diet-fab) { padding-bottom: 96px; }
 .diet-macros { padding-left: 0; padding-right: 0; } /* 영양소 줄 왼쪽·오른쪽 끝을 위 칼로리 줄과 같은 선에 */
+.rhythm-hero.collecting .rd-tick-row { margin: 14px 0 12px; } /* 상세 준비 중: 게이지 위아래 여백 */
+.rd-trend-bar { display: flex; align-items: center; gap: 10px; }
+.rd-trend-bar > i { flex: 1; height: 10px; border-radius: 999px; background: #E3E6EA; overflow: hidden; }
+.rd-trend-bar > i > i { display: block; height: 100%; border-radius: 999px; background: #A9B1BB; }
+.rd-trend-bar b { font-size: 15px; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rd-trend-bar b small { font-size: 12px; font-weight: 600; color: var(--text-3); }

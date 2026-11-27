@@ -27,7 +27,7 @@ const MONTHS = SAMPLE_MONTH_STATS.map((stat, i) => {
 /** 홈 카드·포인트 안내와 같은 금액 (월 1회) */
 const SURVEY_POINTS = '500만 P'
 
-const RECENT = [...MONTHS].reverse().map((m, i) => ({ date: m.label, sub: '토마톡 링 월간 기록', value: '확인', today: i === 0 }))
+const RECENT = [...MONTHS].reverse().map((m, i) => ({ date: m.label, sub: 't.ring 월간 기록', value: '확인', today: i === 0 }))
 
 export function SurveyReportScreen() {
   const navigate = useNavigate()
@@ -85,7 +85,7 @@ export function SurveyReportScreen() {
                   <strong>
                     <b>확인</b>
                   </strong>
-                  <span>토마톡 링</span>
+                  <span>t.ring</span>
                 </div>
                 <i className="ms-metric-split" aria-hidden />
                 <div className="ms-metric">
@@ -97,12 +97,12 @@ export function SurveyReportScreen() {
                     <b>반지</b>
                   </strong>
                   <span className="ghost" aria-hidden>
-                    토마톡 링
+                    t.ring
                   </span>
                 </div>
               </div>
               <p className="ms-survey-lead">
-                토마톡 링이 모은 이번 달 수면·스트레스·걸음과 함께, 한 달에 한 번 짧은 설문에 답하면 포인트가 지급돼요.
+                t.ring이 모은 이번 달 수면·스트레스·걸음과 함께, 한 달에 한 번 짧은 설문에 답하면 포인트가 지급돼요.
               </p>
             </div>
 

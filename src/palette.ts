@@ -47,9 +47,9 @@ export const ACTIVITY_LEGEND = [
 ] as const
 
 export const VITAL_COLORS = {
-  hr: { color: '#EE8C84', soft: '#FDEEEC' },
-  spo2: { color: '#6CC4D2', soft: '#E8F7F9' },
-  temp: { color: '#F2AE6B', soft: '#FDF3E8' },
+  hr: { color: '#F96B6D', soft: '#FFEDED' },
+  spo2: { color: '#2BCFDD', soft: '#E3FAFC' },
+  temp: { color: '#FF8E50', soft: '#FFF1E8' },
   resp: { color: '#1CCE68', soft: '#E4FAEC' },
 } as const
 
