@@ -53,3 +53,18 @@ export function PointGuideButton({ className = '' }: { className?: string }) {
     </>
   )
 }
+
+/** 상세 화면 맨 위 '포인트 Tip' 한 줄: 이 항목으로 포인트를 받는 조건 (홈 '포인트 받는 방법'과 같은 문장) */
+export function PointTip({ kind }: { kind: MissionCardKind }) {
+  const r = RULES.find((x) => x.kind === kind)
+  if (!r) return null
+  return (
+    <div className="point-tip" role="note">
+      <span className="point-tip-badge">포인트 Tip</span>
+      <p>
+        {r.rule} <span className="nowrap"><b>{formatP(REWARD_P[kind])}</b>를 받아요</span>
+        <em> · {kind === 'survey' ? '한 달에 1회' : '하루 1회'}</em>
+      </p>
+    </div>
+  )
+}

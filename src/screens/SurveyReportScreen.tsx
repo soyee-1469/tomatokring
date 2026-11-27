@@ -11,6 +11,7 @@ import { SURVEY_FORM_URL, SURVEY_OPEN } from '../survey'
 import { Ri } from '../components/Ri'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
+import { PointTip } from '../components/PointGuide'
 
 /** 최근 3개월 (마지막이 이번 달). 수치는 목업 샘플 — 실제로는 브링 API의 월간 기록 */
 const SAMPLE_MONTH_STATS = [
@@ -75,6 +76,7 @@ export function SurveyReportScreen() {
           </div>
 
           <div className="scroll elder-body">
+            <PointTip kind="survey" />
             <div className="elder-sleep-card ms-hero">
               <div className="ms-hero-meta">
                 <div className="ms-metric">

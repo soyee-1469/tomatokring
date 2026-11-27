@@ -13,6 +13,7 @@ import { Header, Phone } from '../components/ui'
 import { getSession, isMeasureDone, markMeasureDone, saveDietPhoto, todayDietPhoto, type MeasureKind, addStressReading } from '../session'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
+import { PointTip } from '../components/PointGuide'
 import { useScrub } from '../components/useScrub'
 import { VitalDayBodyV2 } from './VitalDayBodyV2'
 import { Ri } from '../components/Ri'
@@ -389,6 +390,7 @@ function DietBody({ period, date, autoStart = false }: { period: Period; date: D
 
   return (
     <>
+      <PointTip kind="diet" />
       <div className="vd-card diet-sum">
         <em>{period === 'day' ? '총 섭취 칼로리' : period === 'week' ? '이번 주 하루 평균' : '이번 달 하루 평균'}</em>
         <strong>{kcal.toLocaleString('ko-KR')}<small>kcal</small></strong>
@@ -615,6 +617,7 @@ function WalkBody({ period, date, autoStart = false }: { period: Period; date: D
 
   return (
     <>
+      <PointTip kind="walk" />
       <div className="ms-act-hero">
         <em>{period === 'day' ? (isToday ? '총 걸음 수' : `${date.getMonth() + 1}월 ${date.getDate()}일 걸음 수`) : period === 'week' ? '이번 주 걸음 수' : '이번 달 걸음 수'}</em>
         <strong>{total.toLocaleString('ko-KR')}<small>걸음</small></strong>

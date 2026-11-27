@@ -7,6 +7,7 @@ import { TrendBars } from '../components/TrendBars'
 import { dayLog, formatLogValue, type LiveMetricId, type LogRow } from '../measureLog'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
+import { PointTip } from '../components/PointGuide'
 import { useScrub } from '../components/useScrub'
 import { METRIC_STYLE } from '../metricStyle'
 
@@ -209,6 +210,8 @@ export function VitalDayBodyV2({
 
       {/* 2) 한 줄 해석 + 오늘 값 */}
       <DateLine date={date} today={today} onDate={onDate} />
+      {/* 포인트가 걸린 항목(스트레스)만: 맨 위에 받는 조건 */}
+      {metric === 'stress' && <PointTip kind="stress" />}
 
       <section className={`v2-hero v2-m-${metric}`}>
         {/* 1행: 항목 아이콘 + 큰 숫자, 2행: 해석 + 조언 */}

@@ -7,6 +7,7 @@ import { Header, Phone, PrimaryButton } from '../components/ui'
 import { isMeasureDone, markMeasureDone } from '../session'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
+import { PointTip } from '../components/PointGuide'
 import { parseDateKey, recentDate, todayStart } from './MeasureScreen'
 import { DateLine } from '../components/DateLine'
 import { Ri } from '../components/Ri'
@@ -219,6 +220,7 @@ export function SleepAnalysisScreen() {
 
           <div className="scroll elder-body v2-page">
             <DateLine date={date} today={todayStart()} onDate={setDate} />
+            <PointTip kind="sleep" />
 
             {/* 바이탈 상세와 같은 히어로: 1행 값(왼쪽)+아이콘(오른쪽), 2행 해석 */}
             <section className="v2-hero v2-m-sleep">
