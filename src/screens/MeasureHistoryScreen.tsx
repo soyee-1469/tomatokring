@@ -71,9 +71,9 @@ const DEFS: Record<MeasureKind, HistoryDef> = {
     startLabel: '오늘 보기',
     today: { id: 'w-today', date: '2026.09.07 월', sub: '야외 걷기 · 32분', value: '2.4km', today: true },
     past: [
-      { id: 'w-1', date: '2026.09.06 일', sub: '09:10-18:40', value: '6,280보' },
-      { id: 'w-2', date: '2026.09.05 토', sub: '08:40-17:20', value: '5,110보' },
-      { id: 'w-3', date: '2026.09.04 금', sub: '07:50-19:10', value: '3,640보' },
+      { id: 'w-1', date: '2026.09.06 일', sub: '09:10-18:40', value: '6,280걸음' },
+      { id: 'w-2', date: '2026.09.05 토', sub: '08:40-17:20', value: '5,110걸음' },
+      { id: 'w-3', date: '2026.09.04 금', sub: '07:50-19:10', value: '3,640걸음' },
     ],
   },
   sleep: {
@@ -90,7 +90,7 @@ const DEFS: Record<MeasureKind, HistoryDef> = {
     ],
   },
   survey: {
-    title: '설문조사 (월)',
+    title: '월간 설문',
     listTitle: '월간 기록',
     emptyHint: '월간 기록이 여기에 쌓여요',
     startLabel: '이번 달 보기',

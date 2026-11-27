@@ -2,32 +2,32 @@ import { MetricInfoButton } from '../components/AccuracyInfo'
 import {
   CaretLeft,
   CaretRight,
-  Robot,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header, Phone } from '../components/ui'
-import { isMeasureDone, markMeasureDone } from '../session'
+import { isMeasureDone } from '../session'
+import { SURVEY_FORM_URL, SURVEY_OPEN } from '../survey'
+import { Ri } from '../components/Ri'
 import { useSession } from '../useSession'
 import { ClaimBanner } from '../components/ClaimBanner'
 
-const MONTHS = [
-  { label: '2026년 7월', sleep: '6시간 50분', stress: '42점', walk: '5,110보' },
-  { label: '2026년 8월', sleep: '7시간 02분', stress: '38점', walk: '4,820보' },
-  { label: '2026년 9월', sleep: '7시간 12분', stress: '35점', walk: '4,015보' },
+/** 최근 3개월 (마지막이 이번 달). 수치는 목업 샘플 — 실제로는 브링 API의 월간 기록 */
+const SAMPLE_MONTH_STATS = [
+  { sleep: '6시간 50분', stress: '42점', walk: '5,110걸음' },
+  { sleep: '7시간 02분', stress: '38점', walk: '4,820걸음' },
+  { sleep: '7시간 12분', stress: '35점', walk: '4,015걸음' },
 ]
+const MONTHS = SAMPLE_MONTH_STATS.map((stat, i) => {
+  const now = new Date()
+  const d = new Date(now.getFullYear(), now.getMonth() - (SAMPLE_MONTH_STATS.length - 1 - i), 1)
+  return { label: `${d.getFullYear()}년 ${d.getMonth() + 1}월`, month: d.getMonth() + 1, ...stat }
+})
 
-const SURVEY_QUESTIONS = [
-  { q: '이번 달 몸 상태는 어땠나요?', a: ['좋았어요', '보통이에요', '힘들었어요'] },
-  { q: '반지는 하루에 얼마나 착용했나요?', a: ['거의 종일', '낮에만', '가끔'] },
-  { q: '포인트 지급이 도움이 됐나요?', a: ['네', '보통', '아니요'] },
-] as const
+/** 홈 카드·포인트 안내와 같은 금액 (월 1회) */
+const SURVEY_POINTS = '500만 P'
 
-const RECENT = [
-  { date: '2026년 9월', sub: '토마톡 링 월간 기록', value: '확인', today: true },
-  { date: '2026년 8월', sub: '토마톡 링 월간 기록', value: '확인' },
-  { date: '2026년 7월', sub: '토마톡 링 월간 기록', value: '확인' },
-]
+const RECENT = [...MONTHS].reverse().map((m, i) => ({ date: m.label, sub: '토마톡 링 월간 기록', value: '확인', today: i === 0 }))
 
 export function SurveyReportScreen() {
   const navigate = useNavigate()
@@ -35,15 +35,15 @@ export function SurveyReportScreen() {
   const report = MONTHS[month]
   const session = useSession()
   const surveyDone = isMeasureDone(session, 'survey')
-  const [answers, setAnswers] = useState<(number | null)[]>(() => SURVEY_QUESTIONS.map(() => null))
-  const allAnswered = answers.every((a) => a !== null)
+  // 설문은 이번 달에만 참여할 수 있다. 지난 달을 보고 있으면 참여 영역 대신 안내
+  const isThisMonth = month === MONTHS.length - 1
 
   return (
     <div className="stage">
       <Phone>
         <div className="screen elder-home">
           <Header
-            title="설문조사 (월)"
+            title="월간 설문"
             backTo="/vitaling/home"
             right={
               <>
@@ -76,9 +76,6 @@ export function SurveyReportScreen() {
 
           <div className="scroll elder-body">
             <div className="elder-sleep-card ms-hero">
-              <button type="button" className="ms-fab" aria-label="도우미">
-                <Robot size={22} weight="fill" />
-              </button>
               <div className="ms-hero-meta">
                 <div className="ms-metric">
                   <em>
@@ -105,44 +102,27 @@ export function SurveyReportScreen() {
                 </div>
               </div>
               <p className="ms-survey-lead">
-                토마톡 링이 모은 이번 달 수면·스트레스·걸음과 함께, 아래 짧은 설문에 답하면 포인트가 지급됩니다.
+                토마톡 링이 모은 이번 달 수면·스트레스·걸음과 함께, 한 달에 한 번 짧은 설문에 답하면 포인트가 지급돼요.
               </p>
             </div>
 
+            {/* 설문은 구글 설문지로 받는다. 운영 전에는 '준비 중'만, 열리면 설문지로 보내고 완료되면 받기 */}
             <div className="elder-sleep-card">
-              <b className="ms-block-title">이번 달 설문 (3문항)</b>
-              {surveyDone ? (
+              <b className="ms-block-title">{isThisMonth ? '이번 달 설문' : `${report.month}월 설문`}</b>
+              {!isThisMonth ? (
+                <p className="ms-survey-past">지난 달 설문은 그 달에만 참여할 수 있어요. 이번 달 설문은 오른쪽 화살표로 넘겨서 확인해 주세요.</p>
+              ) : surveyDone ? (
                 <ClaimBanner kind="survey" doneText="설문 완료" />
+              ) : !SURVEY_OPEN ? (
+                <div className="ms-survey-soon">
+                  <Ri name="time" size={22} />
+                  <b>설문을 준비하고 있어요</b>
+                  <p>설문이 열리면 한 달에 한 번 참여하고 <span className="nowrap">{SURVEY_POINTS}</span>를 받을 수 있어요.</p>
+                </div>
               ) : (
-                <>
-                  <ol className="ms-survey-q">
-                    {SURVEY_QUESTIONS.map((item, qi) => (
-                      <li key={item.q}>
-                        <b>{item.q}</b>
-                        <div className="ms-survey-opts">
-                          {item.a.map((label, ai) => (
-                            <button
-                              key={label}
-                              type="button"
-                              className={answers[qi] === ai ? 'on' : ''}
-                              onClick={() => setAnswers((cur) => cur.map((v, i) => (i === qi ? ai : v)))}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                  <button
-                    type="button"
-                    className="ms-now-btn"
-                    disabled={!allAnswered}
-                    onClick={() => markMeasureDone('survey')}
-                  >
-                    {allAnswered ? '설문 제출하기' : '모든 문항에 답해 주세요'}
-                  </button>
-                </>
+                <button type="button" className="ms-now-btn" onClick={() => window.open(SURVEY_FORM_URL, '_blank', 'noopener')}>
+                  설문 참여하기
+                </button>
               )}
             </div>
 

@@ -202,6 +202,8 @@ export function addStressReading(value: number) {
 }
 
 export const RHYTHM_MIN_DAYS = 7
+/** 추세(7일 막대·회복/피로도 흐름·내 평균 비교)는 14일부터 — 브링 앱: 7일이면 점수는 나오지만 '데이터가 충분하지 않아 추세를 분석할 수 없어요' */
+export const RHYTHM_TREND_DAYS = 14
 /** 바디 리듬 계산에 쓸 수 있는 유효한 날 수 (복원 가능 범위 73일 안) */
 export function validDayCount(session: VitalingSession) {
   const now = new Date()
@@ -209,11 +211,19 @@ export function validDayCount(session: VitalingSession) {
   const fromKey = periodKey('sleep', from)
   return session.validDays.filter((d) => d >= fromKey).length
 }
-/** 시연용: 유효한 날을 n일로 맞춤 (어제부터 거꾸로). 목업 전용 */
+/** 그날 바디 리듬 기록이 있는지 (오늘은 늘 있음으로 본다). 7일 막대에서 없는 날은 빈칸 */
+export function hasRhythmRecord(session: VitalingSession, date: Date) {
+  const now = new Date()
+  const isToday = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()
+  return isToday || session.validDays.includes(periodKey('sleep', date))
+}
+
+/** 시연용: 유효한 날을 n일로 맞춤 (어제부터 거꾸로). 7일 이상이면 사흘 전 하루는 반지를 안 낀 날로 비워 둔다 (7일 막대의 빈칸 확인용). 목업 전용 */
 export function setDemoValidDays(n: number) {
   const cur = read()
   const days: string[] = []
-  for (let i = 1; i <= n; i++) {
+  for (let i = 1; days.length < n; i++) {
+    if (n >= RHYTHM_MIN_DAYS && i === 3) continue
     const d = new Date()
     d.setDate(d.getDate() - i)
     days.push(periodKey('sleep', d))

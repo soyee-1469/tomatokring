@@ -17,7 +17,7 @@ import { useScrub } from '../components/useScrub'
 import { VitalDayBodyV2 } from './VitalDayBodyV2'
 import { Ri } from '../components/Ri'
 import { MEALS } from '../meals'
-import { STEPS_BY_HOUR } from '../steps'
+import { stepsByHourOn, stepsOnDay } from '../steps'
 import { METRIC_STYLE } from '../metricStyle'
 
 type Period = 'day' | 'week' | 'month'
@@ -89,8 +89,8 @@ const RECENT: Record<Exclude<MeasureKind, 'sleep' | 'survey'>, RecentRow[]> = {
     { date: `${recentDate(1)} · 저녁`, sub: '면 요리 · 18:40', value: '640kcal' },
   ],
   walk: [
-    { date: recentDate(0), sub: '야외 걷기 · 32분', value: '8,412보', today: true },
-    { date: recentDate(1), sub: '야외 걷기 · 48분', value: '9,120보' },
+    { date: recentDate(0), sub: '야외 걷기 · 32분', value: '8,412걸음', today: true },
+    { date: recentDate(1), sub: '야외 걷기 · 48분', value: '9,120걸음' },
   ],
 }
 
@@ -100,7 +100,7 @@ const TITLES: Record<MeasureKind, string> = {
   diet: 'AI 식단',
   walk: '활동',
   sleep: '수면',
-  survey: '설문조사 (월)',
+  survey: '월간 설문',
 }
 
 function isMeasureKind(v: string | undefined): v is MeasureKind {
@@ -372,10 +372,14 @@ function MacroBar({ label, value, goal, color }: { label: string; value: number;
 }
 
 /** AI 식단: 총 섭취 칼로리 → 남은 칼로리 → 진행 바 → 3대 영양소 막대 → 식단 기록 → (+) 메뉴 */
-function DietBody({ period, autoStart = false }: { period: Period; autoStart?: boolean }) {
+function DietBody({ period, date, autoStart = false }: { period: Period; date: Date; autoStart?: boolean }) {
   const navigate = useNavigate()
   const session = useSession()
-  const photo = todayDietPhoto(session)
+  // 하루 보기에서 고른 날짜: 오늘 / 지난 날(그날 기록만 보기, 올리기·받기 없음) / 아직 오지 않은 날
+  const today0 = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime()
+  const day0 = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+  const dayKind = period !== 'day' || day0 === today0 ? 'today' : day0 < today0 ? 'past' : 'future'
+  const photo = dayKind === 'today' ? todayDietPhoto(session) : null
   const photoTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -384,7 +388,8 @@ function DietBody({ period, autoStart = false }: { period: Period; autoStart?: b
   const [nameOpen, setNameOpen] = useState(false)
   const [foodName, setFoodName] = useState('')
   const measured = isMeasureDone(session, 'diet')
-  const meals = measured ? MEALS : []
+  // 지난 날은 그날 기록(목업 샘플), 아직 오지 않은 날은 비어 있음
+  const meals = dayKind === 'past' ? MEALS : dayKind === 'future' ? [] : measured ? MEALS : []
   const kcal = meals.reduce((a, m) => a + m.kcal, 0)
   const macro = {
     protein: meals.reduce((a, m) => a + m.protein, 0),
@@ -416,7 +421,7 @@ function DietBody({ period, autoStart = false }: { period: Period; autoStart?: b
         <strong>{kcal.toLocaleString('ko-KR')}<small>kcal</small></strong>
         {period === 'day' && (
           <p className="diet-remain">
-            {kcal === 0 ? <>오늘 목표는 <b>{DIET_GOAL.kcal.toLocaleString('ko-KR')}kcal</b>예요</> : remain > 0 ? <>오늘은 <b>{remain.toLocaleString('ko-KR')}kcal</b> 더 드셔도 돼요</> : <>오늘 목표 칼로리를 <b>다 채웠어요</b></>}
+            {dayKind === 'past' ? <>이 날은 <b>{kcal.toLocaleString('ko-KR')}kcal</b> 드셨어요</> : dayKind === 'future' ? <>아직 오지 않은 날이에요</> : kcal === 0 ? <>오늘 목표는 <b>{DIET_GOAL.kcal.toLocaleString('ko-KR')}kcal</b>예요</> : remain > 0 ? <>오늘은 <b>{remain.toLocaleString('ko-KR')}kcal</b> 더 드셔도 돼요</> : <>오늘 목표 칼로리를 <b>다 채웠어요</b></>}
             <button type="button" className="diet-goal-btn" aria-label="목표 조정" onClick={() => navigate('/vitaling/goals')}><Ri name="equalizer" size={20} /></button>
           </p>
         )}
@@ -452,9 +457,10 @@ function DietBody({ period, autoStart = false }: { period: Period; autoStart?: b
               </span>
             </li>
           ))}
-          {meals.length === 0 && !photo && <li className="diet-empty">아직 오늘 식단 기록이 없어요. 아래 + 버튼으로 사진을 올려 보세요.</li>}
+          {meals.length === 0 && !photo && <li className="diet-empty">{dayKind === 'future' ? '이 날은 아직 기록할 수 없어요.' : '아직 오늘 식단 기록이 없어요. 아래 + 버튼으로 사진을 올려 보세요.'}</li>}
         </ul>
-        <ClaimBanner kind="diet" doneText="등록 완료" />
+        {/* 받기는 오늘만 */}
+        {dayKind === 'today' && <ClaimBanner kind="diet" doneText="등록 완료" />}
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => onFile(e.target.files?.[0])} />
       </div>
@@ -471,10 +477,10 @@ function DietBody({ period, autoStart = false }: { period: Period; autoStart?: b
         </div>
       ) : null}
 
-      {/* (+) 메뉴: 사진 촬영 · 앨범 사진 선택 · 음식 이름 입력 */}
-      <button type="button" className={`diet-fab ${menuOpen ? 'open' : ''}`} aria-label={menuOpen ? '닫기' : '식단 추가'} onClick={() => setMenuOpen((v) => !v)}>
+      {/* (+) 메뉴: 사진 촬영 · 앨범 사진 선택 · 음식 이름 입력 — 오늘만 올릴 수 있다 */}
+      {dayKind === 'today' && <button type="button" className={`diet-fab ${menuOpen ? 'open' : ''}`} aria-label={menuOpen ? '닫기' : '식단 추가'} onClick={() => setMenuOpen((v) => !v)}>
         <Ri name={menuOpen ? 'close' : 'add'} size={28} />
-      </button>
+      </button>}
       {menuOpen && (
         <>
           <button type="button" className="diet-fab-backdrop" aria-label="닫기" onClick={() => setMenuOpen(false)} />
@@ -500,25 +506,32 @@ function DietBody({ period, autoStart = false }: { period: Period; autoStart?: b
   )
 }
 
-/** 걷기 상세 그래프: 시간별은 알약 막대(최근·누른 막대만 진하게), 누적은 목표 점선까지 차오르는 면 그래프 */
-function WalkChart({ mode, hourSteps, cumSteps, latest, goal, picked, onPick }: {
-  mode: 'hour' | 'sum'; hourSteps: readonly number[]; cumSteps: readonly number[]; latest: number; goal: number
-  picked: number | null; onPick: (h: number | null) => void
+/** 걷기 상세 그래프 (기간 공통): 칸마다 알약 막대(최근·누른 칸만 진하게) 또는 목표 점선까지 차오르는 누적 면 그래프.
+ *  오늘 = 0~23시, 이번 주 = 월~일, 이번 달 = 1일~말일. 아직 오지 않은 칸은 비워 둔다 */
+function WalkChart({ mode, bars, cum, latest, goal, picked, onPick, labels, bw }: {
+  mode: 'each' | 'sum'; bars: readonly number[]; cum: readonly number[]; latest: number
+  /** 막대 모드에선 한 칸 목표(하루 목표), 누적 모드에선 기간 전체 목표 */ goal: number
+  picked: number | null; onPick: (i: number | null) => void
+  /** 아래 글자: [칸 번호, 글자] */ labels: readonly (readonly [number, string])[]
+  bw: number
 }) {
   const color = METRIC_STYLE.walk.color
   const W = 320, H = 172, padL = 44, padR = 8, top = 14, bottom = 138
-  const slot = (W - padL - padR) / 24
-  const bw = 7
-  const cx = (h: number) => padL + slot * (h + 0.5)
-  const max = mode === 'hour' ? Math.max(500, Math.ceil(Math.max(...hourSteps) / 500) * 500) : Math.ceil(Math.max(goal, cumSteps[latest]) / 2000) * 2000
+  const n = bars.length
+  const slot = (W - padL - padR) / n
+  const cx = (i: number) => padL + slot * (i + 0.5)
+  const step = n === 24 ? 500 : 2000
+  const max = mode === 'each' ? Math.max(step, Math.ceil(Math.max(...bars, n === 24 ? 0 : goal) / step) * step) : Math.ceil(Math.max(goal, cum[latest]) / 2000) * 2000
   const y = (v: number) => bottom - (Math.min(max, v) / max) * (bottom - top)
-  const ticks = mode === 'hour' ? [0, max / 2, max] : [0, max]
-  // 누른 위치 → 시간 (아직 오지 않은 시간은 가장 최근 시간으로)
+  const showGoal = mode === 'sum' || n !== 24
+  // 목표 점선과 너무 가까운 눈금 숫자는 뺀다 ('목표' 글자와 겹치지 않게)
+  const ticks = (mode === 'each' ? [0, max / 2, max] : [0, max]).filter((t) => !showGoal || t === 0 || Math.abs(t - goal) > max * 0.15)
+  // 누른 위치 → 칸 (아직 오지 않은 칸은 가장 최근 칸으로)
   const scrub = useScrub<HTMLDivElement>()
   const hit = scrub.pos === null ? null : Math.min(latest, Math.max(0, Math.floor((scrub.pos * W - padL) / slot)))
   useEffect(() => { onPick(hit) }, [hit, onPick])
   const strong = picked ?? latest
-  const pts = cumSteps.slice(0, latest + 1).map((v, h) => ({ x: cx(h), y: y(v) }))
+  const pts = cum.slice(0, latest + 1).map((v, i) => ({ x: cx(i), y: y(v) }))
   const line = pts.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
   return (
     <div className="chart-scrub ms-walk-chart" ref={scrub.ref} aria-hidden>
@@ -535,10 +548,19 @@ function WalkChart({ mode, hourSteps, cumSteps, latest, goal, picked, onPick }: 
             <text x={padL - 8} y={y(t) + 4} textAnchor="end" className="tick">{t.toLocaleString('ko-KR')}</text>
           </g>
         ))}
-        {mode === 'hour' ? (
-          hourSteps.map((v, h) => v > 0 && (
-            <rect key={h} x={cx(h) - bw / 2} y={Math.min(y(v), bottom - bw)} width={bw} height={Math.max(bw, bottom - y(v))} rx={bw / 2} fill={color} opacity={h === strong ? 1 : 0.35} />
-          ))
+        {mode === 'each' ? (
+          <>
+            {/* 이번 주·이번 달: 하루 목표 점선 (오늘은 시간별이라 없음) */}
+            {n !== 24 && (
+              <>
+                <line x1={padL} x2={W - padR} y1={y(goal)} y2={y(goal)} stroke="#1a2332" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="4 4" />
+                <text x={padL - 8} y={y(goal) + 4} textAnchor="end" className="goal">목표</text>
+              </>
+            )}
+            {bars.map((v, i) => v > 0 && (
+              <rect key={i} x={cx(i) - bw / 2} y={Math.min(y(v), bottom - bw)} width={bw} height={Math.max(bw, bottom - y(v))} rx={bw / 2} fill={color} opacity={i === strong ? 1 : 0.35} />
+            ))}
+          </>
         ) : (
           <>
             <line x1={padL} x2={W - padR} y1={y(goal)} y2={y(goal)} stroke="#1a2332" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="4 4" />
@@ -546,19 +568,40 @@ function WalkChart({ mode, hourSteps, cumSteps, latest, goal, picked, onPick }: 
             <path d={`${line} L ${pts[pts.length - 1].x.toFixed(1)} ${bottom} L ${pts[0].x.toFixed(1)} ${bottom} Z`} fill="url(#walkArea)" />
             <path d={line} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             {picked !== null && <line x1={cx(picked)} x2={cx(picked)} y1={top} y2={bottom} stroke="#1a2332" strokeOpacity="0.45" strokeWidth="1.5" strokeDasharray="3 3" />}
-            <circle cx={cx(strong)} cy={y(cumSteps[strong])} r={5.5} fill={color} stroke="#fff" strokeWidth="2" />
+            <circle cx={cx(strong)} cy={y(cum[strong])} r={5.5} fill={color} stroke="#fff" strokeWidth="2" />
           </>
         )}
-        {[0, 6, 12, 18].map((h) => (
-          <text key={h} x={cx(h)} y={H - 8} textAnchor="middle" className="tick">{h}시</text>
+        {labels.map(([i, t]) => (
+          <text key={i} x={cx(i)} y={H - 8} textAnchor="middle" className="tick">{t}</text>
         ))}
       </svg>
     </div>
   )
 }
 
+/** 기간별 걸음 칸: 오늘 = 시간별, 이번 주 = 월~일, 이번 달 = 1일~말일 (각 칸의 날짜도 같이) */
+function sameDayLocal(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+function walkSeries(period: Period, date: Date) {
+  if (period === 'day') {
+    // 고른 날짜의 시간대별 걸음 (오늘이 아니면 그날 기록)
+    return { bars: stepsByHourOn(date), dates: null as Date[] | null, labels: [[0, '0시'], [6, '6시'], [12, '12시'], [18, '18시']] as [number, string][], bw: 7 }
+  }
+  if (period === 'week') {
+    const start = mondayOf(date)
+    const dates = Array.from({ length: 7 }, (_, i) => addDays(start, i))
+    return { bars: dates.map(stepsOnDay), dates, labels: dates.map((d, i) => [i, WEEKDAYS[d.getDay()]] as [number, string]), bw: 14 }
+  }
+  const first = new Date(date.getFullYear(), date.getMonth(), 1)
+  const len = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  const dates = Array.from({ length: len }, (_, i) => addDays(first, i))
+  return { bars: dates.map(stepsOnDay), dates, labels: [0, 7, 14, 21, 28].filter((i) => i < len).map((i) => [i, `${i + 1}일`] as [number, string]), bw: 5 }
+}
+
 function WalkBody({ period, date, autoStart = false }: { period: Period; date: Date; autoStart?: boolean }) {
-  const [mode, setMode] = useState<'hour' | 'sum'>('hour')
+  const [mode, setMode] = useState<'each' | 'sum'>('each')
   const [busy, setBusy] = useState(false)
   const started = useRef(false)
   const onSync = () => {
@@ -577,64 +620,77 @@ function WalkBody({ period, date, autoStart = false }: { period: Period; date: D
     onSync()
   }, [autoStart])
   const session = useSession()
-  const goal = session.healthGoals.steps
-  const hourSteps = STEPS_BY_HOUR
-  const cumSteps = hourSteps.map((_, i) => hourSteps.slice(0, i + 1).reduce((a, b) => a + b, 0))
-  // 가장 최근에 걸음이 잡힌 시간 · 가장 많이 걸은 시간
-  const latest = hourSteps.reduce((last, v, i) => (v > 0 ? i : last), 0)
-  const peak = hourSteps.indexOf(Math.max(...hourSteps))
-  const [picked, setPicked] = useState<number | null>(null)
-  const values = mode === 'hour' ? hourSteps : cumSteps
+  const dayGoal = session.healthGoals.steps
+  // 오늘 / 이번 주 / 이번 달 탭에 따라 칸이 바뀐다
+  const { bars, dates, labels, bw } = walkSeries(period, date)
+  const cum = bars.map((_, i) => bars.slice(0, i + 1).reduce((a, b) => a + b, 0))
+  // 가장 최근에 걸음이 잡힌 칸 · 가장 많이 걸은 칸
+  const latest = bars.reduce((last, v, i) => (v > 0 ? i : last), 0)
+  const peak = bars.indexOf(Math.max(...bars))
+  const total = cum[latest]
+  const daysSoFar = dates ? dates.filter((_, i) => i <= latest && bars[i] > 0).length || 1 : 1
+  const goal = mode === 'sum' && dates ? dayGoal * dates.length : dayGoal
+  const [pickedRaw, setPicked] = useState<number | null>(null)
+  // 탭·날짜를 바꾸면 누른 칸은 푼다. 바뀐 첫 그림에서도 이전 칸 번호로 새 배열을 읽지 않게 범위를 바로 확인
+  useEffect(() => { setPicked(null) }, [period, date])
+  const picked = pickedRaw !== null && pickedRaw <= latest && pickedRaw < bars.length ? pickedRaw : null
+  const isToday = sameDayLocal(date, new Date())
+  const values = mode === 'each' ? bars : cum
+  const unitName = period === 'day' ? '시간별' : '일별'
+  const pickLabel = (i: number) => (dates ? `${dates[i].getMonth() + 1}월 ${dates[i].getDate()}일` : `${date.getMonth() + 1}월 ${date.getDate()}일 ${i}시`)
+  const peakLabel = dates ? `${dates[peak].getMonth() + 1}월 ${dates[peak].getDate()}일에 가장 많이 걸었어요` : `${peak}시에 가장 많이 걸었어요`
 
   return (
     <>
       <div className="ms-act-hero">
-        <em>총 걸음 수</em>
-        <strong>8,412<small>걸음</small></strong>
-        <span>{period === 'day' ? '1시간에 평균 350걸음 걸었어요' : '하루 평균 6,650걸음 걸었어요'}</span>
+        <em>{period === 'day' ? (isToday ? '총 걸음 수' : `${date.getMonth() + 1}월 ${date.getDate()}일 걸음 수`) : period === 'week' ? '이번 주 걸음 수' : '이번 달 걸음 수'}</em>
+        <strong>{total.toLocaleString('ko-KR')}<small>걸음</small></strong>
+        <span>{period === 'day' ? `1시간에 평균 ${Math.round(total / (latest + 1)).toLocaleString('ko-KR')}걸음 걸었어요` : `하루 평균 ${Math.round(total / daysSoFar).toLocaleString('ko-KR')}걸음 걸었어요`}</span>
       </div>
 
       <div className="elder-sleep-card ms-walk-card">
         <div className="ms-recent-head">
-          <b>{mode === 'hour' ? '시간별 걸음' : '누적 걸음'}</b>
+          <b>{mode === 'each' ? `${unitName} 걸음` : '누적 걸음'}</b>
           <div className="ms-seg">
-            <button type="button" className={mode === 'hour' ? 'on' : ''} onClick={() => setMode('hour')}>
-              시간별
+            <button type="button" className={mode === 'each' ? 'on' : ''} onClick={() => setMode('each')}>
+              {unitName}
             </button>
             <button type="button" className={mode === 'sum' ? 'on' : ''} onClick={() => setMode('sum')}>
               누적
             </button>
           </div>
         </div>
-        {/* 왼쪽 위 한 줄: 평소엔 가장 많이 걸은 시간, 막대를 누르면 그 시간의 걸음 수·날짜 */}
+        {/* 왼쪽 위 한 줄: 평소엔 가장 많이 걸은 때, 막대를 누르면 그 칸의 걸음 수·날짜 */}
         <p className="ms-bar-pick" aria-live="polite">
           {picked !== null ? (
             <>
               <b>{values[picked].toLocaleString('ko-KR')}<small>걸음</small></b>
-              <span>{date.getMonth() + 1}월 {date.getDate()}일 {picked}시{mode === 'sum' ? '까지' : ''}</span>
+              <span>{pickLabel(picked)}{mode === 'sum' ? '까지' : ''}</span>
             </>
           ) : (
-            <span>{mode === 'hour' ? `${peak}시에 가장 많이 걸었어요` : cumSteps[latest] >= goal ? `목표 ${goal.toLocaleString('ko-KR')}걸음을 채웠어요` : `목표까지 ${(goal - cumSteps[latest]).toLocaleString('ko-KR')}걸음 남았어요`}</span>
+            <span>{mode === 'each' ? peakLabel : total >= goal ? `목표 ${goal.toLocaleString('ko-KR')}걸음을 채웠어요` : `목표까지 ${(goal - total).toLocaleString('ko-KR')}걸음 남았어요`}</span>
           )}
         </p>
-        <WalkChart mode={mode} hourSteps={hourSteps} cumSteps={cumSteps} latest={latest} goal={goal} picked={picked} onPick={setPicked} />
+        <WalkChart key={period} mode={mode} bars={bars} cum={cum} latest={latest} goal={goal} picked={picked} onPick={setPicked} labels={labels} bw={bw} />
       </div>
 
-      <div className="elder-sleep-card">
-        <MeasureNow label="오늘 걸음 불러오기" busy={busy} onClick={onSync} />
-        <ClaimBanner kind="walk" doneText="걸음 확인 완료" />
-      </div>
+      {period === 'day' && isToday && (
+        <div className="elder-sleep-card">
+          <MeasureNow label="오늘 걸음 불러오기" busy={busy} onClick={onSync} />
+          <ClaimBanner kind="walk" doneText="걸음 확인 완료" />
+        </div>
+      )}
 
       <div className="ms-split-2">
         <div className="elder-sleep-card">
           <Fire size={22} weight="fill" color="#E53935" />
           <em>총 소모 칼로리</em>
-          <b>310kcal</b>
+          <b>{Math.round(total * 0.037).toLocaleString('ko-KR')}kcal</b>
         </div>
         <div className="elder-sleep-card">
           <Sneaker size={22} weight="fill" color="#2F80ED" />
           <em>총 거리</em>
-          <b>5.9km</b>
+          <b>{(total * 0.0007).toFixed(1)}km</b>
         </div>
       </div>
     </>
@@ -709,7 +765,7 @@ export function MeasureScreen() {
                 autoStart={params.get('run') === '1' && liveMetric === 'stress'}
               />
             ) : null}
-            {kind === 'diet' ? <DietBody period={period} autoStart={params.get('run') === '1'} /> : null}
+            {kind === 'diet' ? <DietBody period={period} date={date} autoStart={params.get('run') === '1'} /> : null}
             {kind === 'walk' ? <WalkBody period={period} date={date} autoStart={params.get('run') === '1'} /> : null}
             {kind === 'health' ? (
               <RecentCard title="최근 기록" rows={RECENT.health} onMore={() => navigate(historyTo)} />

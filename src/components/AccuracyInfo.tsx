@@ -200,7 +200,7 @@ const METRIC_INFO: Record<MetricInfoKey, { title: string; what: string[]; tips?:
     ],
   },
   survey: {
-    title: '설문조사 (월)',
+    title: '월간 설문',
     what: [
       '매달 1회 짧은 설문(3문항)에 답하면 포인트가 지급돼요.',
       '이번 달 수면·스트레스·걸음 요약을 함께 보여 드려요.',

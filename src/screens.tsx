@@ -27,9 +27,10 @@ import { STEPS_BY_HOUR } from './steps'
 import { METRIC_STYLE } from './metricStyle'
 import { PointGuideButton, STRESS_REWARD_MAX, WALK_REWARD_STEPS } from './components/PointGuide'
 import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
-import { ScoreArc as TodayScoreArc } from './components/ScoreArc'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
+import { SURVEY_OPEN } from './survey'
+import { GradePill } from './components/RhythmGrade'
+import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, saveVitalId, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -345,16 +346,35 @@ const HOME_CARD_META: Record<HomeCardKind, { label: string; icon: string; cls: s
 }
 
 /** 홈 카드 순서 편집: 홈과 같은 2열 격자(식단은 1열 전체) 그대로 보여 주고, 카드를 아무 방향으로나 끌어 옮긴다(화살표·버튼 없음). 놓는 즉시 홈에 반영 */
+/** 홈 카드 두 묶음 (2026-11-27): 측정 4개 / 포인트 받는 카드. 묶음은 통째로 위아래만, 순서는 묶음 안에서만 바꾼다 */
+const MEASURE_CARD_KINDS: readonly HomeCardKind[] = ['hr', 'spo2', 'temp', 'hrv']
+const cardGroupOf = (k: HomeCardKind) => (MEASURE_CARD_KINDS.includes(k) ? 'measure' : 'point')
+/** 저장된 순서를 묶음별로 모음: 먼저 나오는 묶음이 위, 묶음 안 순서는 그대로 */
+function groupedOrder(order: readonly HomeCardKind[]): HomeCardKind[] {
+  const firstIsMeasure = order.length === 0 || cardGroupOf(order[0]) === 'measure'
+  const measure = order.filter((k) => cardGroupOf(k) === 'measure')
+  const point = order.filter((k) => cardGroupOf(k) === 'point')
+  return firstIsMeasure ? [...measure, ...point] : [...point, ...measure]
+}
+
 function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; onClose: () => void }) {
-  const [draft, setDraft] = useState<HomeCardKind[]>([...order])
-  const listRef = useRef<HTMLUListElement>(null)
+  const [draft, setDraft] = useState<HomeCardKind[]>(() => groupedOrder(order))
+  const listRef = useRef<HTMLDivElement>(null)
   // 끄는 중: 어떤 카드를, 잡았을 때 카드 자리(목록 기준)와 크기, 지금 포인터 이동량
   const [drag, setDrag] = useState<{ kind: HomeCardKind; left: number; top: number; w: number; h: number; dx: number; dy: number } | null>(null)
   const dragRef = useRef<{ kind: HomeCardKind; startX: number; startY: number; armed: boolean; timer: number | null } | null>(null)
+  // 묶음 통째로 끄는 중: 어느 묶음을, 세로 이동량
+  const [gdrag, setGdrag] = useState<{ g: 'measure' | 'point'; dy: number } | null>(null)
+  const gdragRef = useRef<{ g: 'measure' | 'point'; startY: number } | null>(null)
+  const boxRefs = useRef<Record<string, HTMLElement | null>>({})
 
   const commit = (next: HomeCardKind[]) => {
     setDraft(next)
     setCardOrder(next) // 놓는 즉시 홈에 반영
+  }
+  const groupsInOrder = (list: readonly HomeCardKind[]) => {
+    const first = cardGroupOf(list[0])
+    return [first, first === 'measure' ? 'point' : 'measure'] as const
   }
   const lift = (kind: HomeCardKind, el: HTMLElement, pointerId: number) => {
     const d = dragRef.current
@@ -374,7 +394,32 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
     dragRef.current = d
     lift(kind, el, e.pointerId) // 누르는 즉시 들린다 (격자 안에서는 스크롤이 없어 꾹 누를 필요 없음)
   }
+  /** 묶음 머리 줄을 잡으면 묶음 전체가 들린다 */
+  const onGroupDown = (g: 'measure' | 'point', e: React.PointerEvent<HTMLElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return
+    gdragRef.current = { g, startY: e.clientY }
+    setGdrag({ g, dy: 0 })
+    try { navigator.vibrate?.(12) } catch { /* 지원 안 하는 기기 */ }
+    listRef.current?.setPointerCapture?.(e.pointerId)
+  }
   const onPointerMove = (e: React.PointerEvent) => {
+    const gd = gdragRef.current
+    if (gd) {
+      e.preventDefault()
+      const dy = e.clientY - gd.startY
+      const [first, second] = groupsInOrder(draft)
+      const other = gd.g === first ? second : first
+      const otherBox = boxRefs.current[other]?.getBoundingClientRect()
+      // 다른 묶음의 절반을 넘어가면 자리를 바꾼다 (위 묶음은 아래로, 아래 묶음은 위로)
+      if (otherBox && ((gd.g === first && dy > otherBox.height / 2) || (gd.g === second && -dy > otherBox.height / 2))) {
+        commit([...draft.filter((k) => cardGroupOf(k) === second), ...draft.filter((k) => cardGroupOf(k) === first)])
+        gd.startY = e.clientY
+        setGdrag({ g: gd.g, dy: 0 })
+        return
+      }
+      setGdrag({ g: gd.g, dy })
+      return
+    }
     const d = dragRef.current
     if (!d) return
     const dx = e.clientX - d.startX
@@ -386,25 +431,29 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
     }
     e.preventDefault()
     setDrag((cur) => (cur ? { ...cur, dx, dy } : cur))
-    // 포인터가 다른 카드 위에 오면 그 자리로 바로 끼워 넣는다 (상하좌우 모두)
+    // 포인터가 같은 묶음의 다른 카드 위에 오면 그 자리로 바로 끼워 넣는다 (상하좌우 모두)
     const items = listRef.current?.querySelectorAll<HTMLElement>('.card-order-item:not(.ghost)') // 떠다니는 복사본은 자리 판정에서 뺀다
     if (!items) return
     const from = draft.indexOf(d.kind)
     for (let i = 0; i < items.length; i++) {
       if (i === from) continue
+      if (cardGroupOf(draft[i]) !== cardGroupOf(d.kind)) continue // 다른 묶음으로는 옮기지 않는다
       const r = items[i].getBoundingClientRect()
       if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
-        if (i !== from) {
-          const next = [...draft]
-          next.splice(from, 1)
-          next.splice(i, 0, d.kind)
-          setDraft(next)
-        }
+        const next = [...draft]
+        next.splice(from, 1)
+        next.splice(i, 0, d.kind)
+        setDraft(next)
         break
       }
     }
   }
   const onPointerEnd = () => {
+    if (gdragRef.current) {
+      gdragRef.current = null
+      setGdrag(null)
+      return
+    }
     const d = dragRef.current
     dragRef.current = null
     if (!d) return
@@ -425,36 +474,52 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
             <X size={20} weight="bold" />
           </button>
         </div>
-        <p className="card-order-hint">홈과 같은 자리예요. 카드를 끌어서 원하는 자리에 놓아 보세요.</p>
-        <ul
+        <p className="card-order-hint">묶음 이름 줄을 끌면 묶음 전체가, 카드를 끌면 묶음 안에서 순서가 바뀌어요.</p>
+        <div
           ref={listRef}
-          className={`card-order-list${drag ? ' dragging' : ''}`}
+          className={`card-order-wrap${drag || gdrag ? ' dragging' : ''}`}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerEnd}
           onPointerCancel={onPointerEnd}
         >
-          {draft.map((kind, i) => {
-            const meta = HOME_CARD_META[kind]
-            const isDrag = drag?.kind === kind
-            const wide = kind === 'diet'
-            return (
-              <li
-                key={kind}
-                className={`card-order-item ${meta.cls}${wide ? ' wide' : ''}${isDrag ? ' placeholder' : ''}`}
-                onPointerDown={(e) => onPointerDown(kind, e)}
-                aria-label={`${meta.label}, ${i + 1}번째`}
-              >
-                <span className="card-order-head">
-                  <i className="card-order-ico metric-ico" data-metric={kind}><Ri name={meta.icon} size={18} /></i>
-                  <b>{meta.label}</b>
-                </span>
-                <span className="card-order-grip" aria-hidden="true"><i className="ri-draggable" /></span> {/* 끌 수 있다는 표시 (이 아이콘만 -line 접미사가 없어 Ri 대신 직접) */}
-              </li>
-            )
-          })}
+          {groupsInOrder(draft).map((g) => (
+            <section
+              key={g}
+              ref={(el) => { boxRefs.current[g] = el }}
+              className={`card-order-box${gdrag?.g === g ? ' lifted' : ''}`}
+              style={gdrag?.g === g ? { transform: `translateY(${gdrag.dy}px)` } : undefined}
+            >
+              {/* 묶음 머리 줄: 잡고 끌면 묶음 통째로 위·아래 */}
+              <div className="card-order-box-head" onPointerDown={(e) => onGroupDown(g, e)} aria-label={`${g === 'measure' ? '기본 측정' : '포인트 미션'} 묶음, 끌어서 옮기기`}>
+                <b>{g === 'measure' ? '기본 측정' : '포인트 미션'}</b>
+                <span className="card-order-grip" aria-hidden="true"><i className="ri-draggable" /></span>
+              </div>
+              <ul className="card-order-list">
+                {draft.filter((k) => cardGroupOf(k) === g).map((kind) => {
+                  const meta = HOME_CARD_META[kind]
+                  const isDrag = drag?.kind === kind
+                  const wide = kind === 'diet'
+                  return (
+                    <li
+                      key={kind}
+                      className={`card-order-item ${meta.cls}${wide ? ' wide' : ''}${isDrag ? ' placeholder' : ''}`}
+                      onPointerDown={(e) => onPointerDown(kind, e)}
+                      aria-label={`${meta.label}, ${draft.indexOf(kind) + 1}번째`}
+                    >
+                      <span className="card-order-head">
+                        <i className="card-order-ico metric-ico" data-metric={kind}><Ri name={meta.icon} size={18} /></i>
+                        <b>{meta.label}</b>
+                      </span>
+                      <span className="card-order-grip" aria-hidden="true"><i className="ri-draggable" /></span> {/* 끌 수 있다는 표시 (이 아이콘만 -line 접미사가 없어 Ri 대신 직접) */}
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          ))}
           {/* 끌리는 카드: 잡은 자리에서 포인터를 따라 떠다니는 복사본 (원래 자리는 점선 빈칸) */}
           {drag && (
-            <li
+            <div
               className={`card-order-item ghost ${HOME_CARD_META[drag.kind].cls}`}
               aria-hidden="true"
               style={{ left: drag.left + drag.dx, top: drag.top + drag.dy, width: drag.w, height: drag.h }}
@@ -463,9 +528,9 @@ function CardOrderSheet({ order, onClose }: { order: readonly HomeCardKind[]; on
                 <i className="card-order-ico metric-ico" data-metric={drag.kind}><Ri name={HOME_CARD_META[drag.kind].icon} size={18} /></i>
                 <b>{HOME_CARD_META[drag.kind].label}</b>
               </span>
-            </li>
+            </div>
           )}
-        </ul>
+        </div>
         <div className="card-order-actions">
           <button type="button" className="card-order-reset" onClick={reset}>
             기본 순서로
@@ -513,17 +578,6 @@ function formatClaimP(points: number) {
 }
 
 /** 스트레스 지수 등급 — 낮을수록 좋음 */
-/** 홈 카드용: 마지막 기록이 2시간 넘게 지났을 때만 "n시간 전 기록" (평소엔 시각을 보여 주지 않는다 — 오래됐다는 신호만) */
-const STALE_MIN = 120
-function staleLabel(time: string | undefined): string | null {
-  if (!time) return null
-  const [h, m] = time.split(':').map(Number)
-  const now = new Date()
-  const diff = now.getHours() * 60 + now.getMinutes() - (h * 60 + m)
-  if (diff < STALE_MIN) return null
-  return `${Math.floor(diff / 60)}시간 전 기록`
-}
-
 function stressLevel(score: number) {
   if (score <= 20) return { label: '매우 낮음', tone: 'ok' as const }
   if (score <= 40) return { label: '낮음', tone: 'ok' as const }
@@ -642,45 +696,27 @@ function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }
   )
 }
 
-function TodayScoreCard({
-  score,
-  tiles,
-  deviceStatus,
-  onOpen,
-}: {
-  score: number
-  tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]
-  deviceStatus: ReactNode
-  onOpen: () => void
-}) {
+/** 홈 바디 리듬 카드 (점수·등급·한 줄만 — 일주일 막대는 상세에서, 2026-11-27): 점수·상태를 왼쪽 위에 크게 → 내 평균과 비교 한 줄 → 최근 7일 막대(상세와 같은 그림).
+ *  위쪽 글자 영역과 '자세히'는 상세로, 막대는 눌러서 그날 점수 보기 */
+function RhythmBannerCard({ score, tiles, validDays, onOpen }: { score: number; tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]; /** 14일 미만이면 평균 비교 대신 남은 날 */ validDays: number; onOpen: () => void }) {
+  const trendReady = validDays >= RHYTHM_TREND_DAYS
   const byScore = statusFromScore(score)
   const alert = tiles.find((t) => t.tone === 'bad') ?? tiles.find((t) => t.tone === 'warn')
-  const status = alert
-    ? {
-        tone: alert.tone,
-        title: alert.tone === 'bad' ? `${alert.label} 위험` : `${alert.label} 주의`,
-      }
-    : byScore
-
+  const title = alert ? (alert.tone === 'bad' ? `${alert.label} 위험` : `${alert.label} 주의`) : byScore.title
+  const myAvg = Math.round(Array.from({ length: 28 }, (_, i) => dayBundle(addDays(HOME_TODAY, -i)).score).reduce((a, b) => a + b, 0) / 28)
+  const diff = score - myAvg
   return (
-    <div className={`elder-score-card arc ring tone-${status.tone}`}>
-      {deviceStatus ? <div className="elder-device-status">{deviceStatus}</div> : null}
-      {/* 단색 링 안에 점수와 한 줄 상태 (무지개 반원·나쁨/보통/최상 눈금은 뺌) */}
-      <button type="button" className="elder-score-gauge" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        <span className="elder-score-ringwrap">
-          <TodayScoreArc score={score} />
-          <span className="elder-score-center">
-            <strong>
-              {score}
-              <small>점</small>
-            </strong>
-            <b>오늘 {status.title}</b>
-          </span>
-        </span>
-      </button>
-      <button type="button" className="elder-score-open-btn" onClick={onOpen}>
-        자세히 보기
-        <Ri name="arrow-right-s" size={14} />
+    <div className="elder-score-card rhythm-banner">
+      <button type="button" className="rhythm-banner-top" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+      {/* 점수 옆 등급 알약(무지개 5색 중 하나) — 상세와 같은 이름(좋음 등). 위험·주의 항목이 있으면 아래 줄에 먼저 */}
+      <span className="rhythm-banner-score">
+        <strong>{score}<small>점</small></strong>
+        <GradePill score={score} />
+      </span>
+      <span className={`rhythm-banner-sub${alert ? ` alert ${alert.tone}` : ''}`}>{alert ? `오늘 ${title}` : !trendReady ? `${RHYTHM_TREND_DAYS - validDays}일 더 모이면 추세를 볼 수 있어요` : Math.abs(diff) < 3 ? `내 평균 ${myAvg}점과 비슷해요` : diff > 0 ? `내 평균보다 ${diff}점 높아요` : `내 평균보다 ${-diff}점 낮아요`}</span>
+      {/* 바디 리듬 계산에 들어간 측정 횟수 (하루 2개 이상 유효 데이터 + 수면 = 1회) */}
+      <span className="rhythm-banner-count">유효 기록 {validDays}회</span>
+      <span className="rhythm-banner-more">자세히<Ri name="arrow-right-s" size={16} /></span>
       </button>
     </div>
   )
@@ -885,12 +921,31 @@ const HOME_VITALS = [
   { id: 'hrv', label: '심박변이도', value: 42, unit: 'ms', icon: 'pulse', color: METRIC_STYLE.hrv.color, soft: METRIC_STYLE.hrv.soft, week: [40, 38, 45, 41, 44, 39, 42] },
 ] as const
 
+
+/** 상세 '하루 흐름'과 같은 기준의 홈 그래프 값: 0~23시 칸마다 그 시간 기록의 평균 (기록 없는 시간은 0 → Spark skipZero 로 건너뜀) */
+function hourlyMeans(rows: readonly { time: string; value: number }[]) {
+  const sum = Array(24).fill(0), cnt = Array(24).fill(0)
+  rows.forEach((r) => { const h = Number(r.time.split(':')[0]); if (h >= 0 && h < 24) { sum[h] += r.value; cnt[h] += 1 } })
+  return sum.map((v, h) => (cnt[h] ? v / cnt[h] : 0))
+}
+/** 홈 하루 흐름 선: 상세와 같이 하루 전체(0~24시) 폭에 시간대별 평균, 점선은 오늘 기록 전체 평균 */
+function DayFlowSpark({ rows, color }: { rows: readonly { time: string; value: number }[]; color: string }) {
+  if (!rows.length) return null
+  const mean = rows.reduce((a, r) => a + r.value, 0) / rows.length
+  const hours = hourlyMeans(rows)
+  // 상세 '하루 흐름'처럼 위아래에 여유를 둬서 작은 오르내림이 과장돼 보이지 않게
+  const on = hours.filter((v) => v > 0)
+  const lo = Math.min(...on), hi = Math.max(...on)
+  const pad = Math.max((hi - lo) * 0.6, Math.abs(mean) * 0.02)
+  return <Spark values={hours} color={color} width={170} height={36} fluid skipZero avg avgValue={mean} range={[lo - pad, hi + pad]} />
+}
+
 /** 아주 작은 7일 선 그래프 (홈 바이탈 칸용) — 축·눈금 없이 흐름만, 마지막 점은 오늘 */
-function Spark({ values, color, width = 60, height = 26, skipZero = false, fluid = false, avg = false }: { values: readonly number[]; color: string; width?: number; height?: number; /** 0을 '기록 없음'으로 보고 건너뜀 (스트레스처럼 안 잰 날이 있는 항목) */ skipZero?: boolean; /** 담긴 칸의 폭에 맞춰 가로로 늘림 (홈 2열 카드). 선 굵기·점은 늘어나지 않게 non-scaling-stroke */ fluid?: boolean; /** 기록 있는 값들의 평균을 가로 점선으로 */ avg?: boolean }) {
+function Spark({ values, color, width = 60, height = 26, skipZero = false, fluid = false, avg = false, avgValue, range }: { values: readonly number[]; color: string; width?: number; height?: number; /** 세로 범위를 직접 정할 때 [아래, 위] (상세처럼 위아래 여유) */ range?: readonly [number, number]; /** 점선 위치를 직접 정할 때 (상세의 '평균'과 같은 값) */ avgValue?: number; /** 0을 '기록 없음'으로 보고 건너뜀 (스트레스처럼 안 잰 날이 있는 항목) */ skipZero?: boolean; /** 담긴 칸의 폭에 맞춰 가로로 늘림 (홈 2열 카드). 선 굵기·점은 늘어나지 않게 non-scaling-stroke */ fluid?: boolean; /** 기록 있는 값들의 평균을 가로 점선으로 */ avg?: boolean }) {
   const pts = values.map((v, i) => ({ i, v, on: !skipZero || v > 0 }))
   const nums = pts.filter((p) => p.on).map((p) => p.v)
-  const min = Math.min(...nums)
-  const max = Math.max(...nums)
+  const min = range ? range[0] : Math.min(...nums)
+  const max = range ? range[1] : Math.max(...nums)
   const span = Math.max(0.0001, max - min)
   const padY = 4
   const x = (i: number) => (values.length < 2 ? width / 2 : 3 + ((width - 6) * i) / (values.length - 1))
@@ -898,7 +953,7 @@ function Spark({ values, color, width = 60, height = 26, skipZero = false, fluid
   // 기록 있는 점끼리만 선으로 잇는다 (빈 날은 끊김)
   const d = pts.map((p, i) => (!p.on ? '' : `${i === 0 || !pts[i - 1].on ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(p.v).toFixed(1)}`)).filter(Boolean).join(' ')
   const lastOn = [...pts].reverse().find((p) => p.on)
-  const mean = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null
+  const mean = avgValue ?? (nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null)
   // fluid 모드에선 가로만 늘어나므로 원(circle)이 타원이 됨 → 점은 길이 0의 둥근 선으로 그려 굵기로 크기를 잡는다
   const ve = fluid ? ('non-scaling-stroke' as const) : undefined
   const dot = (cx: number, cy: number, r: number, key?: number | string, op = 1) =>
@@ -1092,7 +1147,6 @@ export function HomeScreen() {
   const stressInfo = stressLevel(stressSel)
   // 정책: 하루 중 30점 이하 기록이 한 번이라도 있으면 그날 1회 지급 (자동·직접 구분 없음)
   const stressEligible = stressToday.some((v) => v <= STRESS_REWARD_MAX)
-  const stressStale = busyTile === 'stress' ? null : staleLabel(stressLog[0]?.time)
 
   const stepsSel = day.steps[day.steps.length - 1]
   const stepsLabel = stepsSel.toLocaleString('ko-KR')
@@ -1152,7 +1206,7 @@ export function HomeScreen() {
       {corner && <div className="home-tile-corner">{corner}</div>}
       {/* 포인트가 걸린 카드는 조건이 되면 큰 받기 버튼 (받기는 눈에 띄어야 해서 크게 유지) */}
       {action && <div className="home-tile-action">{action}</div>}
-      {action && <p className="home-tile-note">{note}</p>}
+      {action && note && <p className="home-tile-note">{note}</p>}
     </div>
   )
   // 재기는 걷기·수면의 '자동' 알약과 같은 크기의 알약 버튼: 작은 아이콘 + '측정' (2열 카드 폭에서 '측정하기'는 '심박변이도' 같은 긴 이름을 덮음). 재는 동안은 아이콘만 돌아가는 것으로 바뀜
@@ -1207,18 +1261,21 @@ export function HomeScreen() {
       case 'hrv': {
         const v = HOME_VITALS.find((x) => x.id === kind)!
         const now = vitalNow[v.id]
-        const value = now ?? v.value
-        const week = now != null ? [...v.week.slice(0, -1), now] : v.week
-        // 기록 시각은 홈에 안 보인다 (몇 시에 쟀는지는 상세에서). 다만 마지막 기록이 오래됐으면 "n시간 전 기록"만 (방금 직접 쟀으면 없음)
-        const stale = now != null ? null : staleLabel(dayLog(v.id, new Date())[0]?.time)
+        const latest = dayLog(v.id, new Date())[0]?.value
+        // 큰 숫자 = 가장 최근 기록 (상세 히어로와 같은 값). 방금 직접 쟀으면 그 값
+        const value = now ?? latest ?? v.value
+        // 그래프·평균은 상세 '하루 흐름'과 같이 오늘 기록 기준 (방금 직접 잰 값은 지금 시각에 더함)
+        const nowTime = `${String(new Date().getHours()).padStart(2, '0')}:00`
+        const rows = [...dayLog(v.id, new Date()), ...(now != null ? [{ time: nowTime, value: now }] : [])]
+        // 기록 시각('n시간 전 기록')은 홈에 보이지 않는다 — 상세에서 본다
         return tile(
           kind, v.label, v.icon,
           // 상태(정상·낮음·높음)는 값 바로 옆에
           <strong>{value}<small>{v.unit}</small><small className="st">{vitalStatus(v.id, value).label}</small></strong>,
           <>
-            {busyTile === kind ? <span>재는 중…</span> : stale && <span className="sub">{stale}</span>}
+            {busyTile === kind && <span>재는 중…</span>}
           </>,
-          <Spark values={week} color={v.color} width={170} height={36} fluid avg />,
+          <DayFlowSpark rows={rows} color={v.color} />,
           () => navigate(`/vitaling/measure/stress?m=${v.id}`),
           null,
           measureBtn(kind),
@@ -1229,63 +1286,57 @@ export function HomeScreen() {
           kind, '스트레스', 'brain',
           stressShow ? <strong>{stressSel}<small>점</small><small className="st">{stressInfo.label}</small></strong> : <strong className="empty">기록 전</strong>,
           <>
-            {/* 마지막 기록이 오래됐을 때만 상태 옆에 "n시간 전 기록" */}
-            {/* 마지막 기록이 오래됐을 때만 "n시간 전 기록" */}
-            {busyTile === 'stress' ? <span>재는 중…</span> : !stressShow ? <span>반지가 자동으로 재요</span> : stressStale && <span>{stressStale}</span>}
+            {/* 값 바로 아래: 포인트 받는 조건 (재는 동안만 '재는 중…') */}
+            {busyTile === 'stress' ? <span>재는 중…</span> : <span>{`${STRESS_REWARD_MAX}점 이하 ${formatClaimP(STRESS_REWARD_P)}`}</span>}
           </>,
           // 오늘 기록(자동+직접)의 흐름. 7일은 상세에서
-          stressShow ? <Spark values={stressToday} color={METRIC_STYLE.stress.color} width={170} height={36} fluid avg /> : null,
+          stressShow ? <DayFlowSpark rows={stressLog} color={METRIC_STYLE.stress.color} /> : null,
           () => goMeasure('stress'),
           // 버튼 자리는 늘 유지(받기·획득·조건 전), 재기는 오른쪽 위 원형
           pointBtn('stress', STRESS_REWARD_P, stressClaimed, stressShow && stressEligible),
           measureBtn('stress'),
-          `${STRESS_REWARD_MAX}점 이하 ${formatClaimP(STRESS_REWARD_P)}`,
         )
       case 'walk':
         return tile(
           kind, '걷기', 'walk',
           <strong>{stepsLabel}<small>걸음</small></strong>,
           <>
-            {/* 달성하면 따로 말하지 않는다 (받기 버튼이 초록이 되는 것으로 충분). 달성 전에는 남은 걸음만 */}
-            {!walkEligible && <span>{(WALK_REWARD_STEPS - stepsSel).toLocaleString('ko-KR')}걸음 남음</span>}
+            {/* 값 바로 아래: 포인트 받는 조건 */}
+            <span>{`${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상 ${formatClaimP(WALK_REWARD_P)}`}</span>
           </>,
           <HourBars values={STEPS_BY_HOUR} color={METRIC_STYLE.walk.color} />,
           () => goMeasure('walk'),
           // 걷기·수면은 반지가 자동으로 재니 재기 버튼은 없고(오른쪽 위 '자동'), 버튼 자리는 받기·획득·조건 전으로 늘 유지
           pointBtn('walk', WALK_REWARD_P, walkClaimed, walkEligible),
           autoTip,
-          `${WALK_REWARD_STEPS.toLocaleString('ko-KR')}걸음 이상 ${formatClaimP(WALK_REWARD_P)}`,
         )
       case 'sleep':
         return tile(
           kind, '수면', 'moon',
           sleepShow ? <strong>{Math.floor(sleepH)}<small>시간</small> {Math.round((sleepH - Math.floor(sleepH)) * 60)}<small>분</small></strong> : <strong className="empty">기록 전</strong>,
           <>
-            <span>{sleepShow ? `효율 ${day.efficiency}%` : '자면 자동 기록'}</span>
+            <span>{`수면 기록 ${formatClaimP(SLEEP_REWARD_P)}`}</span>
           </>,
           sleepShow ? <SleepHypnogram segments={SLEEP_LAST_NIGHT} height={36} className="home-vital-spark" /> : null,
           () => goMeasure('sleep'),
           pointBtn('sleep', SLEEP_REWARD_P, sleepClaimed, sleepShow),
           autoTip,
-          `수면 기록 ${formatClaimP(SLEEP_REWARD_P)}`,
         )
       case 'survey':
         return tile(
           kind, '설문', 'survey',
-          surveyMeasured ? <strong className="text">설문 완료</strong> : <strong className="empty">참여 전</strong>,
+          surveyMeasured ? <strong className="text">설문 완료</strong> : <strong className="empty">{SURVEY_OPEN ? '참여 전' : '준비 중'}</strong>,
           <>
-            {!surveyMeasured && <span>월 1회</span>}
+            <span>{`설문 완료 ${formatClaimP(SURVEY_REWARD_P)}`}</span>
           </>,
           null,
           () => goMeasure('survey'),
-          // 참여 전엔 참여하기, 참여하면 받기, 받은 뒤엔 회색 획득 (답변은 카드를 눌러 본다)
-          surveyClaimed ? doneBtn(SURVEY_REWARD_P) : surveyMeasured ? claimBtn('survey', SURVEY_REWARD_P) : (
+          // 참여 전엔 참여하기, 참여하면 받기, 받은 뒤엔 회색 획득 (답변은 카드를 눌러 본다). 구글 설문 운영 전에는 회색 '준비 중'
+          surveyClaimed ? doneBtn(SURVEY_REWARD_P) : surveyMeasured ? claimBtn('survey', SURVEY_REWARD_P) : !SURVEY_OPEN ? lockedBtn(SURVEY_REWARD_P) : (
             <button type="button" className="elder-claim-btn secondary" onClick={() => goMeasure('survey')}>
               <span>참여하기</span>
             </button>
           ),
-          null,
-          `설문 완료 ${formatClaimP(SURVEY_REWARD_P)}`,
         )
       case 'diet':
         return (
@@ -1307,8 +1358,11 @@ export function HomeScreen() {
 
   /** 순서대로 돌되, 2열 작은 카드가 이어지면 한 그리드로 묶고 식단(1열)은 따로 */
   const cardGroups: { tiles: boolean; kinds: HomeCardKind[] }[] = []
-  session.cardOrder.forEach((k) => {
+  // 묶음(측정 / 포인트)끼리 붙여서 그린다 — 측정 카드와 포인트 카드가 한 줄에 섞이지 않게 묶음이 바뀌면 줄을 새로 시작
+  groupedOrder(session.cardOrder).forEach((k, i, arr) => {
     const isTile = k !== 'diet'
+    const newGroup = i > 0 && cardGroupOf(arr[i - 1]) !== cardGroupOf(k)
+    if (newGroup) { cardGroups.push({ tiles: isTile, kinds: [k] }); return }
     const last = cardGroups[cardGroups.length - 1]
     if (last && last.tiles && isTile) last.kinds.push(k)
     else cardGroups.push({ tiles: isTile, kinds: [k] })
@@ -1404,12 +1458,7 @@ export function HomeScreen() {
                   </p>
                 </div>
                 {validDays >= RHYTHM_MIN_DAYS ? (
-                  <TodayScoreCard
-                    score={day.score}
-                    tiles={tiles}
-                    onOpen={() => navigate('/vitaling/day')}
-                    deviceStatus={null}
-                  />
+                  <RhythmBannerCard score={day.score} tiles={tiles} validDays={validDays} onOpen={() => navigate('/vitaling/day')} />
                 ) : (
                   <RhythmCollecting days={validDays} onOpen={() => navigate('/vitaling/day')} />
                 )}
@@ -1569,7 +1618,7 @@ export function SettingsScreen() {
               </div>
               <div className="device-card-row">
                 <span>마지막 동기화</span>
-                <b>{session.vitalId ? '오늘 10:24' : '--'}</b>
+                <b>{session.vitalId ? '10:24' : '--'}</b>
               </div>
             </div>
             <div className="row-group">
@@ -1727,7 +1776,6 @@ const FAQ: { group: string; icon: string; color: string; items: { q: string; a: 
 ]
 
 export function HelpScreen() {
-  const navigate = useNavigate()
   const [open, setOpen] = useState<string | null>(null)
   return (
     <div className="stage">
@@ -1735,22 +1783,6 @@ export function HelpScreen() {
         <div className="screen elder-home help-screen">
           <Header title="도움말 · 문의" backTo="/vitaling/my" />
           <div className="scroll elder-body">
-            <ul className="my-menu">
-              <li>
-                <button type="button" className="my-menu-row" onClick={() => navigate('/vitaling/guide')}>
-                  <span className="my-menu-ico"><Ri name="book-open" size={22} /></span>
-                  <span className="my-menu-copy"><b>사용 방법</b><em>처음 시작하기 · 반지 착용법</em></span>
-                  <Ri name="arrow-right-s" size={22} className="my-menu-caret" />
-                </button>
-              </li>
-              <li>
-                <button type="button" className="my-menu-row">
-                  <span className="my-menu-ico"><Ri name="question-answer" size={22} /></span>
-                  <span className="my-menu-copy"><b>1:1 문의하기</b><em>토마톡 고객센터로 연결돼요</em></span>
-                  <Ri name="arrow-right-s" size={22} className="my-menu-caret" />
-                </button>
-              </li>
-            </ul>
 
             {FAQ.map((g) => (
               <section key={g.group} className="faq-group">

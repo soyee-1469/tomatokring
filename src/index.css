@@ -14254,11 +14254,10 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .card-order-item .card-order-ico { width: auto; height: auto; background: transparent; border-radius: 0; }
 /* 홈 포인트 카드: 버튼 아래 설명 한 줄(언제 포인트를 받는지). 글이 없어도 한 줄 높이를 비워 카드끼리 높이가 같다 */
 .elder-home .home-tile-note { margin: -4px 0 0; min-height: 16px; font-size: 12px; line-height: 16px; text-align: center; color: var(--text-3); white-space: nowrap; letter-spacing: -0.03em; }
-/* 버튼이 없는 카드(심박수 등)가 순서 편집으로 포인트 카드 옆에 오면: 카드 높이는 옆 카드와 같아지고, 버튼·설명 자리만큼 그래프가 아래로 커진다 (아래가 비지 않게) */
-.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) { grid-template-rows: 1fr; align-content: stretch; }
-.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-tile-hit { align-self: stretch; grid-template-rows: auto auto auto 1fr; }
-.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-vital-graph { height: auto; min-height: 36px; align-items: stretch; }
-.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-vital-graph .home-vital-spark { height: 100%; min-height: 36px; }
+/* 버튼이 없는 카드(심박수 등): 그래프 아래 '7일 평균' 한 줄. 포인트 카드 옆에 오면 카드 높이는 옆과 같아지지만 그래프는 36px 그대로 —
+   남는 높이는 상태 줄과 그래프 사이 여백이 먹고, 그래프·평균 줄은 카드 아래쪽에 붙는다 (그래프를 늘리면 변화가 과장돼 보여서) */
+.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) { grid-template-rows: 1fr auto; align-content: stretch; }
+.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-tile-hit { align-self: stretch; grid-template-rows: auto auto 1fr auto; }
 /* 홈 식단 카드: 아이콘은 원형 바탕 없이 알맹이만 (2열 카드와 같은 18px) */
 .elder-home .elder-fit-card .elder-fit-head i.metric-ico { width: auto; height: auto; background: transparent; border-radius: 0; font-size: 18px !important; }
 .elder-home .elder-fit-card .elder-fit-head i.metric-ico svg { width: 18px; height: 18px; }
@@ -14274,3 +14273,100 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 /* 지급 기준 안내(아직 조건 전): 아이콘을 글 첫 줄과 나란히 (두 줄이 되어도 아이콘이 가운데로 내려가지 않게) */
 .claim-banner.off { align-items: flex-start; }
 .claim-banner.off > i { flex-shrink: 0; margin-top: 1px; }
+/* 설문 준비 중 (구글 설문 운영 전) */
+.ms-survey-soon { display: grid; justify-items: center; gap: 6px; padding: 18px 8px 6px; text-align: center; }
+.ms-survey-soon i { color: var(--text-3); }
+.ms-survey-soon b { font-size: 16px; font-weight: 700; }
+.ms-survey-soon p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
+.ms-survey-soon .nowrap { white-space: nowrap; }
+/* 홈 섹션 사이 여백 줄임: 제목 줄은 링크 유무와 관계없이 28px로 통일(링크는 보이지 않는 터치 영역으로 44px 유지), 카드 아래 14 → 10px (2열 카드 간격과 같게) */
+.elder-home .elder-body > .elder-section-row .elder-mission-link { position: relative; min-height: 28px; }
+.elder-home .elder-body > .elder-section-row .elder-mission-link::after { content: ''; position: absolute; inset: -8px 0; }
+.elder-home .elder-body > :is(.elder-mission-card, .elder-score-card, .elder-signal-card, .home-tiles, .elder-fit-card) { margin-bottom: 10px; }
+.elder-home .elder-body > .elder-section-row .elder-section-info { position: relative; width: 28px; height: 28px; }
+.elder-home .elder-body > .elder-section-row .elder-section-info::after { content: ''; position: absolute; inset: -8px; }
+.elder-home .elder-body > .elder-compact-top:has(+ .elder-section-row) { margin-bottom: 10px; } /* 날짜 카드 아래도 다른 카드와 같은 10px */
+/* 바디 리듬: 회복·피로도 7일 두 선 */
+.rd-rf-key { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.rd-rf-key i { width: 10px; height: 3px; border-radius: 2px; }
+.rd-rf-key i + i, .rd-rf-key i:not(:first-child) { margin-left: 8px; }
+.rd-rf-say { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
+.rd-rf-say b { color: var(--text); font-weight: 700; }
+/* 바디 리듬 그래프: 눈금 없이, 고른 날 위에 검정 말풍선 (홈 걸음 상세와 같은 말투). 처음엔 마지막 날, 누르면 그 날로 */
+.rd-chart { position: relative; touch-action: pan-y; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.rd-tip { position: absolute; transform: translate(-50%, calc(-100% - 8px)); display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: #1a2332; color: #fff; font-size: 12px; font-weight: 700; line-height: 16px; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; }
+.rd-tip i { width: 6px; height: 6px; border-radius: 50%; }
+.rd-tip i + * , .rd-tip i:not(:first-child) { margin-left: 4px; }
+/* 양 끝 칸에서는 말풍선이 카드 밖으로 나가지 않게 안쪽으로 붙인다 */
+.rd-tip.at-start { transform: translate(-16px, calc(-100% - 8px)); }
+.rd-tip.at-end { transform: translate(calc(-100% + 16px), calc(-100% - 8px)); }
+/* 버튼 없는 카드: 상태 줄이 비어 있으면(평소) 두 줄 자리(34px)를 비워 두지 않는다. 'n시간 전 기록'·'재는 중'이 있을 때만 줄이 생김.
+   포인트 카드 옆에 오면 남는 높이는 여전히 이 줄(1fr)이 먹어서 그래프·평균 줄은 아래에 붙는다 */
+.elder-home .home-tiles .elder-fit-card.tile:not(:has(> .home-tile-action)) .home-vital-state:empty { min-height: 0; margin-top: -8px; }
+/* ——— 홈 바디 리듬 1열 배너 (링 대신 확정) ——— 점수·상태 → 평균 비교 → 최근 7일 막대 */
+.elder-home .elder-score-card.rhythm-banner { display: grid; gap: 4px; padding: 18px 16px 12px; text-align: left; }
+.rhythm-banner-top { position: relative; display: grid; gap: 4px; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; color: inherit; cursor: pointer; }
+.rhythm-banner-score { display: flex; align-items: baseline; gap: 10px; }
+.rhythm-banner-score strong { font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--text); }
+.rhythm-banner-score strong small { margin-left: 2px; font-size: 16px; font-weight: 700; color: var(--text-2); }
+.rhythm-banner-score b { font-size: 17px; font-weight: 700; color: var(--text); }
+.rhythm-banner-sub { font-size: 14px; color: var(--text-2); }
+.rhythm-banner-more { position: absolute; top: 2px; right: 0; display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--text-3); }
+.elder-home .rhythm-banner .rd-chart { margin-top: 2px; }
+/* 포인트 카드: 상태 줄은 많아야 한 줄('2시간 전 기록'·'효율 84%'·'n걸음 남음'·'월 1회')이라 두 줄 자리(34px) 대신 한 줄(16px)만 잡는다.
+   비어 있어도(걷기 달성 후) 16px은 남겨서 옆 카드와 그래프·버튼 줄이 맞게 */
+.elder-home .home-tiles .elder-fit-card.tile:has(> .home-tile-action) .home-vital-state { min-height: 16px; }
+/* 바디 리듬 상세 첫 카드: 링 대신 큰 점수 + 등급 알약 (2026-11-27) */
+.rd-score { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.rd-score strong { font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; color: var(--text); }
+.rd-score strong small { margin-left: 3px; font-size: 20px; font-weight: 700; color: var(--text-2); }
+.rd-grade { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; font-size: 15px; font-weight: 700; color: var(--text); }
+.rd-grade i { width: 8px; height: 8px; border-radius: 50%; }
+.day-score-page .rd-first .rd-avg { text-align: left; margin-top: 10px; }
+/* 바디 리듬 7~13일: 추세 대신 진행 상황 (14칸 점) */
+.rd-trend-wait { display: grid; gap: 10px; }
+.rd-trend-wait > b { font-size: 16px; font-weight: 700; }
+.rd-trend-wait p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
+.rd-trend-wait .rhythm-days, .rhythm-banner-days { display: flex; flex-wrap: wrap; gap: 5px; }
+.rd-trend-wait .rhythm-days i, .rhythm-banner-days i { width: 12px; height: 12px; }
+.elder-home .rhythm-banner .rhythm-banner-days { margin: 10px 0 4px; }
+.rd-trend-wait .rhythm-days i:not(.on), .rhythm-banner-days i:not(.on) { background: #DDE1E6; } /* 흰 카드 위에서도 빈 칸이 보이게 */
+/* ——— 바디 리듬 무지개 5색 (2026-11-27): 등급 알약 · 무지개 눈금 ——— */
+.rhythm-banner .rd-grade { height: 28px; padding: 0 10px; font-size: 14px; }
+.rhythm-banner-sub.alert.bad { color: #D2453F; font-weight: 600; }
+.rhythm-banner-sub.alert.warn { color: #C26A1A; font-weight: 600; }
+.grade-scale { margin-top: 16px; }
+.grade-scale-bar { position: relative; display: flex; gap: 3px; height: 10px; }
+.grade-scale-bar i { height: 100%; border-radius: 999px; }
+.grade-scale-mark { position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 4px solid; transform: translate(-50%, -50%); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.grade-scale-labels { display: flex; gap: 3px; margin-top: 8px; }
+.grade-scale-labels em { font-style: normal; font-size: 12px; font-weight: 500; color: var(--text-3); text-align: center; white-space: nowrap; }
+.grade-scale-labels em.on { font-weight: 700; color: var(--text); }
+
+.rd-tip.empty { background: #6B7684; } /* 기록 없는 날: 말풍선도 회색 */
+/* 점수 옆 등급 알약: 숫자(84) 글자의 세로 가운데에 맞춤 (상세·홈 같게). 줄 상자 가운데보다 숫자 글자 가운데가 조금 위라 --pill-lift 만큼 올림 */
+.rd-score, .rhythm-banner-score { align-items: center; }
+.rd-score .rd-grade { margin-bottom: var(--pill-lift, 6px); }
+.rhythm-banner-score .rd-grade { margin-bottom: var(--pill-lift-sm, 4px); }
+/* 바디 리듬 막대 기간 탭 (7일 · 14일) */
+.rd-span-tabs { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--chip-gray); }
+.rd-span-tabs button { height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer; }
+.rd-span-tabs button.on { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+.rhythm-banner-count { font-size: 13px; font-weight: 500; color: var(--text-3); }
+/* 순서 편집 시트: 묶음 상자 (2026-11-27) — 머리 줄을 끌면 묶음 통째로 위·아래, 카드는 묶음 안에서만 */
+.card-order-wrap { position: relative; display: grid; gap: 12px; margin: 0 0 14px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.card-order-wrap .card-order-list { position: static; margin: 0; }
+.card-order-box { padding: 10px 10px 10px; border-radius: 20px; background: #F7F8FA; border: 1.5px solid transparent; transition: box-shadow 0.15s ease; }
+.card-order-box.lifted { position: relative; z-index: 2; border-color: #D5DAE0; background: #fff; box-shadow: 0 10px 24px rgba(26, 35, 50, 0.16); }
+.card-order-box-head { display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 2px 6px 6px; cursor: grab; } /* 오른쪽 점(⠿)을 아래 카드들의 점과 같은 세로줄에 */
+.card-order-box-head b { font-size: 14px; font-weight: 700; color: var(--text-2); }
+.card-order-box .card-order-item { background: #fff; }
+/* 도움말 · 문의: 다른 화면과 같은 글씨 크기로 (제목 20→16, 질문 16→15, 답변 15→14) */
+.help-screen .faq-group:first-child { margin-top: 4px; }
+.help-screen .faq-title { font-size: 16px; gap: 6px; margin-bottom: 8px; }
+.help-screen .faq-title i { font-size: 18px !important; }
+.help-screen .faq-title svg { width: 18px; height: 18px; }
+.help-screen .faq-q { padding: 14px 16px; font-size: 15px; font-weight: 600; }
+.help-screen .faq-a p { font-size: 14px; }
+.help-screen .help-footer b { font-size: 15px; }
+.ms-survey-past { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-2); word-break: keep-all; }
