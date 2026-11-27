@@ -131,11 +131,11 @@ export const GRADE_BANDS = [
 export function gradeOf(score: number) {
   return GRADE_BANDS.find((b) => score >= b.from && score < b.to) ?? GRADE_BANDS[0]
 }
-/** 등급별 한 줄 해석 (홈 게이지 안 문구와 상세 헤드라인이 같은 톤) */
-export const GRADE_COPY: Record<(typeof GRADE_BANDS)[number]['label'], { short: string; headline: string; headlinePast: string; advice: string }> = {
-  최상: { short: '최상이에요', headline: '몸과 마음이 아주 가뿐한 상태예요.', headlinePast: '몸과 마음이 아주 가뿐한 날이었어요.', advice: '미뤄 둔 일을 하기 좋은 날이에요.' },
-  좋음: { short: '괜찮아요', headline: '몸과 마음이 가뿐한 상태예요.', headlinePast: '몸과 마음이 가뿐한 날이었어요.', advice: '쌓인 일들을 차근차근 정리해 보세요.' },
-  보통: { short: '보통이에요', headline: '조금 쉬어가도 괜찮은 날이에요.', headlinePast: '조금 쉬어가도 괜찮은 날이었어요.', advice: '무리한 일정은 내일로 미루고 물을 자주 마셔 보세요.' },
-  주의: { short: '주의가 필요해요', headline: '몸이 쉬고 싶다고 말하고 있어요.', headlinePast: '몸이 지쳐 있던 날이었어요.', advice: '오늘은 가볍게만 움직이고 일찍 쉬어 주세요.' },
-  나쁨: { short: '조금 살펴보세요', headline: '오늘은 몸을 돌봐야 하는 날이에요.', headlinePast: '몸이 많이 지쳐 있던 날이었어요.', advice: '충분히 쉬고, 불편한 증상이 있으면 의료 전문가와 상담해 주세요.' },
+/** 등급 문구 — 해석·조언 없이 사실만 (2026-11-27: 근거 없는 문장 금지). 받침에 맞춘 조사 */
+export const GRADE_COPY: Record<(typeof GRADE_BANDS)[number]['label'], { short: string; headline: string; headlinePast: string }> = {
+  최상: { short: '최상', headline: "오늘 바디 리듬은 '최상'이에요.", headlinePast: "이 날 바디 리듬은 '최상'이었어요." },
+  좋음: { short: '좋음', headline: "오늘 바디 리듬은 '좋음'이에요.", headlinePast: "이 날 바디 리듬은 '좋음'이었어요." },
+  보통: { short: '보통', headline: "오늘 바디 리듬은 '보통'이에요.", headlinePast: "이 날 바디 리듬은 '보통'이었어요." },
+  주의: { short: '주의', headline: "오늘 바디 리듬은 '주의'예요.", headlinePast: "이 날 바디 리듬은 '주의'였어요." },
+  나쁨: { short: '나쁨', headline: "오늘 바디 리듬은 '나쁨'이에요.", headlinePast: "이 날 바디 리듬은 '나쁨'이었어요." },
 }

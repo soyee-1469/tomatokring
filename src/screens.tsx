@@ -31,7 +31,7 @@ import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { SURVEY_OPEN } from './survey'
 import { shrinkImage } from './imageUtil'
 import { MEALS } from './meals'
-import { GradeTicks } from './components/RhythmGrade'
+import { DeltaChip, GradeTicks, rhythmHeadline } from './components/RhythmGrade'
 import { DEFAULT_CARD_ORDER, hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
@@ -608,9 +608,9 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
 /** 홈 '이상 징후' 카드 — 브링 판정이 '감지'인 날에만 홈에 나온다. 컨디션 체크(좋아요·보통·안 좋아요)를 받는다.
  *  토마토 연한 배경은 이 카드에만 쓴다 (홈에서 빨강 계열을 쓰는 유일한 자리). 평소와 비슷·준비 중 상태는 상세 화면에서만 본다 */
 export const CONDITION_OPTIONS: readonly { id: ConditionAnswer; label: string; icon: string; advice: string }[] = [
-  { id: 'good', label: '좋아요', icon: 'emotion-happy', advice: '지금처럼 좋은 생활 리듬을 유지해 보세요.' },
-  { id: 'so-so', label: '보통이에요', icon: 'emotion-normal', advice: '가벼운 활동과 휴식으로 하루의 균형을 맞춰 보세요.' },
-  { id: 'bad', label: '안 좋아요', icon: 'emotion-unhappy', advice: '오늘은 무리하지 말고 쉬어 주세요. 불편함이 계속되면 전문가와 상의해 보세요.' },
+  { id: 'good', label: '좋아요', icon: 'emotion-happy', advice: "오늘 컨디션을 '좋아요'로 기록했어요." },
+  { id: 'so-so', label: '보통이에요', icon: 'emotion-normal', advice: "오늘 컨디션을 '보통이에요'로 기록했어요." },
+  { id: 'bad', label: '안 좋아요', icon: 'emotion-unhappy', advice: "오늘 컨디션을 '안 좋아요'로 기록했어요. 불편함이 계속되면 전문가와 상의해 주세요." },
 ]
 function SignalCard({ condition, onOpen, onCondition }: {
   condition: ConditionAnswer | null
@@ -626,7 +626,7 @@ function SignalCard({ condition, onOpen, onCondition }: {
         <StatusTag tone="low">감지</StatusTag>
         <Ri name="arrow-right-s" size={20} className="elder-signal-arrow" />
       </button>
-      <p className="elder-signal-say">어제에 이어 몸이 평소 같지 않아요</p>
+      <p className="elder-signal-say">어제에 이어 2일째 이상 징후가 감지됐어요</p>
       <p className="elder-signal-q">오늘 컨디션은 어떤가요?</p>
       <div className="elder-signal-options">
         {CONDITION_OPTIONS.map((o) => (
@@ -636,7 +636,7 @@ function SignalCard({ condition, onOpen, onCondition }: {
           </button>
         ))}
       </div>
-      <p className="elder-signal-advice">{picked ? picked.advice : '오늘은 쉬는 시간을 조금 더 가져 보세요.'}</p>
+      <p className="elder-signal-advice">{picked ? picked.advice : '오늘 느낌을 골라 두면 기록에 남아요.'}</p>
     </div>
   )
 }
@@ -678,15 +678,16 @@ function RhythmBannerCard({ score, tiles, validDays, yesterdayRecorded, onOpen }
     <div className="elder-score-card rhythm-banner rv-a">
       {/* 맨 위: 한 문장만. 위험·주의 항목이 있으면 이 자리에 그 경고를 먼저 (빨강·주황) */}
       <button type="button" className="rv-full-top" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        <b className={`rv-a-headline${alert ? ` alert ${alert.tone}` : ''}`}>{alert ? `오늘 ${title}` : GRADE_COPY[gradeOf(score).label].headline}</b>
+        <b className={`rv-a-headline${alert ? ` alert ${alert.tone}` : ''}`}>{alert ? `오늘 ${title}` : rhythmHeadline(score, yesterdayRecorded ? yesterday : null, trendReady ? myAvg : null)}</b>
       </button>
-      {/* 왼쪽: 등급 · 내 평균(14일부터) · 어제를 목록처럼, 오른쪽: 눈금 반원 게이지(가운데 점수) */}
-      <button type="button" className="rv-tick-row" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        <span className="rv-tick-list">
-          <span><i style={{ background: gradeOf(score).color }} /><b>{gradeOf(score).label}</b> 상태</span>
-          {trendReady && <span><b>{myAvg}점</b> 내 평균</span>}
-          {yesterdayRecorded && <span><b>{yesterday}점</b> 어제</span>}
-        </span>
+      {/* 왼쪽: 내 평균(14일부터)·어제 + 증감 칩, 오른쪽: 눈금 게이지. 비교할 게 없으면 게이지만 가운데 */}
+      <button type="button" className={`rv-tick-row${!trendReady && !yesterdayRecorded ? ' solo' : ''}`} onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+        {(trendReady || yesterdayRecorded) && (
+          <span className="rv-tick-list">
+            {trendReady && <span><em>내 평균</em><b>{myAvg}</b><DeltaChip diff={score - myAvg} /></span>}
+            {yesterdayRecorded && <span><em>어제</em><b>{yesterday}</b><DeltaChip diff={score - yesterday} /></span>}
+          </span>
+        )}
         <GradeTicks score={score} />
       </button>
       {/* 맨 아래 한 줄: 기록 수 · 자세히 — 작은 안내 글은 여기에만 모은다 (추세 안내는 상세에서만) */}
@@ -1419,7 +1420,7 @@ function VitalResultSheet({ row, onClose }: { row: ResultRow; onClose: () => voi
         </ul>
         {/* 안내는 문장마다 한 줄 (둘째 문장은 줄 바꿔서) */}
         <p className="vital-result-say">
-          {(row.tone === 'ok' ? ['정상 범위예요.'] : row.tone === 'mid' ? ['평소와 조금 다른 값이에요.', '잠시 쉬었다가 다시 재 보세요.'] : ['범위를 벗어난 값이에요.', '불편함이 있으면 전문가와 상의해 보세요.']).map((line, i) => (
+          {(row.tone === 'ok' ? ['정상 범위예요.'] : row.tone === 'mid' ? ['평소와 조금 다른 값이에요.'] : ['범위를 벗어난 값이에요.', '불편함이 있으면 전문가와 상의해 보세요.']).map((line, i) => (
             <Fragment key={i}>{i > 0 && <br />}{line}</Fragment>
           ))}
         </p>

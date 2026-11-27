@@ -94,12 +94,10 @@ const SLEEP_NIGHTS: readonly {
   segments: readonly SleepSegment[]
   hr: readonly [number, number, number]
   spo2: readonly [number, number, number]
-  say: { b: string; p: string }
 }[] = [
   {
     total: 432, start: '22:21', end: '06:21', efficiency: 84, segments: SLEEP_LAST_NIGHT,
     hr: [52, 58, 71], spo2: [94, 97, 99],
-    say: { b: '푹 잘 잔 밤이에요.', p: '깊은 수면이 충분했어요. 오늘도 같은 시간에 잠자리에 들어 보세요.' },
   },
   {
     // 브링 캡처 샘플: 잠이 부족한 밤 (4시간 18분, 03:26~07:44, 효율 54%)
@@ -110,7 +108,6 @@ const SLEEP_NIGHTS: readonly {
       { stage: 'light', min: 22 },
     ],
     hr: [57, 64, 77], spo2: [90, 96, 99],
-    say: { b: '잠이 부족한 밤이었어요.', p: '늦게 잠들어 수면 시간이 짧았어요. 오늘은 조금 일찍 잠자리에 들어 보세요.' },
   },
   {
     total: 460, start: '22:10', end: '06:05', efficiency: 88,
@@ -121,7 +118,6 @@ const SLEEP_NIGHTS: readonly {
       { stage: 'awake', min: 8 }, { stage: 'light', min: 28 },
     ],
     hr: [51, 57, 69], spo2: [95, 97, 99],
-    say: { b: '푹 잘 잔 밤이에요.', p: '수면 시간과 깊은 수면 모두 충분했어요.' },
   },
 ]
 const SLEEP_RECENT = [
@@ -172,7 +168,6 @@ function SleepEfficiencyInfoSheet({ onClose }: { onClose: () => void }) {
           <li><b>21~40%</b><span>하</span></li>
           <li><b>20% 이하</b><span>최하</span></li>
         </ul>
-        <p>잠자리에서는 휴대전화를 멀리 두고, 잠이 오지 않으면 잠시 일어났다가 다시 눕는 것이 도움이 돼요.</p>
         <PrimaryButton onClick={onClose}>확인</PrimaryButton>
       </div>
     </div>
@@ -237,8 +232,9 @@ export function SleepAnalysisScreen() {
               </div>
               <div className="v2-say">
                 <div>
-                  <b>{night.say.b}</b>
-                  <p>{night.say.p}</p>
+                  {/* 사실만: 잔 시간 · 목표와 차이 / 잠든·깬 시각 · 수면 효율 */}
+                  <b>{sleepMinutesLabel(night.total)} 잤어요.</b>
+                  <p>{night.total >= goal ? `목표 ${sleepMinutesLabel(goal)}을 채웠어요` : `목표 ${sleepMinutesLabel(goal)}보다 ${sleepMinutesLabel(goal - night.total)} 짧아요`} · {night.start}–{night.end} · 수면 효율 {night.efficiency}%</p>
                 </div>
               </div>
             </section>

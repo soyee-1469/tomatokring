@@ -3,21 +3,14 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone } from '../components/ui'
 import { Ri } from '../components/Ri'
-import { GradeTicks } from '../components/RhythmGrade'
+import { DeltaChip, GradeTicks, rhythmHeadline } from '../components/RhythmGrade'
 import { METRIC_STYLE } from '../metricStyle'
 import { DateLine } from '../components/DateLine'
 import { useScrub } from '../components/useScrub'
 import { dayLabel, pickIndex, RhythmWeekBars } from '../components/RhythmWeekBars'
 import { useSession } from '../useSession'
 import { hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, validDayCount } from '../session'
-import { addDays, dayBundle, daySeed, GRADE_COPY, gradeOf, sameDay, startOfDay, type DayMetric } from '../rhythm'
-
-
-function statusFromScore(score: number) {
-  const g = gradeOf(score)
-  const c = GRADE_COPY[g.label]
-  return { tone: g.tone, label: g.label, headline: c.headline, headlinePast: c.headlinePast, advice: c.advice }
-}
+import { addDays, dayBundle, daySeed, sameDay, startOfDay, type DayMetric } from '../rhythm'
 
 function MetricRow({
   metric,
@@ -96,16 +89,39 @@ function RecoveryFatigueChart({ endDate, hasRecord }: { endDate: Date; /** 기�
     </div>
   )
 }
-/** 전날과 비교 칩: 화살표 + 차이. 색은 방향이 아니라 좋아졌는지로 (회복은 오르면, 피로도는 내리면 초록) */
-function DeltaChip({ diff, higherIsBetter }: { diff: number; higherIsBetter: boolean }) {
-  if (diff === 0) return <span className="rd-delta same">전날과 같아요</span>
-  const better = higherIsBetter ? diff > 0 : diff < 0
+/** 받침 있으면 '이에요', 없으면 '예요' */
+function iEyo(word: string) {
+  const c = word.charCodeAt(word.length - 1)
+  return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0 ? '이에요' : '예요'
+}
+/** 오늘의 포인트: 점수를 가장 많이 끌어내린 항목 하나 + 그 항목의 지난 7일 평균과 비교 + 그 항목 상세로.
+ *  데이터로 확인되는 내용만 (근거 없는 권장 문장은 넣지 않음). 모든 항목이 좋으면 '고르게 좋아요' 한 줄 */
+function TodayFocus({ date, isToday, onOpen }: { date: Date; /** 지난 날은 '이 날'로 */ isToday: boolean; onOpen: (to: string) => void }) {
+  const metrics = dayBundle(date).metrics
+  const low = [...metrics].sort((a, b) => a.score - b.score)[0]
+  if (low.score >= 80) {
+    return (
+      <section className="rd-focus good">
+        <b className="rd-focus-title">{isToday ? '오늘은' : '이 날은'} 모든 항목이 고르게 좋아요</b>
+      </section>
+    )
+  }
+  // 평소 = 지난 7일 같은 항목 점수 평균
+  const usual = Math.round(Array.from({ length: 7 }, (_, i) => dayBundle(addDays(date, -(i + 1))).metrics.find((m) => m.id === low.id)!.score).reduce((a, b) => a + b, 0) / 7)
+  const diff = low.score - usual
+  const name = low.id === 'activity' ? '걷기' : low.label
   return (
-    <span className={`rd-delta ${better ? 'good' : 'bad'}`} aria-label={`전날보다 ${Math.abs(diff)}점 ${diff > 0 ? '높아요' : '낮아요'}`}>
-      <Ri name={diff > 0 ? 'arrow-up' : 'arrow-down'} size={13} />{Math.abs(diff)}점
-    </span>
+    <section className="rd-focus">
+      <span className="rd-focus-head">
+        <Ri name={low.icon} fill size={18} style={{ color: low.color }} />
+        <b className="rd-focus-title">{isToday ? '오늘' : '이 날'} 점수를 낮춘 건 {name}{iEyo(name)}</b>
+      </span>
+      <p className="rd-focus-why">{name} 점수 {low.score}점 · 지난 7일 평균 {usual}점보다 {Math.abs(diff) < 2 ? '비슷해요' : `${Math.abs(diff)}점 ${diff < 0 ? '낮아요' : '높아요'}`}</p>
+      <button type="button" className="rd-focus-link" onClick={() => onOpen(low.to)}>{name} 보기<Ri name="arrow-right-s" size={16} /></button>
+    </section>
   )
 }
+
 function rhythmLabel(v: number, higherIsBetter: boolean) {
   const good = higherIsBetter ? v : 100 - v
   if (good >= 85) return '최상'
@@ -127,8 +143,9 @@ export function DayScoreScreen() {
   const today = useMemo(() => startOfDay(new Date()), [])
   const [selected, setSelected] = useState(today)
   const bundle = useMemo(() => dayBundle(selected), [selected])
-  const status = statusFromScore(bundle.score)
   const isToday = sameDay(selected, today)
+  const prevRec = hasRhythmRecord(session, addDays(selected, -1))
+  const prevScore = dayBundle(addDays(selected, -1)).score
   const dateLabel = `${selected.getMonth() + 1}월 ${selected.getDate()}일`
   const rhythm = rhythmOf(selected)
   const rhythmPrev = rhythmOf(addDays(selected, -1))
@@ -180,30 +197,34 @@ export function DayScoreScreen() {
               <>
                 {/* 1) 첫 카드: 한 문장 → 조언 → 홈과 같은 등급 목록 + 눈금 게이지. 7일 흐름은 아래 막대에서 */}
                 <section className="rd-gauge rd-first">
-                  <h2 className="rd-headline">{isToday ? status.headline : status.headlinePast}</h2>
-                  <p className="rd-advice">{status.advice}</p>
-                  {/* 홈 '오늘의 상태'와 같은 모양: 왼쪽 목록(등급 · 내 평균(14일부터) · 전날), 오른쪽 눈금 반원 게이지(가운데 점수) */}
-                  <div className="rv-tick-row rd-tick-row">
-                    <span className="rv-tick-list">
-                      <span><i style={{ background: gradeOf(bundle.score).color }} /><b>{gradeOf(bundle.score).label}</b> 상태</span>
-                      {trendReady && <span><b>{myAvg}점</b> 내 평균</span>}
-                      {hasRhythmRecord(session, addDays(selected, -1)) && <span><b>{dayBundle(addDays(selected, -1)).score}점</b> 전날</span>}
-                    </span>
+                  {/* 맨 위: 등급 반복 대신 변화(사실) — 전날 → 내 평균 → 점수 순으로 있는 것 */}
+                  <h2 className="rd-headline">{rhythmHeadline(bundle.score, prevRec ? prevScore : null, trendReady ? myAvg : null, isToday)}</h2>
+                  {/* 왼쪽: 내 평균(14일부터)·전날 + 증감 칩, 오른쪽: 눈금 게이지. 비교할 게 없으면 게이지만 가운데 */}
+                  <div className={`rv-tick-row rd-tick-row${!trendReady && !prevRec ? ' solo' : ''}`}>
+                    {(trendReady || prevRec) && (
+                      <span className="rv-tick-list">
+                        {trendReady && <span><em>내 평균</em><b>{myAvg}</b><DeltaChip diff={bundle.score - myAvg} /></span>}
+                        {prevRec && <span><em>{isToday ? '어제' : '전날'}</em><b>{prevScore}</b><DeltaChip diff={bundle.score - prevScore} /></span>}
+                      </span>
+                    )}
                     <GradeTicks score={bundle.score} />
                   </div>
                 </section>
+
+                {/* 2) 오늘의 포인트: 점수를 낮춘 항목 하나 + 할 일 */}
+                <TodayFocus date={selected} isToday={isToday} onOpen={(to) => navigate(to)} />
 
                 {/* 3) 회복 · 피로도 — 홈 바이탈 칸과 같은 2칸 */}
                 <section className="rd-pair">
                   <div>
                     <em>회복</em>
                     <strong>{rhythm.recovery}<small>점</small></strong>
-                    <span className="rd-pair-meta"><b>{rhythmLabel(rhythm.recovery, true)}</b><span className="rd-pair-vs"><em>전날보다</em><DeltaChip diff={rhythm.recovery - rhythmPrev.recovery} higherIsBetter /></span></span>
+                    <span className="rd-pair-meta"><b>{rhythmLabel(rhythm.recovery, true)}</b><span className="rd-pair-vs"><em>전날보다</em><DeltaChip diff={rhythm.recovery - rhythmPrev.recovery} sameText="전날과 같아요" /></span></span>
                   </div>
                   <div>
                     <em>피로도</em>
                     <strong>{rhythm.fatigue}<small>점</small></strong>
-                    <span className="rd-pair-meta"><b>{rhythmLabel(rhythm.fatigue, false)}</b><span className="rd-pair-vs"><em>전날보다</em><DeltaChip diff={rhythm.fatigue - rhythmPrev.fatigue} higherIsBetter={false} /></span></span>
+                    <span className="rd-pair-meta"><b>{rhythmLabel(rhythm.fatigue, false)}</b><span className="rd-pair-vs"><em>전날보다</em><DeltaChip diff={rhythm.fatigue - rhythmPrev.fatigue} higherIsBetter={false} sameText="전날과 같아요" /></span></span>
                   </div>
                 </section>
 
@@ -230,7 +251,7 @@ export function DayScoreScreen() {
                       <span className="rd-rf-key"><i style={{ background: REC_COLOR }} />회복<i style={{ background: FAT_COLOR }} />피로도</span>
                     </div>
                     <RecoveryFatigueChart endDate={selected} hasRecord={(d) => hasRhythmRecord(session, d)} />
-                    <p className="rd-rf-say">{overDays === 0 ? '이번 주는 무리한 날 없이 잘 쉬었어요.' : <>피로도가 회복보다 높았던 날이 <b>{overDays}일</b> 있어요.</>}</p>
+                    <p className="rd-rf-say">{overDays === 0 ? '최근 7일 중 피로도가 회복보다 높았던 날은 없어요.' : <>최근 7일 중 피로도가 회복보다 높았던 날이 <b>{overDays}일</b> 있어요.</>}</p>
                   </section>
                 ) : (
                   /* 7~13일: 추세 분석 대신 진행 상황 (브링과 같이 14일부터) */

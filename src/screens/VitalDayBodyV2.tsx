@@ -57,42 +57,40 @@ const SPEC: Record<LiveMetricId, Spec> = {
 function minutesOf(t: string) { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 const fmt = (v: number, d: number) => v.toFixed(d)
 
-/** 오늘 값을 평소(최근 7일 평균)와 정상 범위에 비춰 한 줄로 */
+/** 오늘 값을 사실로만 두 줄: ① 정상 범위(또는 구간) 안인지 ② 지난 7일 평균과 차이. 해석·조언은 넣지 않는다 (2026-11-27) */
 function interpret(metric: LiveMetricId, today: number, usual: number | null, isToday: boolean) {
   const s = SPEC[metric]
   const [lo, hi] = s.normal
-  const diff = usual === null ? 0 : today - usual
-  const tol = metric === 'temp' ? 0.2 : metric === 'spo2' ? 1 : 5
-  if (metric === 'hr') {
-    if (today > hi) return { head: isToday ? '오늘은 심장이 조금 빨리 뛰어요.' : '심장이 조금 빨리 뛴 날이었어요.', tip: '잠시 앉아서 숨을 고르고, 카페인은 줄여 보세요.', tone: 'warn' as const }
-    if (today < lo) return { head: isToday ? '오늘은 심장이 천천히 뛰어요.' : '심장이 천천히 뛴 날이었어요.', tip: '어지럽거나 기운이 없으면 의료 전문가와 상담해 주세요.', tone: 'warn' as const }
-    if (diff > tol) return { head: isToday ? '평소보다 조금 빨라요.' : '평소보다 조금 빨랐던 날이에요.', tip: '활동이 많았거나 긴장한 날일 수 있어요. 잠시 쉬어 가세요.', tone: 'ok' as const }
-    if (diff < -tol) return { head: isToday ? '평소보다 느긋해요.' : '평소보다 느긋했던 날이에요.', tip: '편안한 하루예요. 이 흐름을 유지해 보세요.', tone: 'ok' as const }
-    return { head: isToday ? '오늘 심장은 평소처럼 안정적이에요.' : '심장이 안정적이었던 날이에요.', tip: '좋은 상태예요. 물 한 잔 마시고 가볍게 움직여 보세요.', tone: 'ok' as const }
+  const u = s.unit
+  const f = (v: number) => fmt(v, s.digits)
+  const be = isToday ? '이에요' : '이었어요'
+  let head: string
+  let tone: 'ok' | 'warn' = 'ok'
+  if (metric === 'stress') {
+    // 스트레스는 구간 이름으로 (매우 낮음 0–20 · 낮음 21–40 · 보통 41–60 · 높음 61–80 · 매우 높음 81–100)
+    const z = s.zones.find((zz) => zz.test(today))
+    const ranges: Record<string, string> = { '매우 낮음': '0–20점', '낮음': '21–40점', '보통': '41–60점', '높음': '61–80점', '매우 높음': '81–100점' }
+    head = `'${z?.label ?? '-'}' 구간(${ranges[z?.label ?? ''] ?? ''})${be}.`
+    tone = today > 60 ? 'warn' : 'ok'
+  } else if (today < lo) {
+    head = `정상 범위(${f(lo)}–${f(hi)}${u})보다 낮${isToday ? '아요' : '았어요'}.`
+    tone = 'warn'
+  } else if (today > hi) {
+    head = `정상 범위(${f(lo)}–${f(hi)}${u})보다 높${isToday ? '아요' : '았어요'}.`
+    tone = 'warn'
+  } else {
+    head = `정상 범위(${f(lo)}–${f(hi)}${u}) 안${be}.`
   }
-  if (metric === 'spo2') {
-    if (today < 90) return { head: isToday ? '혈중 산소가 낮게 나왔어요.' : '혈중 산소가 낮았던 날이에요.', tip: '잠시 뒤 다시 재 보고, 계속 낮으면 의료 전문가와 상담해 주세요.', tone: 'warn' as const }
-    if (today < lo) return { head: isToday ? '혈중 산소가 조금 낮아요.' : '혈중 산소가 조금 낮았던 날이에요.', tip: '깊게 숨 쉬고 잠시 쉬어 보세요. 잘 때는 잠깐 낮아지기도 해요.', tone: 'warn' as const }
-    return { head: isToday ? '혈중 산소가 충분해요.' : '혈중 산소가 충분했던 날이에요.', tip: '좋은 상태예요. 이대로 유지해 보세요.', tone: 'ok' as const }
+  const tol = metric === 'temp' ? 0.1 : 1
+  let tip: string
+  if (usual === null) tip = '지난 7일 기록이 없어 평균과 비교할 수 없어요.'
+  else {
+    const d = today - usual
+    tip = Math.abs(d) < tol
+      ? `지난 7일 평균과 같아요(${f(usual)}${u}).`
+      : `지난 7일 평균 ${f(usual)}${u}보다 ${f(Math.abs(d))}${u} ${d > 0 ? '높' : '낮'}${isToday ? '아요' : '았어요'}.`
   }
-  if (metric === 'temp') {
-    if (today >= 37.5) return { head: isToday ? '피부 온도가 높아요.' : '피부 온도가 높았던 날이에요.', tip: '몸이 뜨겁거나 으슬으슬하면 체온계로 확인해 주세요.', tone: 'warn' as const }
-    if (today >= hi) return { head: isToday ? '피부 온도가 조금 높아요.' : '피부 온도가 조금 높았던 날이에요.', tip: '운동 직후나 더운 곳에서는 올라갈 수 있어요.', tone: 'warn' as const }
-    if (today < 35.5) return { head: isToday ? '피부 온도가 낮아요.' : '피부 온도가 낮았던 날이에요.', tip: '손이 차가우면 낮게 나와요. 손을 따뜻하게 해 주세요.', tone: 'warn' as const }
-    if (Math.abs(diff) > tol) return { head: diff > 0 ? '평소보다 조금 따뜻해요.' : '평소보다 조금 서늘해요.', tip: '큰 변화는 아니에요. 흐름을 지켜봐 주세요.', tone: 'ok' as const }
-    return { head: isToday ? '피부 온도가 평소와 같아요.' : '피부 온도가 안정적이었던 날이에요.', tip: '좋은 상태예요.', tone: 'ok' as const }
-  }
-  if (metric === 'hrv') {
-    if (today < lo) return { head: isToday ? '오늘은 회복이 조금 부족해요.' : '회복이 부족했던 날이에요.', tip: '무리하지 말고 오늘은 일찍 쉬어 주세요.', tone: 'warn' as const }
-    if (diff > tol) return { head: isToday ? '평소보다 회복이 잘 됐어요.' : '회복이 잘 됐던 날이에요.', tip: '몸이 준비돼 있어요. 활동하기 좋은 날이에요.', tone: 'ok' as const }
-    return { head: isToday ? '회복 상태가 평소와 비슷해요.' : '회복이 평소와 비슷했던 날이에요.', tip: '꾸준히 잘 자는 게 회복에 가장 좋아요.', tone: 'ok' as const }
-  }
-  // stress: 낮을수록 좋음
-  if (today > 80) return { head: isToday ? '스트레스가 매우 높아요.' : '스트레스가 매우 높았던 날이에요.', tip: '하던 일을 잠시 멈추고 천천히 숨을 고르세요.', tone: 'warn' as const }
-  if (today > 60) return { head: isToday ? '스트레스가 높은 편이에요.' : '스트레스가 높았던 날이에요.', tip: '10분만 걷거나 창밖을 보며 쉬어 보세요.', tone: 'warn' as const }
-  if (today > 40) return { head: isToday ? '스트레스가 보통이에요.' : '스트레스가 보통이었던 날이에요.', tip: '물 한 잔 마시고 어깨를 풀어 보세요.', tone: 'ok' as const }
-  if (today > 20) return { head: isToday ? '오늘은 마음이 편안해요.' : '마음이 편안했던 날이에요.', tip: '좋은 상태예요. 이 흐름을 유지해 보세요.', tone: 'ok' as const }
-  return { head: isToday ? '스트레스가 거의 없어요.' : '스트레스가 거의 없던 날이에요.', tip: '아주 편안한 상태예요. 이대로 지내 보세요.', tone: 'ok' as const }
+  return { head, tip, tone }
 }
 
 /** 하루 그래프: 시간대별 평균을 막대로, 정상 범위는 연한 띠 */

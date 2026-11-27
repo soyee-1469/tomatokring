@@ -14439,7 +14439,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rv-tick-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; width: 100%; margin: 10px 0 0; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .rv-tick-list { display: grid; gap: 8px; padding-bottom: 6px; font-size: 14px; color: var(--text-2); }
 .rv-tick-list > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.rv-tick-list i { width: 8px; height: 8px; border-radius: 50%; }
+.rv-tick-list > span > i { width: 8px; height: 8px; border-radius: 50%; } /* 목록 줄 앞 색 점만 (칩 안 화살표에는 적용 안 되게) */
 .rv-tick-list b { font-weight: 700; color: var(--text); }
 .grade-ticks { position: relative; flex: none; line-height: 0; }
 .grade-ticks svg { display: block; }
@@ -14539,3 +14539,17 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .point-tip-badge { margin-top: 0; }
 .point-tip-head { display: inline-flex; align-items: center; gap: 8px; }
 .point-tip-head em { font-style: normal; font-size: 12.5px; font-weight: 600; color: #178A49; }
+/* 바디 리듬 상세: 오늘 점수를 낮춘 항목 + 할 일 */
+.day-score-page .rd-focus { display: grid; gap: 6px; margin: 0 0 12px; padding: 16px; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.rd-focus-head { display: inline-flex; align-items: center; gap: 6px; }
+.rd-focus-title { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+.rd-focus-why { margin: 0; font-size: 14px; color: var(--text-2); }
+.rd-focus-do { display: flex; align-items: flex-start; gap: 2px; margin: 4px 0 0; padding: 10px 12px; border-radius: 12px; background: #F5F6F8; font-size: 14px; font-weight: 600; line-height: 1.45; color: var(--text); word-break: keep-all; }
+.rd-focus-do i { margin-top: 1px; color: var(--text-3); }
+.rd-focus-link { justify-self: end; display: inline-flex; align-items: center; margin: 2px 0 0; padding: 4px 0; border: 0; background: transparent; font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer; }
+.rd-focus.good .rd-focus-do { margin-top: 0; }
+/* 바디 리듬 목록: 이름 · 점수 · 증감 칩 한 줄. 비교할 게 없으면 게이지만 가운데 */
+.rv-tick-list > span > em { font-style: normal; min-width: 44px; color: var(--text-2); }
+.rv-tick-list > span > b { min-width: 24px; font-size: 17px; font-variant-numeric: tabular-nums; }
+.rv-tick-row.solo { justify-content: center; }
+.rd-delta i { width: auto; height: auto; border-radius: 0; line-height: 1; } /* 증감 칩 화살표는 원래 모양 그대로 */

@@ -22,8 +22,8 @@ const SIGNAL_SAMPLE: Record<Exclude<SignalState, 'collecting'>, { say: string; d
     ],
   },
   detected: {
-    say: '어제에 이어 몸이 평소 같지 않아요',
-    detail: '여러 지표가 평소와 달라요. 일정을 줄이고 쉬는 시간을 늘려 주세요.',
+    say: '어제에 이어 2일째 이상 징후가 감지됐어요',
+    detail: '수면 중 심박수·심박변이도가 최근 28일 평소 범위를 벗어났어요.',
     badDays: [0, 1, 2, 12], noneDays: [20],
     metrics: [
       { id: 'hr', label: '심박수', unit: 'bpm', icon: 'heart-pulse', value: 67, lo: 52, hi: 63 },
@@ -198,7 +198,7 @@ export function SignalScreen() {
                       </button>
                     ))}
                   </div>
-                  <p className="elder-signal-advice">{picked ? picked.advice : '오늘 느낌을 골라 두면 달력에 남아 몸 상태를 돌아볼 수 있어요.'}</p>
+                  <p className="elder-signal-advice">{picked ? picked.advice : '오늘 느낌을 골라 두면 기록에 남아요.'}</p>
                 </section>
               </>
             )}

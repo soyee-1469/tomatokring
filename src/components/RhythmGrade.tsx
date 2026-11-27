@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { GRADE_BANDS, gradeOf } from '../rhythm'
+import { Ri } from './Ri'
 
 /** 바디 리듬 무지개 5색 — 등급마다 색 하나 (나쁨 빨강 · 주의 주황 · 보통 노랑 · 좋음 초록 · 최상 파랑).
  *  색만 봐도 지금 상태가 구분되게, 홈 카드·상세·7일 막대가 모두 이 색을 쓴다 (GRADE_BANDS 가 단일 소스) */
@@ -89,4 +90,30 @@ export function GradeTicks({ score, width = 168, gray = false, center }: { score
       </span>
     </div>
   )
+}
+
+/** 증감 칩: 화살표 + 차이. 색은 좋아졌는지로 (higherIsBetter=false 면 내려갈 때 초록) */
+export function DeltaChip({ diff, higherIsBetter = true, sameText = '같음' }: { diff: number; higherIsBetter?: boolean; sameText?: string }) {
+  if (diff === 0) return <span className="rd-delta same">{sameText}</span>
+  const better = higherIsBetter ? diff > 0 : diff < 0
+  return (
+    <span className={`rd-delta ${better ? 'good' : 'bad'}`} aria-label={`${Math.abs(diff)}점 ${diff > 0 ? '높아요' : '낮아요'}`}>
+      <Ri name={diff > 0 ? 'arrow-up' : 'arrow-down'} size={13} />{Math.abs(diff)}
+    </span>
+  )
+}
+
+/** 바디 리듬 맨 위 한 줄 (사실만): 어제(전날)와 차이 → 없으면 내 평균과 차이 → 없으면 점수 */
+export function rhythmHeadline(score: number, prev: number | null, avg: number | null, isToday = true) {
+  const prevName = isToday ? '어제' : '전날'
+  const tail = (d: number) => (isToday ? (d > 0 ? '높아요' : '낮아요') : (d > 0 ? '높았어요' : '낮았어요'))
+  if (prev !== null) {
+    const d = score - prev
+    return d === 0 ? `${prevName}와 같은 점수${isToday ? '예요' : '였어요'}` : `${prevName}보다 ${Math.abs(d)}점 ${tail(d)}`
+  }
+  if (avg !== null) {
+    const d = score - avg
+    return d === 0 ? `내 평균과 같은 점수${isToday ? '예요' : '였어요'}` : `내 평균보다 ${Math.abs(d)}점 ${tail(d)}`
+  }
+  return isToday ? `오늘 바디 리듬 ${score}점이에요` : `이 날 바디 리듬 ${score}점이었어요`
 }
