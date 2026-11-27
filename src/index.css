@@ -14589,10 +14589,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rhythm-hero.collecting .rc-detail-sub { margin: 4px 0 0; font-size: 15px; color: var(--text-2); }
 .rc-compact .grade-ticks-center strong.ticks-days { font-size: 28px; } .rc-compact .grade-ticks-center strong.ticks-days small { font-size: 13px; }
 .rc-compact .rv-a-headline { white-space: nowrap; font-size: 16px; } /* "7일 중 n일 기록했어요" 한 줄 */
-/* 받은 도장: 오른쪽 아래 작은 초록 체크 */
 .elder-mission-seal { position: relative; }
-.elder-mission-check { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #1FBF62; color: #fff; box-shadow: 0 0 0 2px #fff; }
-.elder-mission-check i { font-size: 12px !important; line-height: 1; font-weight: 700; }
 .rv-tick-list > span > em { min-width: 58px; white-space: nowrap; } /* "7일 평균"·"어제" 뒤 숫자 세로줄 맞춤 */
 @media (max-width: 340px) { .rv-tick-list > span > em { min-width: 0; } }
 /* 증감 표시 (2026-11-27): 배경 칩·화살표 아이콘 → 작은 삼각형 + 숫자, 글자색만 */
@@ -14607,3 +14604,16 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rv-tick-list > span > em { min-width: 54px; }
 @media (max-width: 340px) { .rv-tick-row:not(.solo) { gap: 10px; } }
 .elder-mission-say { word-break: keep-all; text-wrap: balance; } /* 좁은 화면에서 낱말 단위·고르게 줄바꿈 */
+/* 오늘의 미션 도장 (2026-11-27): 조건 전 = 연회색 / 받을 수 있음 = 초록(불 켜짐) / 받음 = 회색 + 초록 체크 */
+.elder-home .elder-mission-list li.pending button { color: #E3E6EA; }
+.elder-home .elder-mission-list li.pending .elder-mission-seal svg + svg { color: #fff; }
+.elder-home .elder-mission-list li.pending b { color: var(--text-3); }
+.elder-home .elder-mission-list li.ready button { color: var(--brand-green); }
+.elder-home .elder-mission-list li.ready .elder-mission-seal svg + svg { color: #fff; }
+.elder-home .elder-mission-list li.ready b { color: var(--text); font-weight: 700; }
+.elder-home .elder-mission-list li.done button { color: #B9C0C8; }
+.elder-home .elder-mission-list li.done .elder-mission-seal svg + svg { color: #fff; }
+.elder-home .elder-mission-list li.done b { color: var(--text-2); font-weight: 600; }
+/* 받은 도장: 오른쪽 아래 작은 체크 (흰 바탕 + 초록 체크, 꽉 찬 초록 도장 위) */
+.elder-mission-check { position: absolute; right: -3px; bottom: -2px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--brand-green); box-shadow: 0 0 0 2px #fff; }
+.elder-home .elder-mission-seal .elder-mission-check svg { position: static; color: #fff; }

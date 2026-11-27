@@ -582,8 +582,8 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
         // 지금 받을 수 있는 게 있으면: 금액만 알려 준다 (받기는 각 카드·도장에서)
         <p className="elder-mission-say">지금 받을 수 있는 포인트 <b>{formatClaimP(readySum)}</b></p>
       ) : doneCount > 0 ? (
-        // 받을 수 있는 건 다 받았고, 남은 미션은 아직 조건 전 (조건은 각 카드·포인트 Tip에)
-        <p className="elder-mission-say"><b>지금 받을 수 있는 포인트는 다 받았어요</b></p>
+        // 받을 수 있는 건 다 받았고, 남은 미션은 아직 조건 전: 받은 개수 + 조건 전 항목 이름 (사실만)
+        <p className="elder-mission-say"><b>{doneCount}개 받았어요</b> · {active.filter((it) => !claimed[it.kind]).map((it) => it.label).join('·')}{(() => { const n = active.filter((it) => !claimed[it.kind]).map((it) => it.label).join(''); const c = n.charCodeAt(n.length - 1); return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0 ? '은' : '는' })()} 아직 조건 전이에요</p>
       ) : (
         // 아직 아무것도 받지 않았고 받을 것도 없으면: 남은 미션 수와 금액
         <p className="elder-mission-say">
@@ -594,16 +594,16 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
         <ul className="elder-mission-list">
           {POINT_ITEMS.map((it) => {
             const done = claimed[it.kind]
-            const state = done ? '받음' : ready[it.kind] ? '받기 가능' : '조건 남음'
+            const closed = it.kind === 'survey' && !SURVEY_OPEN && !done
+            const state = done ? '받음' : ready[it.kind] ? '받기 가능' : closed ? '준비 중' : '조건 전'
             return (
-              <li key={it.kind} className={done ? 'done' : ready[it.kind] ? 'ready' : ''}>
+              <li key={it.kind} className={done ? 'done' : ready[it.kind] ? 'ready' : closed ? 'pending closed' : 'pending'}>
                 <button type="button" onClick={() => onItem(it.kind)} aria-label={`${it.label} ${state}`}>
+                  {/* 도장: 조건 전 = 연회색 → 받을 수 있음 = 초록(불이 켜짐, 누를 것) → 받음 = 회색 + 초록 체크 */}
                   <span className="elder-mission-seal">
                     <Seal size={44} weight="fill" />
-                    {/* 도장 안은 항목 아이콘. 초록 = 받기 가능(누를 것), 회색 + 작은 체크 = 받음, 연회색 = 조건 남음 */}
                     <it.Icon size={20} weight="fill" />
-                    {/* 받은 도장: 오른쪽 아래 작은 체크 (조건 전 도장과 구분) */}
-                    {done && <span className="elder-mission-check" aria-hidden><Ri name="check" size={11} /></span>}
+                    {done && <span className="elder-mission-check" aria-hidden><Check size={11} weight="bold" /></span>}
                   </span>
                   <b>{it.label}</b>
                 </button>
