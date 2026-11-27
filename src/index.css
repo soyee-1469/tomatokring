@@ -14553,3 +14553,39 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rv-tick-list > span > b { min-width: 24px; font-size: 17px; font-variant-numeric: tabular-nums; }
 .rv-tick-row.solo { justify-content: center; }
 .rd-delta i { width: auto; height: auto; border-radius: 0; line-height: 1; } /* 증감 칩 화살표는 원래 모양 그대로 */
+/* 좁은 화면(300px 등): 게이지가 남는 폭만큼 줄어들고, 가운데 숫자도 함께 작아짐 */
+.rv-tick-row .grade-ticks { flex: 0 1 168px; min-width: 120px; }
+.rv-tick-list { flex: 0 0 auto; }
+.grade-ticks-center strong { font-size: clamp(30px, 10vw, 40px); }
+.rd-focus-link { display: none; }
+/* 아주 좁은 화면(폭 340px 이하): 목록·게이지 간격을 줄여 카드 안에 들어가게, 카드 모서리 알약은 아이콘만 (이름을 가리지 않게) */
+@media (max-width: 340px) {
+  .rv-tick-row { gap: 6px; }
+  .rv-tick-row .grade-ticks { min-width: 96px; }
+  .rv-tick-list { flex: 0 1 auto; min-width: 0; gap: 6px; font-size: 13px; }
+  .rv-tick-list > span > em { min-width: 34px; }
+  .rv-tick-list > span > b { min-width: 20px; font-size: 15px; }
+  .rv-tick-list .rd-delta { padding: 0 5px; }
+  .grade-ticks-center strong { font-size: 28px; }
+  .elder-home .home-tile-measure, .elder-home .home-tile-auto { font-size: 0; gap: 0; padding: 0 7px; }
+  .elder-home .home-tile-measure i, .elder-home .home-tile-auto i { font-size: 12px !important; }
+  .elder-home .home-tile-auto svg { width: 12px; height: 12px; }
+}
+@media (max-width: 340px) {
+  .rv-tick-row { flex-direction: column-reverse; align-items: center; gap: 10px; }
+  .rv-tick-row .grade-ticks { flex: none; width: 150px; min-width: 0; }
+  .rv-tick-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; padding-bottom: 0; }
+  .grade-ticks-center strong { font-size: 32px; }
+  .elder-home .home-tiles .home-vital-head em { font-size: 13px; }
+}
+.rd-pair .rd-pair-meta em { white-space: nowrap; } /* "전날보다"가 좁은 화면에서 꺾이지 않게 */
+/* 오늘의 미션: 지금 받을 수 있는 포인트 + 한 번에 받기 */
+/* 바디 리듬 준비 중(7일 미만): 한 줄 카드 */
+.elder-home .elder-score-card.rc-compact { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 16px; border: 0; text-align: left; cursor: pointer; }
+.rc-compact .rc-copy { display: grid; gap: 4px; }
+.rc-compact .rv-a-headline { margin: 0; }
+.rc-compact .rc-sub { font-size: 14px; color: var(--text-2); }
+.rc-compact .grade-ticks { flex: none; }
+.rhythm-hero.collecting .rc-detail-sub { margin: 4px 0 0; font-size: 15px; color: var(--text-2); }
+.rc-compact .grade-ticks-center strong.ticks-days { font-size: 28px; } .rc-compact .grade-ticks-center strong.ticks-days small { font-size: 13px; }
+.rc-compact .rv-a-headline { white-space: nowrap; font-size: 16px; } /* "7일 중 n일 기록했어요" 한 줄 */

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone } from '../components/ui'
 import { Ri } from '../components/Ri'
-import { DeltaChip, GradeTicks, rhythmHeadline } from '../components/RhythmGrade'
+import { DayArc, DeltaChip, GradeTicks, rhythmHeadline } from '../components/RhythmGrade'
 import { METRIC_STYLE } from '../metricStyle'
 import { DateLine } from '../components/DateLine'
 import { useScrub } from '../components/useScrub'
@@ -94,9 +94,9 @@ function iEyo(word: string) {
   const c = word.charCodeAt(word.length - 1)
   return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 !== 0 ? '이에요' : '예요'
 }
-/** 오늘의 포인트: 점수를 가장 많이 끌어내린 항목 하나 + 그 항목의 지난 7일 평균과 비교 + 그 항목 상세로.
+/** 오늘의 포인트: 점수를 가장 많이 끌어내린 항목 하나 + 그 항목의 지난 7일 평균과 비교 (상세 이동은 아래 '항목별 점수'에서).
  *  데이터로 확인되는 내용만 (근거 없는 권장 문장은 넣지 않음). 모든 항목이 좋으면 '고르게 좋아요' 한 줄 */
-function TodayFocus({ date, isToday, onOpen }: { date: Date; /** 지난 날은 '이 날'로 */ isToday: boolean; onOpen: (to: string) => void }) {
+function TodayFocus({ date, isToday }: { date: Date; /** 지난 날은 '이 날'로 */ isToday: boolean }) {
   const metrics = dayBundle(date).metrics
   const low = [...metrics].sort((a, b) => a.score - b.score)[0]
   if (low.score >= 80) {
@@ -117,7 +117,6 @@ function TodayFocus({ date, isToday, onOpen }: { date: Date; /** 지난 날은 '
         <b className="rd-focus-title">{isToday ? '오늘' : '이 날'} 점수를 낮춘 건 {name}{iEyo(name)}</b>
       </span>
       <p className="rd-focus-why">{name} 점수 {low.score}점 · 지난 7일 평균 {usual}점보다 {Math.abs(diff) < 2 ? '비슷해요' : `${Math.abs(diff)}점 ${diff < 0 ? '낮아요' : '높아요'}`}</p>
-      <button type="button" className="rd-focus-link" onClick={() => onOpen(low.to)}>{name} 보기<Ri name="arrow-right-s" size={16} /></button>
     </section>
   )
 }
@@ -146,7 +145,6 @@ export function DayScoreScreen() {
   const isToday = sameDay(selected, today)
   const prevRec = hasRhythmRecord(session, addDays(selected, -1))
   const prevScore = dayBundle(addDays(selected, -1)).score
-  const dateLabel = `${selected.getMonth() + 1}월 ${selected.getDate()}일`
   const rhythm = rhythmOf(selected)
   const rhythmPrev = rhythmOf(addDays(selected, -1))
   // 내 평균: 최근 28일 활동 지수 평균 (브링 '내 평균' 마커 기준)
@@ -177,16 +175,12 @@ export function DayScoreScreen() {
 
             {!ready && (
               <section className="rhythm-hero collecting">
-                <span className="rhythm-date">{isToday ? `오늘 · ${dateLabel}` : dateLabel}</span>
                 {/* 기록이 쌓이는 중에는 '부족하다'가 아니라 진행 상황부터: 며칠 모였고 며칠 남았는지 → 인정 조건은 그 아래 작게 */}
-                <h2>{validDays === 0 ? `${RHYTHM_MIN_DAYS}일 기록이 모이면 바디 리듬을 볼 수 있어요.` : `${RHYTHM_MIN_DAYS - validDays}일만 더 모이면 바디 리듬을 볼 수 있어요.`}</h2>
-                {/* 홈 준비 중 카드와 같은 모양: 왼쪽 목록 + 오른쪽 회색 눈금 반원(모인 날만큼 차오름, 가운데 n/7일) */}
-                <div className="rv-tick-row rd-tick-row">
-                  <span className="rv-tick-list">
-                    <span><b>{validDays}일</b> 모였어요</span>
-                    <span className="muted">다 모이면 점수로<br />보여 드려요</span>
-                  </span>
-                  <GradeTicks score={(validDays / RHYTHM_MIN_DAYS) * 100} gray center={<strong className="ticks-days">{validDays}<small>/{RHYTHM_MIN_DAYS}일</small></strong>} />
+                {/* 홈 준비 중 카드와 같은 규칙: 게이지는 모인 만큼 차오르고 가운데에 n/7일 */}
+                <h2>7일 중 {validDays}일 기록했어요</h2>
+                <p className="rc-detail-sub">{RHYTHM_MIN_DAYS - validDays}일 더 모이면 바디 리듬 점수를 볼 수 있어요.</p>
+                <div className="rv-tick-row rd-tick-row solo">
+                  <DayArc days={validDays} total={RHYTHM_MIN_DAYS} center={<strong className="ticks-days">{validDays}<small>/{RHYTHM_MIN_DAYS}일</small></strong>} />
                 </div>
                 <p>하루에 2개 이상의 유효 데이터가 기록되고 수면 기록이 포함돼야 하루로 인정돼요.</p>
                 <button type="button" className="rhythm-collect-link" onClick={() => navigate('/vitaling/my')}>이전 기록이 있다면 데이터 복원 <Ri name="arrow-right-s" size={16} /></button>
@@ -212,7 +206,7 @@ export function DayScoreScreen() {
                 </section>
 
                 {/* 2) 오늘의 포인트: 점수를 낮춘 항목 하나 + 할 일 */}
-                <TodayFocus date={selected} isToday={isToday} onOpen={(to) => navigate(to)} />
+                <TodayFocus date={selected} isToday={isToday} />
 
                 {/* 3) 회복 · 피로도 — 홈 바이탈 칸과 같은 2칸 */}
                 <section className="rd-pair">

@@ -7,24 +7,27 @@ import {
   SettingsScreen,
   TermsScreen,
 } from './screens'
-import { DayScoreScreen } from './screens/DayScoreScreen'
-import { LiveVitalsScreen } from './screens/LiveVitalsScreen'
-import { MeasureHistoryScreen } from './screens/MeasureHistoryScreen'
-import { MeasureScreen } from './screens/MeasureScreen'
-import { AutoMeasureScreen } from './screens/AutoMeasureScreen'
-import { SurveyReportScreen } from './screens/SurveyReportScreen'
-import { MyScreen } from './screens/MyScreen'
-import { SignalScreen } from './screens/SignalScreen'
-import { GoalsScreen, ProfileScreenMy } from './screens/ProfileGoalsScreen'
-import { RewardHistoryAllScreen } from './screens/RewardHistoryScreen'
-import {
-  SleepAnalysisScreen,
-} from './screens/AnalysisScreens'
+import { lazy, Suspense } from 'react'
+// 상세 화면들은 처음 들어갈 때 따로 받는다 (첫 화면 묶음 크기를 줄여 빌드 크기 경고 해소)
+const DayScoreScreen = lazy(() => import('./screens/DayScoreScreen').then((m) => ({ default: m.DayScoreScreen })))
+const LiveVitalsScreen = lazy(() => import('./screens/LiveVitalsScreen').then((m) => ({ default: m.LiveVitalsScreen })))
+const MeasureHistoryScreen = lazy(() => import('./screens/MeasureHistoryScreen').then((m) => ({ default: m.MeasureHistoryScreen })))
+const MeasureScreen = lazy(() => import('./screens/MeasureScreen').then((m) => ({ default: m.MeasureScreen })))
+const AutoMeasureScreen = lazy(() => import('./screens/AutoMeasureScreen').then((m) => ({ default: m.AutoMeasureScreen })))
+const SurveyReportScreen = lazy(() => import('./screens/SurveyReportScreen').then((m) => ({ default: m.SurveyReportScreen })))
+const MyScreen = lazy(() => import('./screens/MyScreen').then((m) => ({ default: m.MyScreen })))
+const SignalScreen = lazy(() => import('./screens/SignalScreen').then((m) => ({ default: m.SignalScreen })))
+const GoalsScreen = lazy(() => import('./screens/ProfileGoalsScreen').then((m) => ({ default: m.GoalsScreen })))
+const ProfileScreenMy = lazy(() => import('./screens/ProfileGoalsScreen').then((m) => ({ default: m.ProfileScreenMy })))
+const RewardHistoryAllScreen = lazy(() => import('./screens/RewardHistoryScreen').then((m) => ({ default: m.RewardHistoryAllScreen })))
+const SleepAnalysisScreen = lazy(() => import('./screens/AnalysisScreens').then((m) => ({ default: m.SleepAnalysisScreen })))
 import './index.css'
 
 export default function App() {
   return (
     <BrowserRouter>
+      {/* 상세 화면을 받는 동안은 빈 화면 (아주 짧음) */}
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<Navigate to="/vitaling/home" replace />} />
         <Route path="/vitaling" element={<Navigate to="/vitaling/home" replace />} />
@@ -55,6 +58,7 @@ export default function App() {
         <Route path="/vitaling/help" element={<HelpScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

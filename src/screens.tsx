@@ -31,7 +31,7 @@ import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { SURVEY_OPEN } from './survey'
 import { shrinkImage } from './imageUtil'
 import { MEALS } from './meals'
-import { DeltaChip, GradeTicks, rhythmHeadline } from './components/RhythmGrade'
+import { DayArc, DeltaChip, GradeTicks, rhythmHeadline } from './components/RhythmGrade'
 import { DEFAULT_CARD_ORDER, hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
@@ -562,10 +562,14 @@ const POINT_ITEMS: readonly { kind: MissionCardKind; label: string; points: numb
   { kind: 'survey', label: '설문', points: SURVEY_REWARD_P, Icon: ClipboardText },
 ]
 function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionCardKind, boolean>; /** 지금 바로 받을 수 있는 항목 */ ready: Record<MissionCardKind, boolean>; onItem: (kind: MissionCardKind) => void }) {
-  const doneCount = POINT_ITEMS.filter((it) => claimed[it.kind]).length
-  const leftCount = POINT_ITEMS.length - doneCount
-  const got = POINT_ITEMS.filter((it) => claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
-  const left = POINT_ITEMS.filter((it) => !claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
+  // 오늘 할 수 있는 미션만 센다: 설문이 아직 운영 전이면 합계·개수에서 뺀다 (도장은 회색으로 남김)
+  const active = POINT_ITEMS.filter((it) => it.kind !== 'survey' || SURVEY_OPEN || claimed.survey)
+  const doneCount = active.filter((it) => claimed[it.kind]).length
+  const leftCount = active.length - doneCount
+  const got = active.filter((it) => claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
+  const left = active.filter((it) => !claimed[it.kind]).reduce((acc, it) => acc + it.points, 0)
+  const readyItems = active.filter((it) => ready[it.kind] && !claimed[it.kind])
+  const readySum = readyItems.reduce((acc, it) => acc + it.points, 0)
   return (
     <section className={`elder-mission-card ${leftCount === 0 ? 'done' : ''}`} aria-label="오늘의 미션">
       {leftCount === 0 ? (
@@ -574,8 +578,11 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
           <b>미션을 모두 완료했어요</b>
           <span>{formatClaimP(got)} 획득</span>
         </div>
+      ) : readySum > 0 ? (
+        // 지금 받을 수 있는 게 있으면: 금액만 알려 준다 (받기는 각 카드·도장에서)
+        <p className="elder-mission-say">지금 받을 수 있는 포인트 <b>{formatClaimP(readySum)}</b></p>
       ) : (
-        // 게임 탭 광고 미션 카드와 같은 문장: "N개만 더 하면 X 획득" (숫자는 버튼과 같은 '40만 P' 표기)
+        // 받을 게 없으면: 남은 미션 수와 금액 (오늘 할 수 있는 것만)
         <p className="elder-mission-say">
           {leftCount}개만 더 하면 <b>{formatClaimP(left)} 획득</b>
         </p>
@@ -644,24 +651,15 @@ function SignalCard({ condition, onOpen, onCondition }: {
 /** 점수 + 이상 바이탈을 반영한 오늘 종합 요약 (무지개) — 요약 전용, 보상 없음 */
 /** 바디 리듬 준비 중 (유효한 날 7일 미만): 점수 카드와 같은 모양 — 왼쪽 목록 + 오른쪽 눈금 반원이 회색으로, 모인 날만큼 차오름 */
 function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }) {
+  // 제목에 '7일 중 n일', 아래 한 줄에 할 일. 오른쪽 반원은 7칸(하루 = 한 칸), 가운데에 n/7일
   return (
-    <div className="elder-score-card rhythm-banner rv-a rhythm-collecting">
-      <button type="button" className="rv-full-top" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        <b className="rv-a-headline">바디 리듬을 준비하고 있어요</b>
-      </button>
-      <button type="button" className="rv-tick-row" onClick={onOpen} aria-label={`${RHYTHM_MIN_DAYS}일 중 ${days}일`}>
-        <span className="rv-tick-list">
-          <span><b>{days}일</b> 모였어요</span>
-          {/* 데이터가 쌓이면 이 회색 반원이 무지개 점수로 바뀐다는 예고 */}
-          <span className="muted">다 모이면 점수로<br />보여 드려요</span>
-        </span>
-        <GradeTicks score={(days / RHYTHM_MIN_DAYS) * 100} gray center={<strong className="ticks-days">{days}<small>/{RHYTHM_MIN_DAYS}일</small></strong>} />
-      </button>
-      <button type="button" className="rv-foot" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        <span>유효 기록 {days}회 · 반지를 끼고 주무세요</span>
-        <span className="rv-foot-more">자세히<Ri name="arrow-right-s" size={16} /></span>
-      </button>
-    </div>
+    <button type="button" className="elder-score-card rhythm-banner rv-a rhythm-collecting rc-compact" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+      <span className="rc-copy">
+        <b className="rv-a-headline">7일 중 {days}일 기록했어요</b>
+        <span className="rc-sub">반지를 끼고 주무세요</span>
+      </span>
+      <DayArc days={days} total={RHYTHM_MIN_DAYS} width={132} center={<strong className="ticks-days">{days}<small>/{RHYTHM_MIN_DAYS}일</small></strong>} />
+    </button>
   )
 }
 
@@ -1217,12 +1215,13 @@ export function HomeScreen() {
           kind, '설문', 'survey',
           surveyMeasured ? <strong className="text">설문 완료</strong> : <strong className="empty">{SURVEY_OPEN ? '참여 전' : '준비 중'}</strong>,
           <>
-            <span>{`설문 완료 ${formatClaimP(SURVEY_REWARD_P)}`}</span>
+            {/* 운영 전에는 상태만 (받을 수 없는 받기 버튼·금액은 숨김) */}
+            {(SURVEY_OPEN || surveyMeasured) && <span>{`설문 완료 ${formatClaimP(SURVEY_REWARD_P)}`}</span>}
           </>,
           null,
           () => goMeasure('survey'),
           // 참여 전엔 참여하기, 참여하면 받기, 받은 뒤엔 회색 획득 (답변은 카드를 눌러 본다). 구글 설문 운영 전에는 회색 '준비 중'
-          surveyClaimed ? doneBtn(SURVEY_REWARD_P) : surveyMeasured ? claimBtn('survey', SURVEY_REWARD_P) : !SURVEY_OPEN ? lockedBtn(SURVEY_REWARD_P) : (
+          surveyClaimed ? doneBtn(SURVEY_REWARD_P) : surveyMeasured ? claimBtn('survey', SURVEY_REWARD_P) : !SURVEY_OPEN ? null : (
             <button type="button" className="elder-claim-btn secondary" onClick={() => goMeasure('survey')}>
               <span>참여하기</span>
             </button>

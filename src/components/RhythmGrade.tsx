@@ -51,8 +51,7 @@ export function GradeScale({ score }: { score: number }) {
 
 /** 눈금 반원 게이지 (홈 오늘의 상태): 가는 눈금 41개로 된 반원. 0점부터 오늘 점수까지의 눈금만 그 구간의 무지개 색, 나머지는 연회색.
  *  가운데에 점수(덜 굵게) + 등급 이름 */
-export function GradeTicks({ score, width = 168, gray = false, center }: { score: number; width?: number;
-  /** 준비 중(7일 미만): 무지개 대신 회색 — score 만큼 진한 회색으로 차오름 */ gray?: boolean;
+export function GradeTicks({ score, width = 168, center }: { score: number; width?: number;
   /** 가운데 글자를 바꿀 때 (준비 중 '4/7일' 등) */ center?: ReactNode }) {
   const s = Math.min(100, Math.max(0, score))
   const cur = gradeOf(s)
@@ -62,8 +61,9 @@ export function GradeTicks({ score, width = 168, gray = false, center }: { score
   const rIn = rOut - 14
   const h = rOut + 6
   return (
-    <div className="grade-ticks" style={{ width }}>
-      <svg viewBox={`0 0 ${width} ${h}`} width={width} height={h} aria-label={`0~100 중 ${s}점, ${cur.label}`} role="img">
+    // 좁은 화면에서는 줄어들도록: 최대 width, 남는 폭에 맞춰 축소 (viewBox 비율 유지)
+    <div className="grade-ticks" style={{ width: '100%', maxWidth: width }}>
+      <svg viewBox={`0 0 ${width} ${h}`} width="100%" style={{ height: 'auto' }} aria-label={`0~100 중 ${s}점, ${cur.label}`} role="img">
         {Array.from({ length: n }, (_, i) => {
           const v = (i / (n - 1)) * 100
           const a = Math.PI * (1 - i / (n - 1))
@@ -73,7 +73,7 @@ export function GradeTicks({ score, width = 168, gray = false, center }: { score
               key={i}
               x1={cx + rIn * Math.cos(a)} y1={rOut + 2 - rIn * Math.sin(a)}
               x2={cx + rOut * Math.cos(a)} y2={rOut + 2 - rOut * Math.sin(a)}
-              stroke={on ? (gray ? '#A9B1BB' : rainbowAt(v)) : '#E3E6EA'}
+              stroke={on ? rainbowAt(v) : '#E3E6EA'}
               strokeWidth={3}
               strokeLinecap="round"
             />
@@ -116,4 +116,42 @@ export function rhythmHeadline(score: number, prev: number | null, avg: number |
     return d === 0 ? `내 평균과 같은 점수${isToday ? '예요' : '였어요'}` : `내 평균보다 ${Math.abs(d)}점 ${tail(d)}`
   }
   return isToday ? `오늘 바디 리듬 ${score}점이에요` : `이 날 바디 리듬 ${score}점이었어요`
+}
+
+/** 기록 모으는 중 반원 (바디 리듬 준비 중): 반원을 total 칸으로 나눠 하루 = 한 칸. 모인 날은 진한 회색, 남은 날은 연한 회색.
+ *  가운데에 n/7일 (점수 게이지와 같은 반원 모양이지만 칸 수가 날짜 수) */
+export function DayArc({ days, total, width = 168, center }: { days: number; total: number; width?: number; center?: ReactNode }) {
+  const sw = 14
+  const r = (width - sw) / 2
+  const cx = width / 2
+  const cy = r + sw / 2
+  const h = cy + sw / 2
+  const gapDeg = 4 // 칸 사이 틈(도)
+  const seg = (180 - gapDeg * (total - 1)) / total
+  const pt = (deg: number) => {
+    const a = (Math.PI * deg) / 180
+    return [cx - r * Math.cos(a), cy - r * Math.sin(a)] as const
+  }
+  return (
+    <div className="grade-ticks day-arc" style={{ width: '100%', maxWidth: width }}>
+      <svg viewBox={`0 0 ${width} ${h}`} width="100%" style={{ height: 'auto' }} aria-label={`${total}일 중 ${days}일 기록`} role="img">
+        {Array.from({ length: total }, (_, i) => {
+          const from = i * (seg + gapDeg)
+          const [x1, y1] = pt(from)
+          const [x2, y2] = pt(from + seg)
+          return (
+            <path
+              key={i}
+              d={`M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`}
+              fill="none"
+              stroke={i < days ? '#A9B1BB' : '#E3E6EA'}
+              strokeWidth={sw}
+              strokeLinecap="butt"
+            />
+          )
+        })}
+      </svg>
+      <span className="grade-ticks-center">{center}</span>
+    </div>
+  )
 }
