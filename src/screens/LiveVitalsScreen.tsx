@@ -157,7 +157,7 @@ export function LiveVitalsScreen() {
       value: '95',
       label: '혈중 산소',
       unit: '%',
-      status: '양호',
+      status: '정상',
       guide: 95,
       points: [96, 96, 95, 95, 96, 95, 94, 95, 95, 96, 95, 95, 96, 95, 94, 95, 95, 96, 95, 95],
     },

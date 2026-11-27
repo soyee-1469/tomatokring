@@ -187,7 +187,7 @@ export function DayScoreScreen() {
                     <span className="rv-tick-list">
                       <span><i style={{ background: gradeOf(bundle.score).color }} /><b>{gradeOf(bundle.score).label}</b> 상태</span>
                       {trendReady && <span><b>{myAvg}점</b> 내 평균</span>}
-                      <span><b>{dayBundle(addDays(selected, -1)).score}점</b> 전날</span>
+                      {hasRhythmRecord(session, addDays(selected, -1)) && <span><b>{dayBundle(addDays(selected, -1)).score}점</b> 전날</span>}
                     </span>
                     <GradeTicks score={bundle.score} />
                   </div>

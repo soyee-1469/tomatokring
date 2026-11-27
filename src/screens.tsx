@@ -32,7 +32,7 @@ import { SURVEY_OPEN } from './survey'
 import { shrinkImage } from './imageUtil'
 import { MEALS } from './meals'
 import { GradeTicks } from './components/RhythmGrade'
-import { DEFAULT_CARD_ORDER, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -667,7 +667,7 @@ function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }
 
 /** 홈 '오늘의 상태' 카드 (2026-11-27): 맨 위 한 문장·기록 수·자세히 → 점수·등급(오른쪽 내 평균·어제) → 가로 무지개 눈금
  *  항목별(수면·스트레스·걷기 등)은 바로 아래 '오늘 기록' 카드가 보여 주므로 여기엔 넣지 않는다. 일주일 막대는 상세에서만 */
-function RhythmBannerCard({ score, tiles, validDays, onOpen }: { score: number; tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]; /** 14일 미만이면 내 평균 대신 남은 날 */ validDays: number; onOpen: () => void }) {
+function RhythmBannerCard({ score, tiles, validDays, yesterdayRecorded, onOpen }: { score: number; tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]; /** 14일 미만이면 내 평균 대신 남은 날 */ validDays: number; /** 어제 기록이 없으면 '어제' 줄을 숨김 */ yesterdayRecorded: boolean; onOpen: () => void }) {
   const trendReady = validDays >= RHYTHM_TREND_DAYS
   const byScore = statusFromScore(score)
   const alert = tiles.find((t) => t.tone === 'bad') ?? tiles.find((t) => t.tone === 'warn')
@@ -685,7 +685,7 @@ function RhythmBannerCard({ score, tiles, validDays, onOpen }: { score: number; 
         <span className="rv-tick-list">
           <span><i style={{ background: gradeOf(score).color }} /><b>{gradeOf(score).label}</b> 상태</span>
           {trendReady && <span><b>{myAvg}점</b> 내 평균</span>}
-          <span><b>{yesterday}점</b> 어제</span>
+          {yesterdayRecorded && <span><b>{yesterday}점</b> 어제</span>}
         </span>
         <GradeTicks score={score} />
       </button>
@@ -1306,10 +1306,13 @@ export function HomeScreen() {
                       </button>
                     )}
                   </span>
+                  {/* 배터리는 반지가 연결돼 있을 때만 */}
+                  {session.paired && (
                   <span className={`elder-date-battery ${battery.tone}`} aria-label={`반지 배터리 ${battery.text}`}>
                     <Ri name={battery.icon} fill size={18} />
                     {battery.text}
                   </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -1346,7 +1349,7 @@ export function HomeScreen() {
                   </p>
                 </div>
                 {validDays >= RHYTHM_MIN_DAYS ? (
-                  <RhythmBannerCard score={day.score} tiles={tiles} validDays={validDays} onOpen={() => navigate('/vitaling/day')} />
+                  <RhythmBannerCard score={day.score} tiles={tiles} validDays={validDays} yesterdayRecorded={hasRhythmRecord(session, addDays(HOME_TODAY, -1))} onOpen={() => navigate('/vitaling/day')} />
                 ) : (
                   <RhythmCollecting days={validDays} onOpen={() => navigate('/vitaling/day')} />
                 )}
