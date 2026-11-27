@@ -10,7 +10,7 @@ import { useScrub } from '../components/useScrub'
 import { dayLabel, pickIndex, RhythmWeekBars } from '../components/RhythmWeekBars'
 import { useSession } from '../useSession'
 import { hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, validDayCount } from '../session'
-import { addDays, dayBundle, daySeed, sameDay, startOfDay, type DayMetric } from '../rhythm'
+import { addDays, dayBundle, daySeed, recentAvg7, sameDay, startOfDay, type DayMetric } from '../rhythm'
 
 function MetricRow({
   metric,
@@ -147,8 +147,8 @@ export function DayScoreScreen() {
   const prevScore = dayBundle(addDays(selected, -1)).score
   const rhythm = rhythmOf(selected)
   const rhythmPrev = rhythmOf(addDays(selected, -1))
-  // 내 평균: 최근 28일 활동 지수 평균 (브링 '내 평균' 마커 기준)
-  const myAvg = useMemo(() => Math.round(Array.from({ length: 28 }, (_, i) => dayBundle(addDays(selected, -i)).score).reduce((a, b) => a + b, 0) / 28), [selected])
+  // 7일 평균: 고른 날 전날부터 7일 중 기록 있는 날만 (14일부터 표시)
+  const avg7 = trendReady ? recentAvg7(selected, (d) => hasRhythmRecord(session, d)) : null
   // 최근 7일 중 피로도가 회복보다 높았던 날 (그래프에서 칠한 칸과 같은 기준)
   const overDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(selected, -i)).filter((d) => hasRhythmRecord(session, d)).map(rhythmOf).filter((r) => r.fatigue > r.recovery).length, [selected])
 
@@ -191,13 +191,13 @@ export function DayScoreScreen() {
               <>
                 {/* 1) 첫 카드: 한 문장 → 조언 → 홈과 같은 등급 목록 + 눈금 게이지. 7일 흐름은 아래 막대에서 */}
                 <section className="rd-gauge rd-first">
-                  {/* 맨 위: 등급 반복 대신 변화(사실) — 전날 → 내 평균 → 점수 순으로 있는 것 */}
-                  <h2 className="rd-headline">{rhythmHeadline(bundle.score, prevRec ? prevScore : null, trendReady ? myAvg : null, isToday)}</h2>
-                  {/* 왼쪽: 내 평균(14일부터)·전날 + 증감 칩, 오른쪽: 눈금 게이지. 비교할 게 없으면 게이지만 가운데 */}
-                  <div className={`rv-tick-row rd-tick-row${!trendReady && !prevRec ? ' solo' : ''}`}>
-                    {(trendReady || prevRec) && (
+                  {/* 맨 위: 등급 반복 대신 변화(사실) — 전날 → 7일 평균 → 점수 순으로 있는 것 */}
+                  <h2 className="rd-headline">{rhythmHeadline(bundle.score, prevRec ? prevScore : null, avg7, isToday)}</h2>
+                  {/* 왼쪽: 7일 평균(14일부터)·전날 + 증감 칩, 오른쪽: 눈금 게이지. 비교할 게 없으면 게이지만 가운데 */}
+                  <div className={`rv-tick-row rd-tick-row${avg7 === null && !prevRec ? ' solo' : ''}`}>
+                    {(avg7 !== null || prevRec) && (
                       <span className="rv-tick-list">
-                        {trendReady && <span><em>내 평균</em><b>{myAvg}</b><DeltaChip diff={bundle.score - myAvg} /></span>}
+                        {avg7 !== null && <span><em>7일 평균</em><b>{avg7}</b><DeltaChip diff={bundle.score - avg7} /></span>}
                         {prevRec && <span><em>{isToday ? '어제' : '전날'}</em><b>{prevScore}</b><DeltaChip diff={bundle.score - prevScore} /></span>}
                       </span>
                     )}
@@ -256,7 +256,7 @@ export function DayScoreScreen() {
                       <i><i style={{ width: `${Math.min(100, (validDays / RHYTHM_TREND_DAYS) * 100)}%` }} /></i>
                       <b>{validDays}<small>/{RHYTHM_TREND_DAYS}일</small></b>
                     </span>
-                    <p>{RHYTHM_TREND_DAYS - validDays}일 더 모이면 회복·피로도 흐름과 그 전 7일 바디 리듬, 내 평균과의 비교를 볼 수 있어요.</p>
+                    <p>{RHYTHM_TREND_DAYS - validDays}일 더 모이면 회복·피로도 흐름과 그 전 7일 바디 리듬, 7일 평균과의 비교를 볼 수 있어요.</p>
                   </section>
                 )}
               </>

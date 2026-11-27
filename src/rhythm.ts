@@ -119,6 +119,13 @@ export function dayBundle(date: Date) {
 
 
 
+/** 지난 7일(어제부터 7일 전까지) 중 기록이 있는 날의 바디 리듬 평균. 기록이 하루도 없으면 null.
+ *  홈 '오늘의 상태'와 바디 리듬 상세가 같은 값을 쓴다 (2026-11-27: 28일 → 7일, 기록 없는 날 제외) */
+export function recentAvg7(date: Date, hasRecord: (d: Date) => boolean): number | null {
+  const scores = Array.from({ length: 7 }, (_, i) => addDays(date, -(i + 1))).filter(hasRecord).map((d) => dayBundle(d).score)
+  return scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
+}
+
 /** 5단계 등급 (나쁨 0–34 · 주의 35–49 · 보통 50–74 · 좋음 75–89 · 최상 90–100) — 홈·상세 공통 */
 export const GRADE_BANDS = [
   // 파스텔 무지개 (2026-11-27): 산호 → 살구 → 노랑 → 연두 → 하늘. 칸 사이는 그라데이션으로 이어 그린다

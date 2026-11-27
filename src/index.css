@@ -14593,3 +14593,16 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .elder-mission-seal { position: relative; }
 .elder-mission-check { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #1FBF62; color: #fff; box-shadow: 0 0 0 2px #fff; }
 .elder-mission-check i { font-size: 12px !important; line-height: 1; font-weight: 700; }
+.rv-tick-list > span > em { min-width: 58px; white-space: nowrap; } /* "7일 평균"·"어제" 뒤 숫자 세로줄 맞춤 */
+@media (max-width: 340px) { .rv-tick-list > span > em { min-width: 0; } }
+/* 증감 표시 (2026-11-27): 배경 칩·화살표 아이콘 → 작은 삼각형 + 숫자, 글자색만 */
+.rd-delta, .rd-delta.good, .rd-delta.bad, .rd-delta.same, .rv-tick-list .rd-delta { background: none; padding: 0; height: auto; gap: 2px; font-size: 13px; font-weight: 700; }
+.rd-delta.good { color: #2E9E5B; }
+.rd-delta.bad { color: #D9534F; }
+.rd-delta.same { color: var(--text-3, #9AA3AD); font-weight: 600; }
+.rd-delta-tri { font-size: 8px; line-height: 1; transform: translateY(-1px); }
+/* 7일 평균·어제 목록과 게이지 사이 여백 (붙어 보이지 않게) */
+.rv-tick-row:not(.solo) { gap: 20px; }
+.rv-tick-row:not(.solo) .grade-ticks { flex: 0 1 152px; }
+.rv-tick-list > span > em { min-width: 54px; }
+@media (max-width: 340px) { .rv-tick-row:not(.solo) { gap: 10px; } }

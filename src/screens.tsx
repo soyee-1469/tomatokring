@@ -26,13 +26,13 @@ import { SLEEP_LAST_NIGHT, SleepHypnogram } from './components/Sleep'
 import { STEPS_BY_HOUR } from './steps'
 import { METRIC_STYLE } from './metricStyle'
 import { PointGuideButton, STRESS_REWARD_MAX, WALK_REWARD_STEPS } from './components/PointGuide'
-import { dayBundle, GRADE_COPY, gradeOf } from './rhythm'
+import { dayBundle, GRADE_COPY, gradeOf, recentAvg7 } from './rhythm'
 import { AUTO_MODE_LABEL, dayLog } from './measureLog'
 import { SURVEY_OPEN } from './survey'
 import { shrinkImage } from './imageUtil'
 import { MEALS } from './meals'
 import { DayArc, DeltaChip, GradeTicks, rhythmHeadline } from './components/RhythmGrade'
-import { DEFAULT_CARD_ORDER, hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
+import { DEFAULT_CARD_ORDER, getSession, hasRhythmRecord, RHYTHM_MIN_DAYS, RHYTHM_TREND_DAYS, addStressReading, completeOnboarding, isClaimed, isMeasureDone, markClaimed, maskSerial, pairRing, setCardOrder, setConditionCheck, todayCondition, todayDietPhoto, saveDietPhoto, markMeasureDone, type ConditionAnswer, type HomeCardKind, type MeasureKind, type MissionCardKind, unpairRing, validDayCount } from './session'
 import { openVitalingShop, VITALING_SHOP_URL } from './shop'
 import {
   ACTIVITY_COLORS,
@@ -668,26 +668,27 @@ function RhythmCollecting({ days, onOpen }: { days: number; onOpen: () => void }
   )
 }
 
-/** 홈 '오늘의 상태' 카드 (2026-11-27): 맨 위 한 문장·기록 수·자세히 → 점수·등급(오른쪽 내 평균·어제) → 가로 무지개 눈금
+/** 홈 '오늘의 상태' 카드 (2026-11-27): 맨 위 한 문장·기록 수·자세히 → 점수·등급(오른쪽 7일 평균·어제) → 가로 무지개 눈금
  *  항목별(수면·스트레스·걷기 등)은 바로 아래 '오늘 기록' 카드가 보여 주므로 여기엔 넣지 않는다. 일주일 막대는 상세에서만 */
-function RhythmBannerCard({ score, tiles, validDays, yesterdayRecorded, onOpen }: { score: number; tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]; /** 14일 미만이면 내 평균 대신 남은 날 */ validDays: number; /** 어제 기록이 없으면 '어제' 줄을 숨김 */ yesterdayRecorded: boolean; onOpen: () => void }) {
+function RhythmBannerCard({ score, tiles, validDays, yesterdayRecorded, onOpen }: { score: number; tiles: readonly { label: string; tone: 'ok' | 'warn' | 'bad' }[]; /** 14일 미만이면 7일 평균 숨김 */ validDays: number; /** 어제 기록이 없으면 '어제' 줄을 숨김 */ yesterdayRecorded: boolean; onOpen: () => void }) {
   const trendReady = validDays >= RHYTHM_TREND_DAYS
   const byScore = statusFromScore(score)
   const alert = tiles.find((t) => t.tone === 'bad') ?? tiles.find((t) => t.tone === 'warn')
   const title = alert ? (alert.tone === 'bad' ? `${alert.label} 위험` : `${alert.label} 주의`) : byScore.title
-  const myAvg = Math.round(Array.from({ length: 28 }, (_, i) => dayBundle(addDays(HOME_TODAY, -i)).score).reduce((a, b) => a + b, 0) / 28)
+  // 7일 평균: 어제부터 7일 중 기록 있는 날만 (14일부터 표시)
+  const avg7 = trendReady ? recentAvg7(HOME_TODAY, (d) => hasRhythmRecord(getSession(), d)) : null
   const yesterday = dayBundle(addDays(HOME_TODAY, -1)).score
   return (
     <div className="elder-score-card rhythm-banner rv-a">
       {/* 맨 위: 한 문장만. 위험·주의 항목이 있으면 이 자리에 그 경고를 먼저 (빨강·주황) */}
       <button type="button" className="rv-full-top" onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        <b className={`rv-a-headline${alert ? ` alert ${alert.tone}` : ''}`}>{alert ? `오늘 ${title}` : rhythmHeadline(score, yesterdayRecorded ? yesterday : null, trendReady ? myAvg : null)}</b>
+        <b className={`rv-a-headline${alert ? ` alert ${alert.tone}` : ''}`}>{alert ? `오늘 ${title}` : rhythmHeadline(score, yesterdayRecorded ? yesterday : null, avg7)}</b>
       </button>
-      {/* 왼쪽: 내 평균(14일부터)·어제 + 증감 칩, 오른쪽: 눈금 게이지. 비교할 게 없으면 게이지만 가운데 */}
-      <button type="button" className={`rv-tick-row${!trendReady && !yesterdayRecorded ? ' solo' : ''}`} onClick={onOpen} aria-label="바디 리듬 자세히 보기">
-        {(trendReady || yesterdayRecorded) && (
+      {/* 왼쪽: 7일 평균(14일부터)·어제 + 증감 칩, 오른쪽: 눈금 게이지. 비교할 게 없으면 게이지만 가운데 */}
+      <button type="button" className={`rv-tick-row${avg7 === null && !yesterdayRecorded ? ' solo' : ''}`} onClick={onOpen} aria-label="바디 리듬 자세히 보기">
+        {(avg7 !== null || yesterdayRecorded) && (
           <span className="rv-tick-list">
-            {trendReady && <span><em>내 평균</em><b>{myAvg}</b><DeltaChip diff={score - myAvg} /></span>}
+            {avg7 !== null && <span><em>7일 평균</em><b>{avg7}</b><DeltaChip diff={score - avg7} /></span>}
             {yesterdayRecorded && <span><em>어제</em><b>{yesterday}</b><DeltaChip diff={score - yesterday} /></span>}
           </span>
         )}
@@ -1033,7 +1034,6 @@ export function HomeScreen() {
     return i === 6 ? rs[0].value : Math.round(rs.reduce((acc, r) => acc + r.value, 0) / rs.length)
   })
   const stressSel = stressSeries[stressSeries.length - 1]
-  // 내 평균: 오늘을 뺀 최근 6일 중 기록 있는 날의 평균
   // 오늘 잰 값들을 시간순으로 (dayLog은 최신이 먼저라 뒤집음) — 홈 카드 오른쪽 위 작은 그래프용. 7일 흐름은 상세에서만
   const stressLog = dayLog('stress', new Date())
   const stressToday = stressLog.map((r) => r.value).reverse()
