@@ -581,8 +581,11 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
       ) : readySum > 0 ? (
         // 지금 받을 수 있는 게 있으면: 금액만 알려 준다 (받기는 각 카드·도장에서)
         <p className="elder-mission-say">지금 받을 수 있는 포인트 <b>{formatClaimP(readySum)}</b></p>
+      ) : doneCount > 0 ? (
+        // 받을 수 있는 건 다 받았고, 남은 미션은 아직 조건 전 (조건은 각 카드·포인트 Tip에)
+        <p className="elder-mission-say"><b>받을 수 있는 포인트를 모두 받았어요</b></p>
       ) : (
-        // 받을 게 없으면: 남은 미션 수와 금액 (오늘 할 수 있는 것만)
+        // 아직 아무것도 받지 않았고 받을 것도 없으면: 남은 미션 수와 금액
         <p className="elder-mission-say">
           {leftCount}개만 더 하면 <b>{formatClaimP(left)} 획득</b>
         </p>
@@ -597,8 +600,10 @@ function TodayMissionCard({ claimed, ready, onItem }: { claimed: Record<MissionC
                 <button type="button" onClick={() => onItem(it.kind)} aria-label={`${it.label} ${state}`}>
                   <span className="elder-mission-seal">
                     <Seal size={44} weight="fill" />
-                    {/* 도장 안은 항목 아이콘만 (체크 없음). 상태는 도장 색으로만: 초록 = 받기 가능(누를 것), 회색 = 받음, 연회색 = 조건 남음 */}
+                    {/* 도장 안은 항목 아이콘. 초록 = 받기 가능(누를 것), 회색 + 작은 체크 = 받음, 연회색 = 조건 남음 */}
                     <it.Icon size={20} weight="fill" />
+                    {/* 받은 도장: 오른쪽 아래 작은 체크 (조건 전 도장과 구분) */}
+                    {done && <span className="elder-mission-check" aria-hidden><Ri name="check" size={11} /></span>}
                   </span>
                   <b>{it.label}</b>
                 </button>

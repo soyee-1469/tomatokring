@@ -14589,3 +14589,7 @@ body, button, input { word-break: keep-all; overflow-wrap: anywhere; }
 .rhythm-hero.collecting .rc-detail-sub { margin: 4px 0 0; font-size: 15px; color: var(--text-2); }
 .rc-compact .grade-ticks-center strong.ticks-days { font-size: 28px; } .rc-compact .grade-ticks-center strong.ticks-days small { font-size: 13px; }
 .rc-compact .rv-a-headline { white-space: nowrap; font-size: 16px; } /* "7일 중 n일 기록했어요" 한 줄 */
+/* 받은 도장: 오른쪽 아래 작은 초록 체크 */
+.elder-mission-seal { position: relative; }
+.elder-mission-check { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #1FBF62; color: #fff; box-shadow: 0 0 0 2px #fff; }
+.elder-mission-check i { font-size: 12px !important; line-height: 1; font-weight: 700; }
